@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "drivemetrics"
+version = "0.1.0"
+description = "Risk-weighted, distance-stratified evaluation for driving semantic segmentation"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Kuo Tun-Yu" }]
+keywords = [
+    "autonomous-driving", "semantic-segmentation", "evaluation",
+    "safety", "camvid", "metrics",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+]
+
+# The evaluation core is deliberately numpy-only: it must be installable and
+# testable on a CPU-only machine with no deep-learning stack, so that CI can
+# verify every metric without a GPU, a dataset, or a model checkpoint.
+dependencies = ["numpy>=1.21"]
+
+[project.optional-dependencies]
+# Needed only to train or run models and produce predictions to evaluate.
+train = ["torch>=2.0", "torchvision>=0.15", "pillow>=9.0", "tqdm>=4.60"]
+# Needed only to render the figures and HTML report.
+report = ["matplotlib>=3.5", "jinja2>=3.0"]
+dev = ["pytest>=7.0", "pytest-cov>=4.0", "ruff>=0.1"]
+
+[project.scripts]
+drivemetrics = "drivemetrics.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/kuotunyu/driving-risk-metrics"
+Issues = "https://github.com/kuotunyu/driving-risk-metrics/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+# `pythonpath` lets the suite run straight from a clone without an editable
+# install, which keeps the CPU-only CI job to a single `pytest` invocation.
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "slow: needs real data or a trained model; excluded from the default CPU run",
+]
+filterwarnings = [
+    "error::RuntimeWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = [
+    "E501",  # line length is handled by the formatter
+    "B905",  # zip(strict=) is not available on py39
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]

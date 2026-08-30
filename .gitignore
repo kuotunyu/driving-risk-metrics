@@ -1,0 +1,38 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Datasets are never committed. The split manifest in reports/ records the
+# exact bytes used for any reported result; the pixels themselves stay out.
+data/
+*.zip
+*.tar.gz
+CamVid/
+
+# Model artefacts
+*.pt
+*.pth
+*.onnx
+checkpoints/
+
+# Generated figures and the rendered report. Both are rebuilt in one command
+# (`scripts/evaluate.py` then `scripts/report.py`), and the HTML embeds every
+# figure as a data URI, so committing it would add ~600KB per regeneration for
+# no information the JSON alongside it does not already carry.
+reports/figures/
+reports/report*.html
+
+# The JSON in reports/ IS committed on purpose: it is the evidence behind the
+# claims in README.md and docs/AUDIT.md, and it is small.
+
+# Training artefacts
+predictions/
+runs/
+
+!docs/assets/

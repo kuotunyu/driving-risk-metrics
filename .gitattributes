@@ -1,0 +1,11 @@
+# Normalise line endings so the repo is identical on Windows, macOS and Linux.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.pt  binary
+*.pth binary
+*.onnx binary
+
+# Notebooks diff badly by default; mark them so tooling can special-case them.
+*.ipynb text
