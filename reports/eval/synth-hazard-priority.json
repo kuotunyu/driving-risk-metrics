@@ -1,0 +1,803 @@
+{
+  "model": "synth-hazard-priority",
+  "split": "val",
+  "n_samples": 101,
+  "headline": {
+    "mean_iou": 0.6493697573110521,
+    "n_classes_counted": 11,
+    "pixel_accuracy": 0.720913298563979,
+    "risk_skill": 0.900021322884428,
+    "expected_risk": 0.4155422429701818,
+    "vru_recall": 0.9816378678270111
+  },
+  "iou": {
+    "dataset_protocol": {
+      "aggregation": "dataset",
+      "mean_iou": 0.6493697573110521,
+      "n_classes_counted": 11,
+      "per_class_iou": [
+        0.6630087581190844,
+        0.522770044116453,
+        0.7465627050604083,
+        0.5641230306203313,
+        0.3447810050140109,
+        0.7287876518246061,
+        0.8193571903342696,
+        0.31573893647834866,
+        0.7576821537773137,
+        0.7707496491312975,
+        0.909506205945449
+      ]
+    },
+    "per_image_nanmean_protocol": {
+      "aggregation": "per_image_nanmean",
+      "mean_iou": 0.6151297019561449,
+      "n_classes_counted": 11,
+      "per_class_iou": [
+        0.6625554612237174,
+        0.5142637969409587,
+        0.7148426116134968,
+        0.5628959122590199,
+        0.33709864008176077,
+        0.7256542517400587,
+        0.7860304969990087,
+        0.2639786126025482,
+        0.612468378309788,
+        0.684001576456647,
+        0.9026369832905903
+      ]
+    },
+    "frequency_weighted": 0.5785257258361026
+  },
+  "pixel_accuracy": 0.720913298563979,
+  "per_class_recall": {
+    "Sky": 0.6746750165457475,
+    "Building": 0.7033481344815258,
+    "Pole": 0.9817967695103503,
+    "Road": 0.7804319501240408,
+    "Pavement": 0.5818290903045242,
+    "Tree": 0.7354658248936823,
+    "SignSymbol": 0.9815828003390614,
+    "Fence": 0.3336001504103709,
+    "Car": 0.8335433649693486,
+    "Pedestrian": 0.981952065955554,
+    "Bicyclist": 0.9815456964936307
+  },
+  "per_class_precision": {
+    "Sky": 0.9745823017709052,
+    "Building": 0.6706386666167247,
+    "Pole": 0.7570415368477087,
+    "Road": 0.6705463315368941,
+    "Pavement": 0.4583636182914935,
+    "Tree": 0.9876940091783869,
+    "SignSymbol": 0.8321501676756239,
+    "Fence": 0.8550129295126861,
+    "Car": 0.8927638724371975,
+    "Pedestrian": 0.7818250673249552,
+    "Bicyclist": 0.9253292149994398
+  },
+  "support": {
+    "Sky": 1601620,
+    "Building": 4531180,
+    "Pole": 98499,
+    "Road": 5053176,
+    "Pavement": 1521751,
+    "Tree": 2851125,
+    "SignSymbol": 155724,
+    "Fence": 537197,
+    "Car": 304716,
+    "Pedestrian": 113531,
+    "Bicyclist": 387010
+  },
+  "risk": {
+    "harm_model": "default-v1",
+    "expected_risk": 0.4155422429701818,
+    "majority_risk": 4.156308674596977,
+    "majority_class": "Road",
+    "best_constant_risk": 3.8880679225921857,
+    "best_constant_class": "Pole",
+    "risk_skill": 0.900021322884428,
+    "risk_skill_strict": 0.8931237181954531,
+    "risk_weighted_iou": 0.7963342639430763,
+    "risk_share_by_true_class": {
+      "Sky": 0.007380716685320922,
+      "Building": 0.19780898650230536,
+      "Pole": 0.0013424330750821277,
+      "Road": 0.028291812126140455,
+      "Pavement": 0.00854738501191006,
+      "Tree": 0.01313760836780478,
+      "SignSymbol": 0.0021745451964392,
+      "Fence": 0.4470553232521332,
+      "Car": 0.1873116367906339,
+      "Pedestrian": 0.02381170475393847,
+      "Bicyclist": 0.08313784823829155
+    }
+  },
+  "risk_top_confusions": [
+    {
+      "true": "Fence",
+      "pred": "Building",
+      "pixels": 349202,
+      "unit_cost": 9.0,
+      "total_risk": 3142818.0,
+      "risk_share": 0.44085923011112454
+    },
+    {
+      "true": "Building",
+      "pred": "Road",
+      "pixels": 1269863,
+      "unit_cost": 1.0,
+      "total_risk": 1269863.0,
+      "risk_share": 0.17813020815287522
+    },
+    {
+      "true": "Car",
+      "pred": "Road",
+      "pixels": 45678,
+      "unit_cost": 27.0,
+      "total_risk": 1233306.0,
+      "risk_share": 0.17300216991611686
+    },
+    {
+      "true": "Bicyclist",
+      "pred": "Road",
+      "pixels": 746,
+      "unit_cost": 97.0,
+      "total_risk": 72362.0,
+      "risk_share": 0.010150589569393199
+    },
+    {
+      "true": "Bicyclist",
+      "pred": "Building",
+      "pixels": 707,
+      "unit_cost": 99.0,
+      "total_risk": 69993.0,
+      "risk_share": 0.009818277766376527
+    },
+    {
+      "true": "Bicyclist",
+      "pred": "Tree",
+      "pixels": 705,
+      "unit_cost": 99.0,
+      "total_risk": 69795.0,
+      "risk_share": 0.009790503288961035
+    },
+    {
+      "true": "Bicyclist",
+      "pred": "Pavement",
+      "pixels": 698,
+      "unit_cost": 97.0,
+      "total_risk": 67706.0,
+      "risk_share": 0.009497468524713743
+    },
+    {
+      "true": "Bicyclist",
+      "pred": "Fence",
+      "pixels": 748,
+      "unit_cost": 90.0,
+      "total_risk": 67320.0,
+      "risk_share": 0.00944332232126738
+    },
+    {
+      "true": "Bicyclist",
+      "pred": "Sky",
+      "pixels": 679,
+      "unit_cost": 99.0,
+      "total_risk": 67221.0,
+      "risk_share": 0.009429435082559634
+    },
+    {
+      "true": "Bicyclist",
+      "pred": "Pole",
+      "pixels": 723,
+      "unit_cost": 90.0,
+      "total_risk": 65070.0,
+      "risk_share": 0.009127703259727695
+    }
+  ],
+  "safety_recall": {
+    "Pedestrian": 0.981952065955554,
+    "Bicyclist": 0.9815456964936307,
+    "pooled": 0.9816378678270111
+  },
+  "blind_spot": {
+    "Pedestrian": {
+      "class": "Pedestrian",
+      "present_images": 101,
+      "blind_images": 0,
+      "blind_rate": 0.0,
+      "min_gt_pixels": 50,
+      "recall_threshold": 0.1,
+      "blind_image_ids": []
+    },
+    "Bicyclist": {
+      "class": "Bicyclist",
+      "present_images": 101,
+      "blind_images": 0,
+      "blind_rate": 0.0,
+      "min_gt_pixels": 50,
+      "recall_threshold": 0.1,
+      "blind_image_ids": []
+    }
+  },
+  "blind_spot_curve": {
+    "Pedestrian": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.05,
+        0.0
+      ],
+      [
+        0.1,
+        0.0
+      ],
+      [
+        0.15000000000000002,
+        0.0
+      ],
+      [
+        0.2,
+        0.0
+      ],
+      [
+        0.25,
+        0.0
+      ],
+      [
+        0.30000000000000004,
+        0.0
+      ],
+      [
+        0.35000000000000003,
+        0.0
+      ],
+      [
+        0.4,
+        0.0
+      ],
+      [
+        0.45,
+        0.0
+      ],
+      [
+        0.5,
+        0.0
+      ],
+      [
+        0.55,
+        0.0
+      ],
+      [
+        0.6000000000000001,
+        0.0
+      ],
+      [
+        0.65,
+        0.0
+      ],
+      [
+        0.7000000000000001,
+        0.0
+      ],
+      [
+        0.75,
+        0.0
+      ],
+      [
+        0.8,
+        0.0
+      ],
+      [
+        0.8500000000000001,
+        0.0
+      ],
+      [
+        0.9,
+        0.0
+      ],
+      [
+        0.9500000000000001,
+        0.0
+      ],
+      [
+        1.0,
+        0.9900990099009901
+      ]
+    ],
+    "Bicyclist": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.05,
+        0.0
+      ],
+      [
+        0.1,
+        0.0
+      ],
+      [
+        0.15000000000000002,
+        0.0
+      ],
+      [
+        0.2,
+        0.0
+      ],
+      [
+        0.25,
+        0.0
+      ],
+      [
+        0.30000000000000004,
+        0.0
+      ],
+      [
+        0.35000000000000003,
+        0.0
+      ],
+      [
+        0.4,
+        0.0
+      ],
+      [
+        0.45,
+        0.0
+      ],
+      [
+        0.5,
+        0.0
+      ],
+      [
+        0.55,
+        0.0
+      ],
+      [
+        0.6000000000000001,
+        0.0
+      ],
+      [
+        0.65,
+        0.0
+      ],
+      [
+        0.7000000000000001,
+        0.0
+      ],
+      [
+        0.75,
+        0.0
+      ],
+      [
+        0.8,
+        0.0
+      ],
+      [
+        0.8500000000000001,
+        0.0
+      ],
+      [
+        0.9,
+        0.0
+      ],
+      [
+        0.9500000000000001,
+        0.0
+      ],
+      [
+        1.0,
+        1.0
+      ]
+    ]
+  },
+  "stratified": {
+    "camera": {
+      "horizon_row": 138.0,
+      "focal_px": 420.0,
+      "height_m": 1.35,
+      "image_height": 360,
+      "image_width": 480,
+      "source": "assumed (CamVid publishes no calibration; see docs/GEOMETRY.md)"
+    },
+    "bands": [
+      "0-15m",
+      "15-40m",
+      "40m+"
+    ],
+    "band_edges": [
+      0.0,
+      15.0,
+      40.0,
+      null
+    ],
+    "per_band": {
+      "0-15m": {
+        "pixels": 8701607,
+        "pixel_accuracy": 0.718387304781749,
+        "mean_iou": 0.4570295352724545,
+        "n_classes_present": 10,
+        "per_class_iou": {
+          "Sky": 0.0,
+          "Building": 0.4997316273919226,
+          "Pole": 0.6837876011604825,
+          "Road": 0.6386679063247339,
+          "Pavement": 0.34687440499650146,
+          "Tree": 0.009105260190562101,
+          "SignSymbol": 0.018034825870646767,
+          "Fence": 0.2350842190077888,
+          "Car": 0.8098879912788643,
+          "Pedestrian": 0.8464395412900557,
+          "Bicyclist": 0.9397115104854412
+        },
+        "per_class_recall": {
+          "Sky": null,
+          "Building": 0.5746995482618731,
+          "Pole": 0.9815606334593676,
+          "Road": 0.780434421233446,
+          "Pavement": 0.581829472646624,
+          "Tree": 0.0164001015486164,
+          "SignSymbol": 0.9731543624161074,
+          "Fence": 0.2539320720310007,
+          "Car": 0.8537762785929891,
+          "Pedestrian": 0.9819587102570909,
+          "Bicyclist": 0.9815523171376723
+        },
+        "support": {
+          "Sky": 0,
+          "Building": 1155094,
+          "Pole": 36498,
+          "Road": 5053160,
+          "Pavement": 1521750,
+          "Tree": 19695,
+          "SignSymbol": 298,
+          "Fence": 193028,
+          "Car": 281931,
+          "Pedestrian": 97942,
+          "Bicyclist": 342211
+        },
+        "risk": {
+          "harm_model": "default-v1",
+          "expected_risk": 0.43795071416118886,
+          "majority_risk": 6.101233369882138,
+          "majority_class": "Road",
+          "best_constant_risk": 4.74708522230434,
+          "best_constant_class": "Pedestrian",
+          "risk_skill": 0.9282193144220529,
+          "risk_skill_strict": 0.9077432374494853,
+          "risk_weighted_iou": 0.8020307628172899,
+          "risk_share_by_true_class": {
+            "Sky": 0.0,
+            "Building": 0.13330586807491718,
+            "Pole": 0.0009593597270967953,
+            "Road": 0.05292301636763211,
+            "Pavement": 0.01598924131597074,
+            "Tree": 0.00017030209597533374,
+            "SignSymbol": 1.1283497884344147e-05,
+            "Fence": 0.33684075179584744,
+            "Car": 0.28377367402499426,
+            "Pedestrian": 0.03861580345721127,
+            "Bicyclist": 0.13741069964247057
+          }
+        }
+      },
+      "15-40m": {
+        "pixels": 1060758,
+        "pixel_accuracy": 0.5490158924090132,
+        "mean_iou": 0.45894139948378815,
+        "n_classes_present": 10,
+        "per_class_iou": {
+          "Sky": 0.001383946223803875,
+          "Building": 0.4355366792531349,
+          "Pole": 0.9095136601433831,
+          "Road": 0.0,
+          "Pavement": 0.0,
+          "Tree": 0.12136688741721854,
+          "SignSymbol": 0.8364561647004395,
+          "Fence": 0.3873570473916769,
+          "Car": 0.5406461062739035,
+          "Pedestrian": 0.8758869306477455,
+          "Bicyclist": 0.9402079722703639
+        },
+        "per_class_recall": {
+          "Sky": 0.00228310502283105,
+          "Building": 0.6281332523689153,
+          "Pole": 0.981926198644465,
+          "Road": 0.0,
+          "Pavement": null,
+          "Tree": 0.12369330453563715,
+          "SignSymbol": 0.9812754409769335,
+          "Fence": 0.38933272841982886,
+          "Car": 0.5832674918795541,
+          "Pedestrian": 0.9819103213804605,
+          "Bicyclist": 0.9814449727473037
+        },
+        "support": {
+          "Sky": 3066,
+          "Building": 566504,
+          "Pole": 23902,
+          "Road": 11,
+          "Pavement": 0,
+          "Tree": 92600,
+          "SignSymbol": 11055,
+          "Fence": 282134,
+          "Car": 22782,
+          "Pedestrian": 15589,
+          "Bicyclist": 43115
+        },
+        "risk": {
+          "harm_model": "default-v1",
+          "expected_risk": 1.9799954372250788,
+          "majority_risk": 8.792028907630204,
+          "majority_class": "Building",
+          "best_constant_risk": 4.723292211795716,
+          "best_constant_class": "Pedestrian",
+          "risk_skill": 0.774796527851867,
+          "risk_skill_strict": 0.5808018330349463,
+          "risk_weighted_iou": 0.8168045714322573,
+          "risk_share_by_true_class": {
+            "Sky": 5.23735702015335e-05,
+            "Building": 0.10418436258508325,
+            "Pole": 0.0010903225069228337,
+            "Road": 2.3806168273424316e-06,
+            "Pavement": 0.0,
+            "Tree": 0.0013717114159147092,
+            "SignSymbol": 0.0005270685655736144,
+            "Fence": 0.7294800351950391,
+            "Car": 0.12084439526619105,
+            "Pedestrian": 0.010755626825933107,
+            "Bicyclist": 0.031691723452313386
+          }
+        }
+      },
+      "40m+": {
+        "pixels": 668131,
+        "pixel_accuracy": 0.612834908124305,
+        "mean_iou": 0.34592444708513803,
+        "n_classes_present": 8,
+        "per_class_iou": {
+          "Sky": 0.11273684980613066,
+          "Building": 0.5153508520391973,
+          "Pole": 0.8818805269806894,
+          "Road": 0.0,
+          "Pavement": 0.0,
+          "Tree": 0.4452897682974679,
+          "SignSymbol": 0.9235059377854704,
+          "Fence": 0.3549270824750762,
+          "Car": 0.0,
+          "Pedestrian": 0.0,
+          "Bicyclist": 0.5714779005524862
+        },
+        "per_class_recall": {
+          "Sky": 0.11591986158822497,
+          "Building": 0.7609765874203255,
+          "Pole": 0.9816191241462434,
+          "Road": null,
+          "Pavement": null,
+          "Tree": 0.4473069953623604,
+          "SignSymbol": 0.9806504314085873,
+          "Fence": 0.3634618629767128,
+          "Car": 0.0,
+          "Pedestrian": null,
+          "Bicyclist": 0.9827790973871734
+        },
+        "support": {
+          "Sky": 39881,
+          "Building": 354254,
+          "Pole": 9956,
+          "Road": 0,
+          "Pavement": 0,
+          "Tree": 195358,
+          "SignSymbol": 19587,
+          "Fence": 47408,
+          "Car": 3,
+          "Pedestrian": 0,
+          "Bicyclist": 1684
+        },
+        "risk": {
+          "harm_model": "default-v1",
+          "expected_risk": 0.5565480422252522,
+          "majority_risk": 1.286217822552763,
+          "majority_class": "Building",
+          "best_constant_risk": 1.1092330695627055,
+          "best_constant_class": "Pole",
+          "risk_skill": 0.5672987635012952,
+          "risk_skill_strict": 0.4982587000902696,
+          "risk_weighted_iou": 0.29674462080967945,
+          "risk_share_by_true_class": {
+            "Sky": 0.003689689576626946,
+            "Building": 0.24212915527085063,
+            "Pole": 0.0027699564605872845,
+            "Road": 0.0,
+            "Pavement": 0.0,
+            "Tree": 0.01687790946276291,
+            "SignSymbol": 0.0055157094181208935,
+            "Fence": 0.7221841241155637,
+            "Car": 0.0002178315274830777,
+            "Pedestrian": 0.0,
+            "Bicyclist": 0.006615624168004582
+          }
+        }
+      }
+    }
+  },
+  "confusion_matrix": [
+    [
+      1080573,
+      494695,
+      2909,
+      2968,
+      2999,
+      2858,
+      2959,
+      2948,
+      2861,
+      2901,
+      2949
+    ],
+    [
+      8229,
+      3186997,
+      8134,
+      1269863,
+      8248,
+      8460,
+      8130,
+      8319,
+      8272,
+      8308,
+      8220
+    ],
+    [
+      179,
+      195,
+      96706,
+      185,
+      161,
+      173,
+      204,
+      187,
+      160,
+      172,
+      177
+    ],
+    [
+      9073,
+      9193,
+      9243,
+      3943660,
+      1026994,
+      9106,
+      9192,
+      9182,
+      9169,
+      9120,
+      9244
+    ],
+    [
+      2753,
+      2725,
+      2832,
+      611411,
+      885399,
+      2788,
+      2792,
+      2748,
+      2743,
+      2831,
+      2729
+    ],
+    [
+      5235,
+      707403,
+      5167,
+      5306,
+      5129,
+      2096905,
+      5103,
+      5258,
+      5201,
+      5176,
+      5242
+    ],
+    [
+      279,
+      285,
+      291,
+      285,
+      274,
+      303,
+      152856,
+      291,
+      257,
+      309,
+      294
+    ],
+    [
+      1017,
+      349202,
+      955,
+      938,
+      984,
+      981,
+      984,
+      179209,
+      950,
+      1000,
+      977
+    ],
+    [
+      542,
+      569,
+      580,
+      45678,
+      536,
+      561,
+      553,
+      525,
+      253994,
+      570,
+      608
+    ],
+    [
+      196,
+      211,
+      202,
+      224,
+      230,
+      191,
+      200,
+      183,
+      198,
+      111482,
+      214
+    ],
+    [
+      679,
+      707,
+      723,
+      746,
+      698,
+      705,
+      715,
+      748,
+      698,
+      723,
+      379868
+    ]
+  ],
+  "provenance": {
+    "package_version": "0.1.0",
+    "evaluated_utc": "2026-08-30T13:03:11+00:00",
+    "harm_model": {
+      "name": "default-v1",
+      "notes": "Ordinal tiers, not calibrated against any injury statistic. VRU:vehicle:obstacle:surface:background = 100:30:10:3:1, and missing a class is 20x costlier than hallucinating it for VRUs. Chosen to be defensible in ordering rather than precise in magnitude; conclusions that do not survive the sensitivity sweep are reported as not surviving it."
+    },
+    "camera": {
+      "horizon_row": 138.0,
+      "focal_px": 420.0,
+      "height_m": 1.35,
+      "image_height": 360,
+      "image_width": 480,
+      "source": "assumed (CamVid publishes no calibration; see docs/GEOMETRY.md)"
+    },
+    "band_edges": [
+      0.0,
+      15.0,
+      40.0,
+      null
+    ],
+    "blind_spot_thresholds": {
+      "min_gt_pixels": 50,
+      "recall_threshold": 0.1
+    },
+    "ignore_index": 11,
+    "synthetic": true,
+    "split_size": 101,
+    "synthetic_warning": "SYNTHETIC pipeline fixture \u2014 generated by drivemetrics.synthetic, not a trained model. Any number derived from it describes the generator, not segmentation performance.",
+    "profile": "Recovers hazards almost perfectly but is sloppy on background boundaries \u2014 the profile a heavily class-rebalanced or focal-loss model tends to produce. Scores marginally *worse* than synth-background-biased on mIoU while recovering roughly twice as many VRU pixels. This is the rank inversion the package exists to expose, and it is here so that codepath is exercised by CI."
+  }
+}

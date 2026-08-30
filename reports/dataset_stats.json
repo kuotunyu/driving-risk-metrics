@@ -1,0 +1,183 @@
+{
+  "dataset": "CamVid-11",
+  "root": "..\\2026\u81ea\u99d5\u8eca\\01_\u8a9e\u610f\u5206\u5272_Semantic_Segmentation\\CamVid",
+  "splits": {
+    "train": {
+      "n_images": 367,
+      "total_labelled_pixels": 60913605,
+      "void_pixels": 2503995,
+      "per_class": {
+        "Sky": {
+          "pixels": 10682767,
+          "pixel_share": 0.17537571450581524,
+          "images_present": 366,
+          "image_share": 0.997275204359673
+        },
+        "Building": {
+          "pixels": 14750079,
+          "pixel_share": 0.24214753009610906,
+          "images_present": 365,
+          "image_share": 0.9945504087193461
+        },
+        "Pole": {
+          "pixels": 623349,
+          "pixel_share": 0.010233329647785581,
+          "images_present": 366,
+          "image_share": 0.997275204359673
+        },
+        "Road": {
+          "pixels": 20076880,
+          "pixel_share": 0.32959599091204667,
+          "images_present": 367,
+          "image_share": 1.0
+        },
+        "Pavement": {
+          "pixels": 2845085,
+          "pixel_share": 0.04670688920808414,
+          "images_present": 349,
+          "image_share": 0.9509536784741145
+        },
+        "Tree": {
+          "pixels": 6166762,
+          "pixel_share": 0.10123784333565547,
+          "images_present": 319,
+          "image_share": 0.8692098092643051
+        },
+        "SignSymbol": {
+          "pixels": 743859,
+          "pixel_share": 0.012211705414578566,
+          "images_present": 351,
+          "image_share": 0.9564032697547684
+        },
+        "Fence": {
+          "pixels": 714595,
+          "pixel_share": 0.0117312872879548,
+          "images_present": 173,
+          "image_share": 0.4713896457765668
+        },
+        "Car": {
+          "pixels": 3719877,
+          "pixel_share": 0.06106808158866972,
+          "images_present": 360,
+          "image_share": 0.9809264305177112
+        },
+        "Pedestrian": {
+          "pixels": 405385,
+          "pixel_share": 0.006655081405869838,
+          "images_present": 317,
+          "image_share": 0.8637602179836512
+        },
+        "Bicyclist": {
+          "pixels": 184967,
+          "pixel_share": 0.0030365465974309023,
+          "images_present": 201,
+          "image_share": 0.547683923705722
+        }
+      },
+      "summary": {
+        "safety_critical_classes": [
+          "Pedestrian",
+          "Bicyclist",
+          "Pole"
+        ],
+        "safety_critical_pixel_share": 0.019924957651086324,
+        "background_classes": [
+          "Road",
+          "Building",
+          "Sky"
+        ],
+        "background_pixel_share": 0.747119235513971,
+        "ratio_background_to_safety_critical": 37.496653623915606
+      }
+    },
+    "val": {
+      "n_images": 101,
+      "total_labelled_pixels": 17155529,
+      "void_pixels": 297271,
+      "per_class": {
+        "Sky": {
+          "pixels": 1601620,
+          "pixel_share": 0.09335882326916296,
+          "images_present": 101,
+          "image_share": 1.0
+        },
+        "Building": {
+          "pixels": 4531180,
+          "pixel_share": 0.26412359537266383,
+          "images_present": 101,
+          "image_share": 1.0
+        },
+        "Pole": {
+          "pixels": 98499,
+          "pixel_share": 0.0057415309081987505,
+          "images_present": 101,
+          "image_share": 1.0
+        },
+        "Road": {
+          "pixels": 5053176,
+          "pixel_share": 0.2945508704511531,
+          "images_present": 101,
+          "image_share": 1.0
+        },
+        "Pavement": {
+          "pixels": 1521751,
+          "pixel_share": 0.08870323963778674,
+          "images_present": 101,
+          "image_share": 1.0
+        },
+        "Tree": {
+          "pixels": 2851125,
+          "pixel_share": 0.16619277668441468,
+          "images_present": 101,
+          "image_share": 1.0
+        },
+        "SignSymbol": {
+          "pixels": 155724,
+          "pixel_share": 0.009077190216635115,
+          "images_present": 101,
+          "image_share": 1.0
+        },
+        "Fence": {
+          "pixels": 537197,
+          "pixel_share": 0.03131334510291114,
+          "images_present": 101,
+          "image_share": 1.0
+        },
+        "Car": {
+          "pixels": 304716,
+          "pixel_share": 0.017761970499423248,
+          "images_present": 101,
+          "image_share": 1.0
+        },
+        "Pedestrian": {
+          "pixels": 113531,
+          "pixel_share": 0.006617749881102471,
+          "images_present": 101,
+          "image_share": 1.0
+        },
+        "Bicyclist": {
+          "pixels": 387010,
+          "pixel_share": 0.02255890797654797,
+          "images_present": 101,
+          "image_share": 1.0
+        }
+      },
+      "summary": {
+        "safety_critical_classes": [
+          "Pedestrian",
+          "Bicyclist",
+          "Pole"
+        ],
+        "safety_critical_pixel_share": 0.03491818876584919,
+        "background_classes": [
+          "Road",
+          "Building",
+          "Sky"
+        ],
+        "background_pixel_share": 0.65203328909298,
+        "ratio_background_to_safety_critical": 18.67317040598291
+      }
+    }
+  },
+  "split_manifest": "reports/split_manifest.json"
+}
