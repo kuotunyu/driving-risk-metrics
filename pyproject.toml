@@ -1,43 +1,70 @@
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+requires = ["setuptools>=80", "wheel>=0.45"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "drivemetrics"
+name = "driving-risk-metrics"
 version = "0.1.0"
-description = "Risk-weighted, distance-stratified evaluation for driving semantic segmentation"
+description = "Safety-aware evaluation for road-scene semantic segmentation"
 readme = "README.md"
-requires-python = ">=3.9"
-license = { text = "MIT" }
+requires-python = ">=3.11,<3.12"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Kuo Tun-Yu" }]
 keywords = [
-    "autonomous-driving", "semantic-segmentation", "evaluation",
-    "safety", "camvid", "metrics",
+    "autonomous-driving",
+    "evaluation",
+    "safety",
+    "semantic-segmentation",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
-    "Topic :: Scientific/Engineering :: Image Recognition",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "numpy>=1.26,<3",
+    "pydantic>=2.11,<3",
+    "pyyaml>=6.0,<7",
+    "scipy>=1.14,<2",
+    "typer>=0.16,<1",
 ]
 
-# The evaluation core is deliberately numpy-only: it must be installable and
-# testable on a CPU-only machine with no deep-learning stack, so that CI can
-# verify every metric without a GPU, a dataset, or a model checkpoint.
-dependencies = ["numpy>=1.21"]
-
 [project.optional-dependencies]
-# Needed only to train or run models and produce predictions to evaluate.
-train = ["torch>=2.0", "torchvision>=0.15", "pillow>=9.0", "tqdm>=4.60"]
-# Needed only to render the figures and HTML report.
-report = ["matplotlib>=3.5", "jinja2>=3.0"]
-dev = ["pytest>=7.0", "pytest-cov>=4.0", "ruff>=0.1"]
+train = [
+    "pillow>=10,<13",
+    "torch>=2.4,<3",
+    "torchvision>=0.19,<1",
+    "tqdm>=4.66,<5",
+    "transformers>=4.45,<6",
+]
+report = [
+    "jinja2>=3.1,<4",
+    "matplotlib>=3.9,<4",
+    "plotly>=6,<7",
+]
+
+[dependency-groups]
+dev = [
+    "build>=1.2,<2",
+    "hypothesis>=6.130,<7",
+    "mypy>=1.15,<2",
+    "mutmut>=3.3,<4",
+    "pytest>=8.3,<10",
+    "pytest-cov>=6,<8",
+    "ruff>=0.11,<1",
+    "types-pyyaml>=6.0,<7",
+]
+report = [
+    "jinja2>=3.1,<4",
+    "matplotlib>=3.9,<4",
+    "plotly>=6,<7",
+]
 
 [project.scripts]
-drivemetrics = "drivemetrics.cli:main"
+driving-risk = "drivemetrics.cli.app:app"
 
 [project.urls]
 Homepage = "https://github.com/kuotunyu/driving-risk-metrics"
@@ -46,30 +73,40 @@ Issues = "https://github.com/kuotunyu/driving-risk-metrics/issues"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.uv]
+required-version = ">=0.11.18,<0.12"
+default-groups = ["dev"]
+
 [tool.pytest.ini_options]
-# `pythonpath` lets the suite run straight from a clone without an editable
-# install, which keeps the CPU-only CI job to a single `pytest` invocation.
 pythonpath = ["src"]
 testpaths = ["tests"]
-addopts = "-q --strict-markers"
+addopts = ["--strict-markers", "-ra"]
 markers = [
-    "slow: needs real data or a trained model; excluded from the default CPU run",
+    "slow: needs real data, a trained model, or another explicitly gated resource",
 ]
-filterwarnings = [
-    "error::RuntimeWarning",
-]
+filterwarnings = ["error::RuntimeWarning"]
+
+[tool.coverage.run]
+branch = true
+source = ["drivemetrics"]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+skip_covered = false
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
-src = ["src", "tests"]
+target-version = "py311"
+src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
-ignore = [
-    "E501",  # line length is handled by the formatter
-    "B905",  # zip(strict=) is not available on py39
-]
+select = ["B", "C4", "E", "F", "I", "RUF", "SIM", "UP", "W"]
+ignore = ["E501"]
 
-[tool.ruff.lint.per-file-ignores]
-"tests/*" = ["B011"]
+[tool.mypy]
+python_version = "3.11"
+check_untyped_defs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+warn_unused_configs = true

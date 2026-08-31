@@ -2,65 +2,32 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, rebuild/v1]
   pull_request:
+    branches: [main, rebuild/v1]
+
+permissions:
+  contents: read
 
 jobs:
-  test:
-    # The evaluation core is numpy-only by design, so the whole suite runs on a
-    # plain CPU runner with no dataset, no checkpoint and no GPU. Anything that
-    # needs those is marked `slow` and excluded here rather than faked.
+  verify:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.9", "3.11", "3.12"]
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - name: Install uv and Python 3.11
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
+          version: "0.11.18"
+          python-version: "3.11"
+          enable-cache: true
 
-      - name: Install
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+      - name: Sync locked CPU development environment
+        run: uv sync --frozen --all-groups
 
-      - name: Lint
-        run: ruff check src tests scripts
+      - name: Run deterministic verification gate
+        run: uv run python -m drivemetrics.dev verify
 
-      - name: Test
-        run: pytest -m "not slow" --cov=drivemetrics --cov-report=term-missing
-
-  guard:
-    # Cheap structural checks that catch the failure modes this repo exists to
-    # talk about: committed datasets, committed weights, and leaked secrets.
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: No large files committed
-        run: |
-          big=$(find . -path ./.git -prune -o -type f -size +2M -print)
-          if [ -n "$big" ]; then
-            echo "Files over 2MB must not be committed:"; echo "$big"; exit 1
-          fi
-
-      - name: No model or dataset artefacts committed
-        run: |
-          bad=$(git ls-files | grep -E '\.(pt|pth|onnx|zip|tar\.gz|npz)$' || true)
-          if [ -n "$bad" ]; then
-            echo "Model/dataset artefacts must not be committed:"; echo "$bad"; exit 1
-          fi
-
-      - name: No obvious credentials
-        run: |
-          hits=$(git ls-files -z | xargs -0 grep -nIE \
-            '(AIza[0-9A-Za-z_-]{35}|sk-[A-Za-z0-9]{32,}|hf_[A-Za-z0-9]{34,}|ghp_[A-Za-z0-9]{36})' \
-            || true)
-          if [ -n "$hits" ]; then
-            echo "Possible credential:"; echo "$hits"; exit 1
-          fi
+      - name: Build wheel and source distribution
+        run: uv build
