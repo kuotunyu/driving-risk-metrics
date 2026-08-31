@@ -218,6 +218,7 @@ def test_contract_schema_writer_is_deterministic(tmp_path: Path) -> None:
 
     assert tuple(path.name for path in first_paths) == (
         "portfolio_artifact_envelope_v1.json",
+        "prediction_artifact_v1.json",
         "run_record_v1.json",
     )
     assert {path.name: path.read_bytes() for path in second_paths} == first_bytes
