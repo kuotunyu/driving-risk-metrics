@@ -1,0 +1,28 @@
+schema_version: bdd100k-risk-profile/v1
+name: drivable_boundary
+taxonomy: bdd100k-semantic-train-id/v1
+sensitivity: 1.0
+# P1-06 supports true-class false-negative costs, not a pairwise cost matrix.
+# This profile is therefore a road/sidewalk FN proxy; do not report it as an
+# exact boundary-confusion metric without a future versioned pairwise schema.
+class_costs:
+  - {class_id: 0, class_name: road, cost: 1.8095238095238095}
+  - {class_id: 1, class_name: sidewalk, cost: 1.8095238095238095}
+  - {class_id: 2, class_name: building, cost: 0.9047619047619048}
+  - {class_id: 3, class_name: wall, cost: 0.9047619047619048}
+  - {class_id: 4, class_name: fence, cost: 0.9047619047619048}
+  - {class_id: 5, class_name: pole, cost: 0.9047619047619048}
+  - {class_id: 6, class_name: traffic_light, cost: 0.9047619047619048}
+  - {class_id: 7, class_name: traffic_sign, cost: 0.9047619047619048}
+  - {class_id: 8, class_name: vegetation, cost: 0.9047619047619048}
+  - {class_id: 9, class_name: terrain, cost: 0.9047619047619048}
+  - {class_id: 10, class_name: sky, cost: 0.9047619047619048}
+  - {class_id: 11, class_name: person, cost: 0.9047619047619048}
+  - {class_id: 12, class_name: rider, cost: 0.9047619047619048}
+  - {class_id: 13, class_name: car, cost: 0.9047619047619048}
+  - {class_id: 14, class_name: truck, cost: 0.9047619047619048}
+  - {class_id: 15, class_name: bus, cost: 0.9047619047619048}
+  - {class_id: 16, class_name: train, cost: 0.9047619047619048}
+  - {class_id: 17, class_name: motorcycle, cost: 0.9047619047619048}
+  - {class_id: 18, class_name: bicycle, cost: 0.9047619047619048}
+critical_class_ids: [0, 1]
