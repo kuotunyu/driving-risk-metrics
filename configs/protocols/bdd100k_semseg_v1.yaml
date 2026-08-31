@@ -1,0 +1,50 @@
+schema_version: bdd100k-semseg-protocol/v1
+dataset:
+  name: bdd100k
+  version: 10k-semantic-v1
+splits:
+  source_train: 7000
+  train: 6300
+  calibration: 700
+  locked_validation: 1000
+  unlabeled_test: 2000
+paths:
+  train_images: images/10k/train
+  train_labels: labels/sem_seg/masks/train
+  validation_images: images/10k/val
+  validation_labels: labels/sem_seg/masks/val
+input:
+  resize_height: 512
+  resize_width: 910
+  padded_height: 512
+  padded_width: 1024
+  image_pad_value_after_normalization: 0.0
+  mask_pad_value: 255
+training:
+  steps: 30000
+  warmup_steps: 1000
+  effective_batch_size: 16
+  horizontal_flip_probability: 0.5
+  checkpoint_selection: final_step_only
+models:
+  fcn_resnet50:
+    optimizer: sgd
+    learning_rate: 0.01
+    momentum: 0.9
+    weight_decay: 0.0001
+  deeplabv3_resnet50:
+    optimizer: sgd
+    learning_rate: 0.01
+    momentum: 0.9
+    weight_decay: 0.0001
+  segformer_b0:
+    optimizer: adamw
+    learning_rate: 0.00006
+    weight_decay: 0.01
+calibration:
+  method: scalar_temperature
+  objective: multiclass_nll
+statistics:
+  bootstrap_resamples: 5000
+  bootstrap_seed: 20260831
+  confidence: 0.95
