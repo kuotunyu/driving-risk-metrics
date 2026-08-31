@@ -1,0 +1,11 @@
+schema_version: camvid-smoke/v1
+dataset:
+  name: camvid
+  purpose: smoke
+  smoke_only: true
+input:
+  target_height: 512
+  canvas_width: 1024
+  image_pad_value_after_normalization: 0.0
+  mask_pad_value: 255
+  horizontal_flip_probability: 0.5

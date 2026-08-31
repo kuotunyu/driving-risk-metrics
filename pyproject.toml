@@ -26,6 +26,7 @@ classifiers = [
 ]
 dependencies = [
     "numpy>=1.26,<3",
+    "pillow>=10,<13",
     "pydantic>=2.11,<3",
     "pyyaml>=6.0,<7",
     "scipy>=1.14,<2",
@@ -34,7 +35,6 @@ dependencies = [
 
 [project.optional-dependencies]
 train = [
-    "pillow>=10,<13",
     "torch>=2.4,<3",
     "torchvision>=0.19,<1",
     "tqdm>=4.66,<5",
