@@ -1,0 +1,20 @@
+allowed_evidence_types:
+  - observed
+  - derived
+  - synthetic
+  - illustrative
+claim_required_fields:
+  - claim_id
+  - text
+  - evidence_type
+  - protocol_hash
+  - dataset_manifest_hash
+  - artifact_path
+  - metric_path
+  - status
+allowed_statuses:
+  - draft
+  - verified
+  - rejected
+  - superseded
+claims: []

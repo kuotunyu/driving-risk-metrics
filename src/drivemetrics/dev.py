@@ -130,7 +130,10 @@ def main(
     """Dispatch the public developer verification commands."""
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command", choices=("verify", "schema-contracts", "docs-links"))
+    parser.add_argument(
+        "command",
+        choices=("verify", "schema-contracts", "docs-links", "generate-schemas"),
+    )
     parser.add_argument("--repo-root", type=Path, default=Path.cwd())
     args = parser.parse_args(argv)
     repo_root = args.repo_root.resolve()
@@ -139,6 +142,11 @@ def main(
         return verify_repository(repo_root, runner=runner)
     if args.command == "schema-contracts":
         return verify_schema_contracts(repo_root)
+    if args.command == "generate-schemas":
+        from drivemetrics.artifacts.schemas import write_contract_schemas
+
+        write_contract_schemas(repo_root)
+        return 0
     return verify_docs_links(repo_root)
 
 

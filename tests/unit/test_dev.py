@@ -205,3 +205,15 @@ def test_dev_module_entrypoint_dispatches_schema_check(
         runpy.run_path(str(Path(dev.__file__)), run_name="__main__")
 
     assert raised.value.code == 0
+
+
+def test_dev_cli_generates_model_derived_contract_schemas(tmp_path: Path) -> None:
+    """The checked-in command must regenerate both contract schemas deterministically."""
+
+    dev = load_dev()
+
+    assert dev.main(["generate-schemas", "--repo-root", str(tmp_path)]) == 0
+    assert tuple(path.name for path in sorted((tmp_path / "schemas").glob("*.json"))) == (
+        "portfolio_artifact_envelope_v1.json",
+        "run_record_v1.json",
+    )
