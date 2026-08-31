@@ -1,0 +1,21 @@
+{
+  "dataset_name": "bdd100k",
+  "dataset_version": "10k-semantic-v1",
+  "split_name": "train",
+  "samples": [
+    {
+      "sample_id": "sample-a",
+      "image_path": "nested/sample-a.jpg",
+      "label_path": "nested/sample-a_train_id.png",
+      "image_content": "image-a",
+      "label_content": "label-a"
+    },
+    {
+      "sample_id": "sample-b",
+      "image_path": "sample-b.jpg",
+      "label_path": "sample-b_train_id.png",
+      "image_content": "image-b",
+      "label_content": "label-b"
+    }
+  ]
+}
