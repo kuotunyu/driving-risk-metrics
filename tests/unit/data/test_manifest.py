@@ -7,6 +7,7 @@ import json
 from dataclasses import replace
 from pathlib import Path
 from types import ModuleType
+from typing import Any
 
 import pytest
 
@@ -250,3 +251,63 @@ def test_bdd100k_filename_parsers_reject_wrong_artifact_type(
 
     with pytest.raises(ValueError, match=expected):
         getattr(bdd100k, function_name)(Path(filename))
+
+
+def dump_manifest(manifest: Any, path: Path) -> Path:
+    from dataclasses import asdict
+
+    path.write_text(json.dumps(asdict(manifest), sort_keys=True), encoding="utf-8")
+    return path
+
+
+def test_a_frozen_manifest_document_round_trips_without_drift(tmp_path: Path) -> None:
+    """Reading a manifest through a lossy path would break every downstream hash check."""
+
+    module = load_manifest_module()
+    image_root, label_root = materialize_fixture(tmp_path)
+    original = module.build_paired_manifest(image_root, label_root, "train")
+
+    restored = module.load_manifest(dump_manifest(original, tmp_path / "manifest.json"))
+
+    assert restored == original
+
+
+def test_a_manifest_document_that_is_not_a_mapping_fails_closed(tmp_path: Path) -> None:
+    """A JSON list would otherwise reach the dataclass as positional garbage."""
+
+    module = load_manifest_module()
+    path = tmp_path / "manifest.json"
+    path.write_text(json.dumps(["not", "a", "manifest"]), encoding="utf-8")
+
+    with pytest.raises(TypeError, match="mapping"):
+        module.load_manifest(path)
+
+
+def test_a_manifest_document_with_wrong_fields_fails_closed(tmp_path: Path) -> None:
+    """A renamed or extra field would silently drop part of the frozen cohort identity."""
+
+    module = load_manifest_module()
+    image_root, label_root = materialize_fixture(tmp_path)
+    original = module.build_paired_manifest(image_root, label_root, "train")
+    path = dump_manifest(original, tmp_path / "manifest.json")
+    document = json.loads(path.read_text(encoding="utf-8"))
+    document["unexpected_field"] = "value"
+    path.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="exactly the manifest fields"):
+        module.load_manifest(path)
+
+
+def test_a_tampered_manifest_document_fails_its_own_hash(tmp_path: Path) -> None:
+    """Editing a frozen cohort by hand must never pass as the original manifest."""
+
+    module = load_manifest_module()
+    image_root, label_root = materialize_fixture(tmp_path)
+    original = module.build_paired_manifest(image_root, label_root, "train")
+    path = dump_manifest(original, tmp_path / "manifest.json")
+    document = json.loads(path.read_text(encoding="utf-8"))
+    document["split_name"] = "locked_validation"
+    path.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+        module.load_manifest(path)
