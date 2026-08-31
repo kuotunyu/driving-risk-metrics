@@ -4,12 +4,25 @@ P1：以 BDD100K 建立可重現的自駕感知風險評估專案。
 
 ## 目前狀態
 
-目前只有新版的套件、驗證與 CI 基礎。尚未加入正式指標、模型、訓練、
-推論結果或作品集結論；後續功能會依核准計畫逐項以測試先行方式加入。
+目前已完成新版套件、驗證與 CI 基礎，以及資料 manifest、前處理、標準／
+風險加權指標、instance-balanced semantic coverage 和 normalized image-band
+基礎。尚未加入模型、訓練、推論結果或作品集結論；後續功能會依核准計畫
+逐項以測試先行方式加入。
 
 舊版 CamVid 原型沒有混在目前程式中。完整舊版由本機 Git 標籤
 `legacy-v0-da35026` 保存，盤點記錄在
 [`docs/verification/legacy-audit.md`](docs/verification/legacy-audit.md)。
+
+## P1-07 指標契約
+
+- 每個 instance 產生一筆等權重 coverage 記錄，避免大型物件以像素數壓過
+  小型行人或騎士。
+- 小於 50% 正確像素才標記為 critical instance miss；剛好 50% 不算 miss。
+- small／medium／large 面積 tertile 只從 training annotation intersection 學習。
+- semantic 與 instance sample ID 預設必須完全一致；只有明確啟用 audited
+  intersection 才能繼續，而且會保留每個排除 ID 與原因。
+- 空間欄位固定命名為 `normalized_image_band`，只表示 top／middle／bottom
+  的正規化影像區域，不代表實體距離或深度。
 
 ## 固定工作方式
 
