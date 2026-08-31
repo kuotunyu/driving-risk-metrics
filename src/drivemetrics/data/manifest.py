@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import secrets
 from collections.abc import Callable
@@ -152,4 +153,36 @@ def build_paired_manifest(
         relative_label_paths=relative_label_paths,
         file_sha256=file_sha256,
         manifest_sha256=canonical_manifest_sha256(without_hash),
+    )
+
+
+MANIFEST_FIELDS: tuple[str, ...] = (
+    "dataset_name",
+    "dataset_version",
+    "split_name",
+    "sample_ids",
+    "relative_image_paths",
+    "relative_label_paths",
+    "file_sha256",
+    "manifest_sha256",
+)
+
+
+def load_manifest(path: Path) -> DatasetManifest:
+    """Load one frozen manifest document and re-verify its own content hash."""
+
+    document = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(document, dict):
+        raise TypeError("manifest document must be a mapping")
+    if set(document) != set(MANIFEST_FIELDS):
+        raise ValueError("manifest document must contain exactly the manifest fields")
+    return DatasetManifest(
+        dataset_name=document["dataset_name"],
+        dataset_version=document["dataset_version"],
+        split_name=document["split_name"],
+        sample_ids=tuple(document["sample_ids"]),
+        relative_image_paths=tuple(document["relative_image_paths"]),
+        relative_label_paths=tuple(document["relative_label_paths"]),
+        file_sha256=tuple(document["file_sha256"]),
+        manifest_sha256=document["manifest_sha256"],
     )
