@@ -32,7 +32,7 @@ P1：以 BDD100K 建立可重現的自駕感知風險評估專案。
 - 未經當次明確同意，不執行長時間或 unattended 的本機 RTX 4090 工作。
 
 ```powershell
-uv sync --frozen --all-groups
+uv sync --frozen --all-groups --extra train
 uv run python -m drivemetrics.dev verify
 uv run driving-risk --help
 ```

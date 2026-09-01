@@ -128,3 +128,20 @@ def load_protocol(path: Path) -> LoadedProtocol:
     semantic_content = protocol.model_dump(mode="json")
     protocol_sha256 = hashlib.sha256(canonical_json_bytes(semantic_content)).hexdigest()
     return LoadedProtocol(protocol=protocol, protocol_sha256=protocol_sha256)
+
+
+LOCKED_VALIDATION_SPLIT = "locked_validation"
+
+
+def split_paths(protocol: BDD100KSemanticProtocolV1, split_name: str) -> tuple[str, str]:
+    """Return the image and label directories that hold one cohort.
+
+    Only the locked validation cohort lives in the official validation tree. The
+    source-train, train, and calibration cohorts are all subsets of the training
+    tree, so reading any of them from the validation directories would score
+    entirely different files.
+    """
+
+    if split_name == LOCKED_VALIDATION_SPLIT:
+        return protocol.paths.validation_images, protocol.paths.validation_labels
+    return protocol.paths.train_images, protocol.paths.train_labels

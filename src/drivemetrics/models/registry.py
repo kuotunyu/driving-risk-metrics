@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from drivemetrics.models.adapters import SegmentationAdapter, SegmentationModel
+from drivemetrics.models.adapters import SegmentationAdapter
 
 ModelName = Literal["fcn_resnet50", "deeplabv3_resnet50", "segformer_b0"]
 
@@ -45,7 +45,7 @@ def _build_segformer(num_classes: int, pretrained: bool) -> Any:
     return SegformerForSemanticSegmentation(config)
 
 
-def create_model(name: ModelName, num_classes: int, pretrained: bool) -> SegmentationModel:
+def create_model(name: ModelName, num_classes: int, pretrained: bool) -> SegmentationAdapter:
     """Build one approved architecture with a freshly initialized classifier head.
 
     ``pretrained`` initializes the image backbone or encoder from ImageNet
@@ -54,6 +54,10 @@ def create_model(name: ModelName, num_classes: int, pretrained: bool) -> Segment
     supervision history and the head always has exactly ``num_classes`` outputs.
     Torchvision and Transformers are imported lazily inside the builders, so the
     pure metric core never requires the training extra.
+
+    The declared return type narrows the fixed `SegmentationModel` protocol to
+    the one concrete adapter this factory builds, so the training backend can
+    reach the framework module it must optimize.
     """
 
     if name not in APPROVED_MODEL_NAMES:

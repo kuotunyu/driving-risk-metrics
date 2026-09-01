@@ -208,3 +208,25 @@ def test_the_declared_class_count_matches_every_committed_risk_profile() -> None
     for path in profiles:
         document = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert len(document["class_costs"]) == NUM_TRAIN_CLASSES
+
+
+@pytest.mark.parametrize(
+    ("split_name", "expected"),
+    [
+        ("locked_validation", ("images/10k/val", "labels/sem_seg/masks/val")),
+        ("train", ("images/10k/train", "labels/sem_seg/masks/train")),
+        ("calibration", ("images/10k/train", "labels/sem_seg/masks/train")),
+        ("source_train", ("images/10k/train", "labels/sem_seg/masks/train")),
+    ],
+)
+def test_each_cohort_resolves_to_its_own_protocol_directories(
+    split_name: str,
+    expected: tuple[str, str],
+) -> None:
+    """Reading the calibration cohort from the validation tree would score the wrong files."""
+
+    from drivemetrics.protocol.config import load_protocol, split_paths
+
+    protocol = load_protocol(REPO_ROOT / "configs" / "protocols" / "bdd100k_semseg_v1.yaml")
+
+    assert split_paths(protocol.protocol, split_name) == expected

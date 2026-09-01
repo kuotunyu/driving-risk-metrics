@@ -23,8 +23,8 @@ jobs:
           python-version: "3.11"
           enable-cache: true
 
-      - name: Sync locked CPU development environment
-        run: uv sync --frozen --all-groups
+      - name: Sync locked development environment
+        run: uv sync --frozen --all-groups --extra train
 
       - name: Run deterministic verification gate
         run: uv run python -m drivemetrics.dev verify

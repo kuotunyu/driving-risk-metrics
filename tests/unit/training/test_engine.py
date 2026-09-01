@@ -106,6 +106,8 @@ class FakeBackend:
         self.first_steps: list[tuple[Any, float]] = []
         self.last_step: tuple[Any, float] | None = None
         self.saves: list[tuple[Path, dict[str, Any]]] = []
+        self.update_flags: list[bool] = []
+        self.applied_updates = 0
 
     def seed_all(self, seed: int) -> None:
         self.seeded.append(seed)
@@ -114,8 +116,18 @@ class FakeBackend:
         self.created.append((model_name, dict(optimizer)))
         return {"model": model_name, "weight": 0.0}
 
-    def run_step(self, state: Any, batch: Any, learning_rate: float) -> float:
+    def run_step(
+        self,
+        state: Any,
+        batch: Any,
+        learning_rate: float,
+        *,
+        apply_update: bool,
+    ) -> float:
         self.step_count += 1
+        if len(self.update_flags) < 8:
+            self.update_flags.append(apply_update)
+        self.applied_updates += int(apply_update)
         if self.fail_at_step is not None and self.step_count == self.fail_at_step:
             raise RuntimeError("backend exploded")
         if len(self.first_steps) < 8:
@@ -235,6 +247,9 @@ def test_effective_batch_sixteen_is_reached_by_gradient_accumulation(
 
     assert backend.step_count == 30000 * 4
     assert all(len(batch) == 4 for batch, _ in backend.first_steps)
+    assert all(
+        isinstance(sample_id, str) for batch, _ in backend.first_steps for sample_id, _ in batch
+    )
 
 
 def test_every_micro_batch_in_one_optimizer_step_shares_its_learning_rate(
@@ -557,3 +572,56 @@ def test_an_unsafe_protocol_path_fails_closed(
             17,
             backend=FakeBackend(),
         )
+
+
+def test_the_optimizer_update_is_applied_once_per_accumulation_window(
+    tmp_path: Path,
+    provenance: None,
+) -> None:
+    """Updating on every micro batch would train at one quarter of the locked batch size."""
+
+    engine = load_engine_module()
+    backend = FakeBackend()
+    config_path = write_configs(tmp_path, micro_batch_size=4)
+    manifest_path = write_manifest(tmp_path / "data")
+
+    engine.train(config_path, manifest_path, tmp_path / "out", 17, backend=backend)
+
+    assert backend.update_flags == [False, False, False, True, False, False, False, True]
+    assert backend.applied_updates == 30000
+
+
+def test_a_single_micro_batch_updates_on_every_call(
+    tmp_path: Path,
+    provenance: None,
+) -> None:
+    """Without accumulation every micro batch is already a whole optimizer step."""
+
+    engine = load_engine_module()
+    backend = FakeBackend()
+    config_path = write_configs(tmp_path, micro_batch_size=16)
+    manifest_path = write_manifest(tmp_path / "data")
+
+    engine.train(config_path, manifest_path, tmp_path / "out", 17, backend=backend)
+
+    assert backend.update_flags == [True] * 8
+    assert backend.applied_updates == 30000
+
+
+def test_every_sample_carries_a_deterministic_augmentation_draw(
+    tmp_path: Path,
+    provenance: None,
+) -> None:
+    """Drawing the flip inside the backend would make a rerun depend on backend RNG state."""
+
+    engine = load_engine_module()
+    backend = FakeBackend()
+    config_path = write_configs(tmp_path)
+    manifest_path = write_manifest(tmp_path / "data")
+
+    engine.train(config_path, manifest_path, tmp_path / "out", 17, backend=backend)
+
+    draws = [draw for batch, _ in backend.first_steps for _, draw in batch]
+    assert len(draws) == 32
+    assert all(0.0 <= draw < 1.0 for draw in draws)
+    assert len(set(draws)) > 1

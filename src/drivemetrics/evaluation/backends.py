@@ -1,0 +1,49 @@
+"""Real-framework evaluation backend that restores one final checkpoint.
+
+Torch is imported lazily inside the method, so importing the package stays free
+of the training extra.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, cast
+
+from drivemetrics.data.bdd100k import NUM_TRAIN_CLASSES
+from drivemetrics.models.adapters import SegmentationAdapter
+from drivemetrics.models.registry import ModelName, create_model
+
+
+@dataclass(frozen=True)
+class TorchEvaluationBackend:
+    """Rebuild the architecture a checkpoint names and restore exactly its weights."""
+
+    device: str = "cpu"
+
+    def load_model(
+        self,
+        checkpoint_path: Path,
+    ) -> tuple[SegmentationAdapter, Mapping[str, object]]:
+        """Restore the model and the metadata recorded with its checkpoint.
+
+        Only checkpoints this project wrote are loadable here, because the
+        metadata block is required and must name an approved architecture. The
+        weights are never trusted to imply an architecture on their own.
+        """
+
+        import torch
+
+        payload: dict[str, Any] = torch.load(
+            checkpoint_path,
+            map_location=self.device,
+            weights_only=False,
+        )
+        metadata = dict(payload["metadata"])
+        if "model" not in metadata:
+            raise ValueError("checkpoint metadata must name the model it was trained for")
+
+        adapter = create_model(cast(ModelName, metadata["model"]), NUM_TRAIN_CLASSES, False)
+        adapter.module.load_state_dict(payload["model"])
+        return adapter, metadata

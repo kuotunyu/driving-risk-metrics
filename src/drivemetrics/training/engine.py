@@ -43,8 +43,22 @@ class TrainingBackend(Protocol):
     ) -> object:
         """Build the model and optimizer described by the approved specification."""
 
-    def run_step(self, state: object, batch: object, learning_rate: float) -> float:
-        """Run one micro batch at the supplied learning rate and return its loss."""
+    def run_step(
+        self,
+        state: object,
+        batch: object,
+        learning_rate: float,
+        *,
+        apply_update: bool,
+    ) -> float:
+        """Run one micro batch at the supplied learning rate and return its loss.
+
+        ``batch`` is a tuple of ``(sample_id, flip_draw)`` pairs. Every random
+        choice, including the augmentation draw, is made by the engine, so a
+        rerun never depends on backend random state. ``apply_update`` is true
+        only on the last micro batch of an optimizer step, which is the signal to
+        apply the accumulated gradients exactly once per locked effective batch.
+        """
 
     def save_checkpoint(
         self,
@@ -114,23 +128,26 @@ def _sampling_plan(
     seed: int,
     micro_batch_size: int,
     count: int,
-) -> tuple[tuple[str, ...], ...]:
+) -> tuple[tuple[tuple[str, float], ...], ...]:
     """Return the whole deterministic micro-batch plan for one run.
 
-    The plan is materialized up front so the exact data order of a run is a
-    single value that depends only on the manifest, the seed, and the micro
-    batch size. Each epoch is a fresh permutation, so no sample is ever dropped
-    or repeated inside one pass.
+    Each entry pairs a sample ID with its augmentation draw, so the data order
+    and every random choice of a run are one value that depends only on the
+    manifest, the seed, and the micro batch size. Each epoch is a fresh
+    permutation, so no sample is dropped or repeated inside one pass.
     """
 
     generator = np.random.default_rng(seed)
-    plan: list[tuple[str, ...]] = []
+    plan: list[tuple[tuple[str, float], ...]] = []
     pool: list[str] = []
     for _ in range(count):
         while len(pool) < micro_batch_size:
             order = generator.permutation(len(sample_ids))
             pool.extend(sample_ids[int(index)] for index in order)
-        plan.append(tuple(pool[:micro_batch_size]))
+        draws = generator.random(micro_batch_size)
+        plan.append(
+            tuple((pool[position], float(draws[position])) for position in range(micro_batch_size))
+        )
         del pool[:micro_batch_size]
     return tuple(plan)
 
@@ -211,8 +228,14 @@ def train(
                 total_steps=total_steps,
             )
             start = (step - 1) * accumulation_steps
-            for batch in plan[start : start + accumulation_steps]:
-                backend.run_step(state, batch, learning_rate)
+            window = plan[start : start + accumulation_steps]
+            for position, batch in enumerate(window, start=1):
+                backend.run_step(
+                    state,
+                    batch,
+                    learning_rate,
+                    apply_update=position == accumulation_steps,
+                )
 
         checkpoint_path = output_dir / CHECKPOINT_FILENAME
         checkpoint_sha256 = backend.save_checkpoint(
