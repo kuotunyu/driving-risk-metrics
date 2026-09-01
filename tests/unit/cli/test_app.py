@@ -35,7 +35,15 @@ def test_the_root_help_lists_every_declared_command() -> None:
     result = runner.invoke(app, ["--help"])
 
     assert result.exit_code == 0
-    for command in ("data", "train", "calibrate", "evaluate", "report", "audit-claims"):
+    for command in (
+        "data",
+        "train",
+        "calibrate",
+        "evaluate",
+        "aggregate",
+        "report",
+        "audit-claims",
+    ):
         assert command in result.output
 
 
@@ -447,3 +455,33 @@ def test_evaluate_reports_whether_it_applied_a_temperature(
 
     assert uncalibrated["calibrated"] is False
     assert calibrated["calibrated"] is True
+
+
+def test_aggregate_prints_one_machine_readable_status(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The release workflow needs the three document paths without scraping prose."""
+
+    import drivemetrics.cli.aggregate as aggregate_cli
+
+    result_stub = SimpleNamespace(
+        metrics_path=tmp_path / "metrics.json",
+        intervals_path=tmp_path / "intervals.json",
+        rankings_path=tmp_path / "rankings.json",
+        models=("fcn_resnet50", "deeplabv3_resnet50", "segformer_b0"),
+        sample_count=1000,
+    )
+    monkeypatch.setattr(aggregate_cli, "AGGREGATE_SERVICE", lambda *_, **__: result_stub)
+    index = touch(tmp_path / "formal_run_index.json")
+
+    result = runner.invoke(
+        app,
+        ["aggregate", "--index", str(index), "--output-dir", str(tmp_path / "analysis")],
+    )
+
+    assert result.exit_code == 0
+    status = status_of(result.stdout)
+    assert status["command"] == "aggregate"
+    assert status["sample_count"] == 1000
+    assert len(status["models"]) == 3
