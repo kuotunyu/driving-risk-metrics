@@ -5,6 +5,7 @@ from .envelope import (
     canonical_json_bytes,
     verify_envelope,
 )
+from .formal_index import FormalIndexResult, build_formal_run_index
 from .predictions import (
     ArrayDescriptorV1,
     PredictionArraysV1,
@@ -23,12 +24,14 @@ from .run_record import (
 __all__ = [
     "PROVENANCE_ENV_VAR",
     "ArrayDescriptorV1",
+    "FormalIndexResult",
     "PortfolioArtifactEnvelopeV1",
     "PredictionArraysV1",
     "PredictionArtifactV1",
     "PredictionRecord",
     "RunProvenance",
     "RunRecordV1",
+    "build_formal_run_index",
     "canonical_json_bytes",
     "load_run_provenance",
     "read_prediction_artifact",

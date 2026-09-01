@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import typer
 
-from drivemetrics.cli import aggregate, calibrate, data, evaluate, report, train
+from drivemetrics.cli import aggregate, calibrate, data, evaluate, index, report, train
 
 app = typer.Typer(
     add_completion=False,
@@ -16,6 +16,7 @@ app.add_typer(data.app, name="data")
 app.command("train")(train.train_command)
 app.command("calibrate")(calibrate.calibrate_command)
 app.command("evaluate")(evaluate.evaluate_command)
+app.command("index")(index.index_command)
 app.command("aggregate")(aggregate.aggregate_command)
 app.command("report")(report.report_command)
 app.command("audit-claims")(report.audit_claims_command)
