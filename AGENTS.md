@@ -23,6 +23,14 @@ artifacts, credentials, and private progress handoffs outside this Git repositor
 6. Keep package code under `src/drivemetrics`; never place unique production logic
    in notebooks, workflows, or top-level wrapper scripts.
 
+## Project skills
+
+Before running, resuming, or reporting any formal BDD100K evaluation — freezing
+cohort manifests, launching a training job, scoring a checkpoint, or preparing
+published numbers — read and follow
+[`.agents/skills/running-locked-segmentation-evals/SKILL.md`](.agents/skills/running-locked-segmentation-evals/SKILL.md).
+Its validator must exit zero before any locked-cohort result is trusted.
+
 ## Data and compute safety
 
 - `/data/` and `/artifacts/` are repository-local ignore boundaries; package paths

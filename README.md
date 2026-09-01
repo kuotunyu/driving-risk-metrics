@@ -4,10 +4,15 @@ P1：以 BDD100K 建立可重現的自駕感知風險評估專案。
 
 ## 目前狀態
 
-目前已完成新版套件、驗證與 CI 基礎，以及資料 manifest、前處理、標準／
-風險加權指標、instance-balanced semantic coverage 和 normalized image-band
-基礎。尚未加入模型、訓練、推論結果或作品集結論；後續功能會依核准計畫
-逐項以測試先行方式加入。
+目前已完成新版套件、驗證與 CI 基礎、資料 manifest 與前處理、標準／風險加權
+指標、instance-balanced semantic coverage、normalized image-band、溫度校準與
+配對 bootstrap 分析、三個核准模型的 adapter、確定性訓練與評估引擎、五個 CLI
+指令與 claim-safe 報告產生器，以及 locked evaluation 的專案 skill 與其
+fail-closed validator。
+
+**尚未存在任何正式訓練結果**：正式 manifest 尚未凍結、九個 (模型 × seed)
+訓練工作尚未啟動、`docs/claims.yaml` 為空。任何看似分數的數字在此之前都
+不是量測結果。後續依核准計畫逐項以測試先行方式加入。
 
 舊版 CamVid 原型沒有混在目前程式中。完整舊版由本機 Git 標籤
 `legacy-v0-da35026` 保存，盤點記錄在
