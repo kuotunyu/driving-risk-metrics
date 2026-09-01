@@ -152,6 +152,29 @@ One setting is deliberately left alone: `cudnn.deterministic = True` with
 `benchmark = False`. That buys the exact reproducibility this project rests on,
 at a real cost in speed. It is not a defect and must not be tuned away.
 
+## The approved trio, measured
+
+Run on a Colab A100 at `2026-09-02T03:20Z`, on commit `106afd9`, against the
+same verified cohort, at the committed micro batch of 8 for every model. Memory
+is reserved, not allocated, and anything above 75% of the card is refused even
+when the run completes.
+
+| Model | Params | Per step | Reserved | Share | One run | Three seeds |
+| --- | --- | --- | --- | --- | --- | --- |
+| `segformer_b2` | 27.4M | 0.921 s | 21.2 GiB | 54% | 7.7 h | 23.0 h |
+| `upernet_convnextv2_tiny` | 60.2M | 1.418 s | 28.8 GiB | **73%** | 11.8 h | 35.4 h |
+| `upernet_dinov2_small` | 51.6M | 1.231 s | 10.7 GiB | 27% | 10.3 h | 30.8 h |
+
+Nine formal runs: **89.2 hours** of A100 time.
+
+Two things follow. First, micro batch 8 stands for all three: the 75% gate was
+set before this number existed, ConvNeXtV2 clears it at 73%, and moving a line
+after seeing the data would be the same post-hoc selection this protocol
+forbids elsewhere. Second, the longest single run is now 11.8 hours, well past
+the 6.55 hours at which no-resume checkpointing was last affirmed. That decision
+was re-examined rather than carried forward; the reasoning is recorded in the
+private handoff.
+
 ## Reproduction
 
 The rehearsal builds its own cohort and configs in a temporary directory and

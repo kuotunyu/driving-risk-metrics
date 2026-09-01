@@ -46,7 +46,7 @@ uv run driving-risk --help
 
 ## 指令
 
-七個指令都只驗證參數並呼叫套件服務，成功時把一個 JSON 狀態物件印到 stdout，
+八個指令都只驗證參數並呼叫套件服務，成功時把一個 JSON 狀態物件印到 stdout，
 失敗時把診斷訊息印到 stderr 並以非零狀態結束。依正式流程的順序：
 
 ```powershell
@@ -54,6 +54,7 @@ driving-risk data preflight --config configs/protocols/bdd100k_semseg_v1.yaml --
 driving-risk train --config configs/run_segformer_b2.yaml --manifest PATH --data-root PATH --seed 17 --output-dir PATH
 driving-risk calibrate --config configs/protocols/bdd100k_semseg_v1.yaml --manifest PATH --checkpoint PATH --data-root PATH --output-dir PATH
 driving-risk evaluate --config configs/protocols/bdd100k_semseg_v1.yaml --manifest PATH --checkpoint PATH --data-root PATH --output-dir PATH [--temperature PATH]
+driving-risk index --runs-root PATH --config configs/protocols/bdd100k_semseg_v1.yaml --manifest PATH --risk-profile configs/risk_profiles/vru_priority.yaml --output PATH
 driving-risk aggregate --index PATH --output-dir PATH
 driving-risk audit-claims --claims docs/claims.yaml
 driving-risk report --claims docs/claims.yaml --artifacts-dir PATH --output-dir site

@@ -40,6 +40,7 @@ def test_the_root_help_lists_every_declared_command() -> None:
         "train",
         "calibrate",
         "evaluate",
+        "index",
         "aggregate",
         "report",
         "audit-claims",
@@ -485,3 +486,49 @@ def test_aggregate_prints_one_machine_readable_status(
     assert status["command"] == "aggregate"
     assert status["sample_count"] == 1000
     assert len(status["models"]) == 3
+
+
+def test_index_prints_one_machine_readable_status(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The formal-set gate and aggregation both start from this path, parsed not read."""
+
+    import drivemetrics.cli.index as index_cli
+
+    result_stub = SimpleNamespace(
+        index_path=tmp_path / "formal_run_index.json",
+        run_count=9,
+        protocol_sha256="a" * 64,
+        dataset_manifest_sha256="b" * 64,
+    )
+    profile_stub = SimpleNamespace(critical_class_ids=(11, 12, 17, 18))
+    monkeypatch.setattr(index_cli, "PROFILE_LOADER", lambda *_: profile_stub)
+    monkeypatch.setattr(index_cli, "INDEX_SERVICE", lambda *_, **__: result_stub)
+    runs_root = tmp_path / "runs"
+    runs_root.mkdir()
+    config = touch(tmp_path / "protocol.yaml")
+    manifest = touch(tmp_path / "locked_validation.json")
+    profile = touch(tmp_path / "vru_priority.yaml")
+
+    result = runner.invoke(
+        app,
+        [
+            "index",
+            "--runs-root",
+            str(runs_root),
+            "--config",
+            str(config),
+            "--manifest",
+            str(manifest),
+            "--risk-profile",
+            str(profile),
+            "--output",
+            str(tmp_path / "formal_run_index.json"),
+        ],
+    )
+
+    assert result.exit_code == 0
+    status = status_of(result.stdout)
+    assert status["command"] == "index"
+    assert status["run_count"] == 9
