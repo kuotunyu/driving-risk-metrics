@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import re
 import secrets
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path, PurePosixPath
 
@@ -185,4 +185,66 @@ def load_manifest(path: Path) -> DatasetManifest:
         relative_label_paths=tuple(document["relative_label_paths"]),
         file_sha256=tuple(document["file_sha256"]),
         manifest_sha256=document["manifest_sha256"],
+    )
+
+
+def save_manifest(manifest: DatasetManifest, path: Path) -> None:
+    """Write one frozen manifest document, never replacing an existing file.
+
+    A frozen cohort is evidence. Overwriting one in place would silently detach
+    every run record and claim that referenced its previous hash.
+    """
+
+    if path.exists():
+        raise FileExistsError(f"frozen manifest already exists: {path}")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(asdict(manifest), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def subset_manifest(
+    manifest: DatasetManifest,
+    sample_ids: Sequence[str],
+    split_name: str,
+) -> DatasetManifest:
+    """Derive one cohort manifest from a superset without rehashing any file.
+
+    Paths and the interleaved image/label hashes follow the requested sample
+    order exactly, so a cohort can never inherit another sample file hashes.
+    """
+
+    chosen = tuple(sample_ids)
+    if len(set(chosen)) != len(chosen):
+        raise ValueError("manifest subset contains duplicate sample IDs")
+    index = {sample_id: position for position, sample_id in enumerate(manifest.sample_ids)}
+    missing = tuple(value for value in chosen if value not in index)
+    if missing:
+        raise ValueError(f"sample IDs are not present in the source manifest: {missing}")
+
+    positions = tuple(index[value] for value in chosen)
+    relative_image_paths = tuple(manifest.relative_image_paths[value] for value in positions)
+    relative_label_paths = tuple(manifest.relative_label_paths[value] for value in positions)
+    file_sha256 = tuple(
+        digest for value in positions for digest in manifest.file_sha256[2 * value : 2 * value + 2]
+    )
+    without_hash: dict[str, object] = {
+        "dataset_name": manifest.dataset_name,
+        "dataset_version": manifest.dataset_version,
+        "split_name": split_name,
+        "sample_ids": chosen,
+        "relative_image_paths": relative_image_paths,
+        "relative_label_paths": relative_label_paths,
+        "file_sha256": file_sha256,
+    }
+    return DatasetManifest(
+        dataset_name=manifest.dataset_name,
+        dataset_version=manifest.dataset_version,
+        split_name=split_name,
+        sample_ids=chosen,
+        relative_image_paths=relative_image_paths,
+        relative_label_paths=relative_label_paths,
+        file_sha256=file_sha256,
+        manifest_sha256=canonical_manifest_sha256(without_hash),
     )
