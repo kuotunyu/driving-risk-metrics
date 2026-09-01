@@ -69,8 +69,15 @@ class SegmentationAdapter:
         import torch
 
         self.module.eval()
+        # Follow the weights rather than assuming the CPU. Getting this wrong
+        # does not raise: the input and the weights simply agree on the CPU and
+        # the accelerator sits idle for the whole cohort.
+        parameter = next(iter(self.module.parameters()), None)
+        batch = torch.from_numpy(image_nchw)
+        if parameter is not None:
+            batch = batch.to(parameter.device)
         with torch.no_grad():
-            raw_output = self.module(torch.from_numpy(image_nchw))
+            raw_output = self.module(batch)
         tensor = self.extract_logits(raw_output)
         height = int(image_nchw.shape[2])
         width = int(image_nchw.shape[3])

@@ -89,3 +89,23 @@ def test_evaluation_package_exports_the_backend() -> None:
 
     backends = load_backends_module()
     assert evaluation.TorchEvaluationBackend is backends.TorchEvaluationBackend
+
+
+def test_the_restored_model_is_placed_on_the_requested_device(tmp_path: Path) -> None:
+    """A checkpoint restored onto the CPU makes an A100 run scoring on the CPU."""
+
+    from drivemetrics.evaluation.backends import TorchEvaluationBackend
+
+    adapter = create_model("fcn_resnet50", NUM_TRAIN_CLASSES, False)
+    checkpoint = tmp_path / "final_checkpoint.pt"
+    torch.save(
+        {
+            "model": adapter.module.state_dict(),
+            "metadata": {"model": "fcn_resnet50", "run_id": "r", "seed": 17},
+        },
+        checkpoint,
+    )
+
+    restored, _ = TorchEvaluationBackend(device="meta").load_model(checkpoint)
+
+    assert next(restored.module.parameters()).device.type == "meta"

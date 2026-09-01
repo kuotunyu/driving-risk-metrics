@@ -100,6 +100,10 @@ class TorchTrainingBackend:
         import torch
 
         adapter = create_model(model_name, NUM_TRAIN_CLASSES, self._pretrained)
+        # The batches are moved to this device in run_step, so the weights must
+        # already be there. Every CPU test passes either way, which is exactly
+        # why this has to be explicit rather than assumed.
+        adapter.module.to(self._device)
         parameters = adapter.trainable_parameters()
         if optimizer["optimizer"] == "sgd":
             built: Any = torch.optim.SGD(
