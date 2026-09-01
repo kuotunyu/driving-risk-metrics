@@ -73,6 +73,9 @@ Issues = "https://github.com/kuotunyu/driving-risk-metrics/issues"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+drivemetrics = ["report/templates/*.j2"]
+
 [tool.uv]
 required-version = ">=0.11.18,<0.12"
 default-groups = ["dev"]
