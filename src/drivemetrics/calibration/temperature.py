@@ -148,3 +148,20 @@ def _validate_sample_ids(sample_ids: tuple[str, ...], label: str) -> None:
         raise ValueError(f"{label} sample_ids must contain nonempty strings")
     if len(set(sample_ids)) != len(sample_ids):
         raise ValueError(f"{label} sample_ids must be unique")
+
+
+def softmax_probabilities(logits: Float64Array) -> Float64Array:
+    """Return numerically stable probabilities with classes on the final axis.
+
+    The row maximum is subtracted before exponentiation, so saturated logits
+    cannot overflow into a non-finite probability row.
+    """
+
+    if not isinstance(logits, np.ndarray) or logits.dtype != np.float64:
+        raise ValueError("logits must be a float64 array")
+    if logits.ndim < 1 or logits.shape[-1] < 2:
+        raise ValueError("logits must have at least two classes on the final axis")
+    if not np.all(np.isfinite(logits)):
+        raise ValueError("logits must be finite")
+    exponentiated = np.exp(logits - np.max(logits, axis=-1, keepdims=True))
+    return exponentiated / exponentiated.sum(axis=-1, keepdims=True)

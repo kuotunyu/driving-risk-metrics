@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import json
+import os
 from datetime import datetime
 from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+PROVENANCE_ENV_VAR = "DRIVEMETRICS_RUN_PROVENANCE"
 
 
 def _parse_utc_z(value: str, field_name: str) -> datetime:
@@ -67,3 +71,34 @@ class RunRecordV1(BaseModel):
         ):
             raise ValueError("finished_at_utc must not precede started_at_utc")
         return self
+
+
+class RunProvenance(BaseModel):
+    """Environment facts a run cannot derive and must never invent."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    commit: str = Field(pattern=r"^[0-9a-f]{40}$")
+    lock_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    hardware: dict[str, str] = Field(min_length=1)
+
+
+def load_run_provenance() -> RunProvenance:
+    """Read the commit, lock hash, and hardware of the current run from the environment.
+
+    Making this an explicit environment contract keeps the Colab hardware record
+    a deliberate act rather than a guess, and fails closed when it is missing.
+    """
+
+    raw_value = os.environ.get(PROVENANCE_ENV_VAR)
+    if raw_value is None:
+        raise ValueError(
+            f"{PROVENANCE_ENV_VAR} must supply the commit, lock hash, and hardware of this run"
+        )
+    try:
+        document = json.loads(raw_value)
+    except json.JSONDecodeError as error:
+        raise ValueError(f"{PROVENANCE_ENV_VAR} must contain a JSON object") from error
+    if not isinstance(document, dict):
+        raise ValueError(f"{PROVENANCE_ENV_VAR} must contain a JSON object")
+    return RunProvenance.model_validate(document)

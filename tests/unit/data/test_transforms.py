@@ -206,3 +206,39 @@ def test_restore_prediction_rejects_wrong_dtype_or_shape(prediction: np.ndarray)
 
     with pytest.raises(ValueError, match="prediction"):
         transforms.restore_prediction(prediction, prepared)
+
+
+def test_the_restore_index_map_agrees_exactly_with_the_restored_prediction() -> None:
+    """Two different nearest mappings would misalign confidence from its own class."""
+
+    module = load_transforms_module()
+    rng = np.random.default_rng(7)
+    image = rng.integers(0, 256, size=(720, 1280, 3), dtype=np.uint8)
+    mask = rng.integers(0, 19, size=(720, 1280), dtype=np.uint8)
+    prepared = module.prepare_sample(image, mask, training=False, flip_draw=1.0)
+    canvas = rng.integers(0, 19, size=(512, 1024), dtype=np.uint8)
+
+    index_map = module.restore_index_map(prepared)
+    content = canvas[:, prepared.pad_left : 1024 - prepared.pad_right]
+
+    assert index_map.dtype == np.int64
+    assert index_map.shape == (720, 1280)
+    np.testing.assert_array_equal(
+        content.reshape(-1)[index_map],
+        module.restore_prediction(canvas, prepared),
+    )
+
+
+def test_the_restore_index_map_only_addresses_unpadded_content() -> None:
+    """An index reaching into the padded columns would score invented pixels."""
+
+    module = load_transforms_module()
+    image = np.zeros((720, 1280, 3), dtype=np.uint8)
+    mask = np.zeros((720, 1280), dtype=np.uint8)
+    prepared = module.prepare_sample(image, mask, training=False, flip_draw=1.0)
+
+    index_map = module.restore_index_map(prepared)
+    content_width = 1024 - prepared.pad_left - prepared.pad_right
+
+    assert int(index_map.min()) >= 0
+    assert int(index_map.max()) < 512 * content_width

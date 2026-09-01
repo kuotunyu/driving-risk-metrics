@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -16,7 +15,10 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from drivemetrics.artifacts.envelope import canonical_json_bytes
-from drivemetrics.artifacts.run_record import RunRecordV1
+from drivemetrics.artifacts.run_record import (
+    RunRecordV1,
+    load_run_provenance,
+)
 from drivemetrics.data.manifest import load_manifest
 from drivemetrics.models.registry import ModelName
 from drivemetrics.protocol.config import load_protocol
@@ -24,7 +26,6 @@ from drivemetrics.training.losses import cross_entropy_spec
 from drivemetrics.training.schedule import optimizer_spec, polynomial_learning_rate
 
 APPROVED_SEEDS: tuple[int, ...] = (17, 42, 73)
-PROVENANCE_ENV_VAR = "DRIVEMETRICS_RUN_PROVENANCE"
 CHECKPOINT_FILENAME = "final_checkpoint.pt"
 RUN_RECORD_FILENAME = "run_record.json"
 
@@ -95,33 +96,8 @@ class TrainingRunConfigV1(BaseModel):
         return value
 
 
-class RunProvenance(BaseModel):
-    """Environment facts the engine cannot derive and must never invent."""
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    commit: str = Field(pattern=r"^[0-9a-f]{40}$")
-    lock_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    hardware: dict[str, str] = Field(min_length=1)
-
-
 def _utc_now() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def _load_provenance() -> RunProvenance:
-    raw_value = os.environ.get(PROVENANCE_ENV_VAR)
-    if raw_value is None:
-        raise ValueError(
-            f"{PROVENANCE_ENV_VAR} must supply the commit, lock hash, and hardware of this run"
-        )
-    try:
-        document = json.loads(raw_value)
-    except json.JSONDecodeError as error:
-        raise ValueError(f"{PROVENANCE_ENV_VAR} must contain a JSON object") from error
-    if not isinstance(document, dict):
-        raise ValueError(f"{PROVENANCE_ENV_VAR} must contain a JSON object")
-    return RunProvenance.model_validate(document)
 
 
 def _load_run_config(path: Path) -> tuple[TrainingRunConfigV1, str]:
@@ -188,7 +164,7 @@ def train(
 
     if isinstance(seed, bool) or not isinstance(seed, int) or seed not in APPROVED_SEEDS:
         raise ValueError(f"seed must be one of the approved seeds {APPROVED_SEEDS}")
-    provenance = _load_provenance()
+    provenance = load_run_provenance()
     run_config, config_sha256 = _load_run_config(config_path)
     loaded_protocol = load_protocol(config_path.parent / run_config.protocol_path)
     protocol = loaded_protocol.protocol

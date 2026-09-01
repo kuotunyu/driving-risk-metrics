@@ -22,6 +22,7 @@ from typing import Any
 import pytest
 import yaml
 
+from drivemetrics.artifacts.run_record import PROVENANCE_ENV_VAR
 from drivemetrics.data.manifest import build_paired_manifest
 from drivemetrics.training import train
 
@@ -106,8 +107,6 @@ def build_workspace(tmp_path: Path) -> tuple[Path, Path]:
 
 @pytest.fixture
 def provenance(monkeypatch: pytest.MonkeyPatch) -> None:
-    from drivemetrics.training.engine import PROVENANCE_ENV_VAR
-
     monkeypatch.setenv(PROVENANCE_ENV_VAR, json.dumps(PROVENANCE))
 
 

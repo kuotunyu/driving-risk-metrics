@@ -126,3 +126,23 @@ def restore_prediction(
         resample=Image.Resampling.NEAREST,
     )
     return np.asarray(restored, dtype=np.uint8)
+
+
+def restore_index_map(prepared: PreparedSample) -> npt.NDArray[np.int64]:
+    """Return, for each source pixel, its flat index into the unpadded canvas.
+
+    The mapping comes from the same nearest resize that ``restore_prediction``
+    performs, so any array defined on the model canvas can be restored to source
+    geometry without ever disagreeing with the restored class map.
+    """
+
+    content_width = CANVAS_WIDTH - prepared.pad_left - prepared.pad_right
+    flat_index = np.arange(TARGET_HEIGHT * content_width, dtype=np.int32).reshape(
+        TARGET_HEIGHT,
+        content_width,
+    )
+    restored = Image.fromarray(flat_index).resize(
+        (prepared.original_width, prepared.original_height),
+        resample=Image.Resampling.NEAREST,
+    )
+    return np.asarray(restored, dtype=np.int64)

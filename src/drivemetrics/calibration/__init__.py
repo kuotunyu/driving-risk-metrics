@@ -5,6 +5,7 @@ from .temperature import (
     apply_temperature,
     fit_provenance_checked_temperature,
     fit_scalar_temperature,
+    softmax_probabilities,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "apply_temperature",
     "fit_provenance_checked_temperature",
     "fit_scalar_temperature",
+    "softmax_probabilities",
 ]

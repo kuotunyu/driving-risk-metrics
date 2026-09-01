@@ -416,3 +416,43 @@ def test_temperature_fit_rejects_failed_or_nonfinite_optimizer_result(
             np.array([[2.0, 0.0]], dtype=np.float64),
             np.array([0], dtype=np.int64),
         )
+
+
+def test_softmax_turns_logits_into_a_hand_computed_probability_row() -> None:
+    """A missing normalization would break every Brier, ECE and confidence contract.
+
+    With logits 0 and log 3 the exact softmax is 0.25 and 0.75.
+    """
+
+    module = load_temperature()
+    logits = np.array([[0.0, np.log(3.0)]], dtype=np.float64)
+
+    probabilities = module.softmax_probabilities(logits)
+
+    np.testing.assert_allclose(probabilities, np.array([[0.25, 0.75]]))
+
+
+def test_softmax_rows_sum_to_one_for_extreme_logits() -> None:
+    """Subtracting the row maximum is what keeps large logits from overflowing."""
+
+    module = load_temperature()
+    logits = np.array([[900.0, 899.0, -900.0]], dtype=np.float64)
+
+    probabilities = module.softmax_probabilities(logits)
+
+    assert np.all(np.isfinite(probabilities))
+    np.testing.assert_allclose(probabilities.sum(axis=-1), np.ones(1))
+    assert probabilities[0, 0] > probabilities[0, 1] > probabilities[0, 2]
+
+
+def test_softmax_rejects_inputs_that_are_not_finite_float64_logits() -> None:
+    """Silent dtype promotion or a NaN logit would poison every downstream metric."""
+
+    module = load_temperature()
+
+    with pytest.raises(ValueError, match="float64"):
+        module.softmax_probabilities(np.zeros((1, 2), dtype=np.float32))
+    with pytest.raises(ValueError, match="finite"):
+        module.softmax_probabilities(np.array([[0.0, np.nan]], dtype=np.float64))
+    with pytest.raises(ValueError, match="two classes"):
+        module.softmax_probabilities(np.zeros((1, 1), dtype=np.float64))
