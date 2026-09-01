@@ -347,3 +347,28 @@ def test_the_backend_factory_resolves_the_protocol_and_manifest(tmp_path: Path) 
 
     assert isinstance(backend, backends.TorchTrainingBackend)
     assert backend.load_batch((("t1", 1.0),)).images.shape == (1, 3, 512, 1024)
+
+
+def test_the_training_state_is_built_on_the_requested_device(tmp_path: Path) -> None:
+    """Weights left on the CPU crash the moment a batch arrives on an accelerator.
+
+    Every CPU test passes with the model on the CPU, so this defect is invisible
+    until a real GPU run. The ``meta`` device reproduces it without one: it is a
+    real non-CPU device, so a backend that never moves the module leaves its
+    parameters on the CPU and fails here.
+    """
+
+    from drivemetrics.training.schedule import optimizer_spec
+
+    backends = load_backends_module()
+    data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="meta", pretrained=False
+    )
+
+    state = backend.create_training_state(
+        "fcn_resnet50",  # type: ignore[arg-type]
+        optimizer_spec("fcn_resnet50"),  # type: ignore[arg-type]
+    )
+
+    assert next(state.adapter.module.parameters()).device.type == "meta"

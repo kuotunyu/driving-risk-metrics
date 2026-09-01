@@ -21,8 +21,15 @@ def load_adapters_module() -> ModuleType:
 class FakeTensor:
     """Carry one NumPy payload through the tensor calls the adapter performs."""
 
-    def __init__(self, array: np.ndarray) -> None:
+    def __init__(self, array: np.ndarray, device: str = "cpu") -> None:
         self.array = array
+        self.device = device
+        self.moved_to: str | None = None
+
+    def to(self, device: str) -> FakeTensor:
+        self.moved_to = device
+        self.device = device
+        return self
 
     def detach(self) -> FakeTensor:
         return self
@@ -86,13 +93,14 @@ class FakeModule:
         self.training = True
         self.modes_at_call: list[bool] = []
         self.no_grad_depth_at_call: list[int] = []
+        self.parameter_device = "cpu"
 
     def eval(self) -> FakeModule:
         self.training = False
         return self
 
-    def parameters(self) -> tuple[str, ...]:
-        return ("weight",)
+    def parameters(self) -> tuple[FakeTensor, ...]:
+        return (FakeTensor(np.zeros(1, dtype=np.float32), device=self.parameter_device),)
 
     def __call__(self, tensor: FakeTensor) -> Any:
         self.modes_at_call.append(self.training)
@@ -255,3 +263,65 @@ def test_the_output_extraction_is_reusable_without_running_inference() -> None:
 
     assert torchvision_adapter.extract_logits({"out": logits}) is logits
     assert segformer_adapter.extract_logits(SimpleNamespace(logits=logits)) is logits
+
+
+def test_inference_moves_the_input_to_the_module_device() -> None:
+    """An input left on the CPU makes an accelerator run silently on the CPU.
+
+    This one never raises. The module and the input simply agree on the CPU, the
+    GPU sits idle, and the only symptom is that a locked-cohort evaluation takes
+    fifty times longer than it should for no visible reason. The probe reports a
+    non-CPU parameter device and records where the input actually arrived.
+    """
+
+    torch = pytest.importorskip("torch")
+    adapters = load_adapters_module()
+
+    class DeviceProbe:
+        """A module whose parameters live on ``meta`` and that records its input."""
+
+        def __init__(self) -> None:
+            self.seen: Any = None
+
+        def parameters(self) -> Any:
+            yield torch.zeros(1, device="meta")
+
+        def eval(self) -> None:
+            return None
+
+        def __call__(self, image: Any) -> dict[str, Any]:
+            self.seen = image.device
+            # Return on the CPU so the rest of the path can complete and the
+            # assertion below is about the input, not about meta arithmetic.
+            return {"out": torch.zeros((1, 2, 4, 4), dtype=torch.float32)}
+
+    probe = DeviceProbe()
+    adapter = adapters.SegmentationAdapter(module=probe, output_kind="torchvision_dict")
+
+    adapter.logits(np.zeros((1, 3, 4, 4), dtype=np.float32))
+
+    assert probe.seen is not None
+    assert probe.seen.type == "meta"
+
+
+def test_a_module_without_parameters_still_runs_inference() -> None:
+    """A parameterless module has no device to follow, and must not crash on that."""
+
+    torch = pytest.importorskip("torch")
+    adapters = load_adapters_module()
+
+    class Parameterless:
+        def parameters(self) -> tuple[Any, ...]:
+            return ()
+
+        def eval(self) -> None:
+            return None
+
+        def __call__(self, image: Any) -> dict[str, Any]:
+            return {"out": torch.zeros((1, 2, 4, 4), dtype=torch.float32)}
+
+    adapter = adapters.SegmentationAdapter(module=Parameterless(), output_kind="torchvision_dict")
+
+    result = adapter.logits(np.zeros((1, 3, 4, 4), dtype=np.float32))
+
+    assert result.shape == (1, 2, 4, 4)

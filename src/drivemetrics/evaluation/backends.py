@@ -37,7 +37,7 @@ class TorchEvaluationBackend:
 
         payload: dict[str, Any] = torch.load(
             checkpoint_path,
-            map_location=self.device,
+            map_location="cpu",
             weights_only=False,
         )
         metadata = dict(payload["metadata"])
@@ -46,4 +46,7 @@ class TorchEvaluationBackend:
 
         adapter = create_model(cast(ModelName, metadata["model"]), NUM_TRAIN_CLASSES, False)
         adapter.module.load_state_dict(payload["model"])
+        # Weights are restored on the CPU and only then moved, because moving
+        # first would leave nothing for load_state_dict to copy out of.
+        adapter.module.to(self.device)
         return adapter, metadata
