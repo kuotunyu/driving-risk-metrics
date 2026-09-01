@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
@@ -28,6 +28,11 @@ from drivemetrics.training.schedule import optimizer_spec, polynomial_learning_r
 APPROVED_SEEDS: tuple[int, ...] = (17, 42, 73)
 CHECKPOINT_FILENAME = "final_checkpoint.pt"
 RUN_RECORD_FILENAME = "run_record.json"
+
+# Called once per optimizer step with (step, total_steps, mean micro-batch loss).
+# Purely observational: the engine never reads anything back from it, so a run
+# with an observer and a run without one produce byte-identical checkpoints.
+StepObserver = Callable[[int, int, float], None]
 
 
 class TrainingBackend(Protocol):
@@ -167,6 +172,7 @@ def train(
     seed: int,
     *,
     backend: TrainingBackend,
+    on_step: StepObserver | None = None,
 ) -> TrainingResult:
     """Run one locked training job and return its single final-step checkpoint.
 
@@ -229,13 +235,18 @@ def train(
             )
             start = (step - 1) * accumulation_steps
             window = plan[start : start + accumulation_steps]
+            losses: list[float] = []
             for position, batch in enumerate(window, start=1):
-                backend.run_step(
-                    state,
-                    batch,
-                    learning_rate,
-                    apply_update=position == accumulation_steps,
+                losses.append(
+                    backend.run_step(
+                        state,
+                        batch,
+                        learning_rate,
+                        apply_update=position == accumulation_steps,
+                    )
                 )
+            if on_step is not None:
+                on_step(step, total_steps, sum(losses) / len(losses))
 
         checkpoint_path = output_dir / CHECKPOINT_FILENAME
         checkpoint_sha256 = backend.save_checkpoint(
