@@ -140,3 +140,32 @@ def test_validate_locked_split_rejects_wrong_cohort_count(cohort: str, replaceme
 
     with pytest.raises(ValueError, match="count"):
         splits.validate_locked_split(values["train"], values["calibration"], values["validation"])
+
+
+def test_cohort_membership_hash_ignores_paths_and_file_bytes() -> None:
+    """Membership and manifest hashes answer different questions and must not be confused.
+
+    A cohort's membership is which samples are in it. A manifest hash additionally
+    binds the paths and the file bytes. Recording one where the other is expected
+    reads as dataset drift when nothing drifted, so the two are named separately.
+    """
+
+    splits = load_splits_module()
+
+    first = splits.cohort_membership_sha256("train", ("b", "a"))
+    same = splits.cohort_membership_sha256("train", ("b", "a"))
+    reordered = splits.cohort_membership_sha256("train", ("a", "b"))
+    other_split = splits.cohort_membership_sha256("calibration", ("b", "a"))
+
+    assert first == same
+    assert first != reordered
+    assert first != other_split
+
+
+def test_cohort_membership_hash_rejects_a_duplicated_sample() -> None:
+    """A duplicate would make two different cohorts share one membership hash."""
+
+    splits = load_splits_module()
+
+    with pytest.raises(ValueError, match="duplicate"):
+        splits.cohort_membership_sha256("train", ("a", "a"))

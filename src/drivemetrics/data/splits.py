@@ -5,10 +5,28 @@ from __future__ import annotations
 import hashlib
 from collections.abc import Iterable, Sequence
 
+from drivemetrics.protocol.hashing import canonical_manifest_sha256
+
 SOURCE_TRAIN_COUNT = 7000
 TRAIN_COUNT = 6300
 CALIBRATION_COUNT = 700
 LOCKED_VALIDATION_COUNT = 1000
+
+
+def cohort_membership_sha256(split_name: str, sample_ids: Sequence[str]) -> str:
+    """Hash which samples a cohort contains, ignoring paths and file bytes.
+
+    A manifest hash binds membership, paths and file content together, so it
+    changes whenever any of them change. Membership alone is a narrower and
+    longer-lived fact: it survives a manifest schema change, and it is what a
+    later run must prove it inherited. Naming the two separately keeps a
+    membership hash from ever being read as evidence of dataset drift.
+    """
+
+    cohort = tuple(sample_ids)
+    if len(set(cohort)) != len(cohort):
+        raise ValueError(f"{split_name} membership contains duplicate IDs")
+    return canonical_manifest_sha256({"split_name": split_name, "sample_ids": cohort})
 
 
 def _sha256_order_key(sample_id: str) -> tuple[str, str]:
