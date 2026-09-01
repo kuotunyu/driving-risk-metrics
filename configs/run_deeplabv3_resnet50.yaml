@@ -1,4 +1,4 @@
 schema_version: drivemetrics-training-run/v1
 protocol_path: protocols/bdd100k_semseg_v1.yaml
 model: deeplabv3_resnet50
-micro_batch_size: 4
+micro_batch_size: 16
