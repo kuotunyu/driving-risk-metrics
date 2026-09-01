@@ -193,3 +193,18 @@ def test_loader_accepts_only_yaml_extension(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match=r"\.yaml"):
         profiles.load_risk_profile(path)
+
+
+def test_the_declared_class_count_matches_every_committed_risk_profile() -> None:
+    """A taxonomy that drifts from the profiles would silently mis-index every cost."""
+
+    import yaml
+
+    from drivemetrics.data.bdd100k import NUM_TRAIN_CLASSES
+
+    profiles = sorted((REPO_ROOT / "configs" / "risk_profiles").glob("*.yaml"))
+    assert profiles
+
+    for path in profiles:
+        document = yaml.safe_load(path.read_text(encoding="utf-8"))
+        assert len(document["class_costs"]) == NUM_TRAIN_CLASSES

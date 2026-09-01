@@ -1,6 +1,7 @@
 """Dataset manifests, frozen cohorts, and data adapters."""
 
 from .bdd100k import (
+    NUM_TRAIN_CLASSES,
     SemanticInstanceIntersection,
     SemanticInstanceMismatchError,
     semantic_instance_intersection,
@@ -15,9 +16,15 @@ from .manifest import (
 )
 from .preflight import PreflightResult, run_preflight
 from .splits import freeze_bdd100k_split, validate_locked_split
-from .transforms import PreparedSample, prepare_sample, restore_prediction
+from .transforms import (
+    PreparedSample,
+    prepare_sample,
+    restore_index_map,
+    restore_prediction,
+)
 
 __all__ = [
+    "NUM_TRAIN_CLASSES",
     "CamVidAdapter",
     "CamVidSmokeConfig",
     "DatasetManifest",
@@ -30,6 +37,7 @@ __all__ = [
     "load_camvid_config",
     "load_manifest",
     "prepare_sample",
+    "restore_index_map",
     "restore_prediction",
     "run_preflight",
     "save_manifest",

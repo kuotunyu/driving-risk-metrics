@@ -12,6 +12,8 @@ from typing import Any
 import pytest
 import yaml
 
+from drivemetrics.artifacts.run_record import PROVENANCE_ENV_VAR
+
 PROTOCOL_DOCUMENT: dict[str, Any] = {
     "schema_version": "bdd100k-semseg-protocol/v1",
     "dataset": {"name": "bdd100k", "version": "10k-semantic-v1"},
@@ -188,8 +190,7 @@ def write_configs(
 
 @pytest.fixture
 def provenance(monkeypatch: pytest.MonkeyPatch) -> None:
-    engine = load_engine_module()
-    monkeypatch.setenv(engine.PROVENANCE_ENV_VAR, json.dumps(PROVENANCE))
+    monkeypatch.setenv(PROVENANCE_ENV_VAR, json.dumps(PROVENANCE))
 
 
 def test_the_backend_is_seeded_before_any_state_or_step_exists(
@@ -398,11 +399,11 @@ def test_missing_run_provenance_fails_closed(
     """Guessing the commit or hardware would put an unverifiable claim in the run record."""
 
     engine = load_engine_module()
-    monkeypatch.delenv(engine.PROVENANCE_ENV_VAR, raising=False)
+    monkeypatch.delenv(PROVENANCE_ENV_VAR, raising=False)
     config_path = write_configs(tmp_path)
     manifest_path = write_manifest(tmp_path / "data")
 
-    with pytest.raises(ValueError, match=engine.PROVENANCE_ENV_VAR):
+    with pytest.raises(ValueError, match=PROVENANCE_ENV_VAR):
         engine.train(
             config_path,
             manifest_path,
@@ -490,7 +491,7 @@ def test_malformed_run_provenance_fails_closed(
     """A half-filled provenance block would produce a run record nobody can verify."""
 
     engine = load_engine_module()
-    monkeypatch.setenv(engine.PROVENANCE_ENV_VAR, raw)
+    monkeypatch.setenv(PROVENANCE_ENV_VAR, raw)
     config_path = write_configs(tmp_path)
     manifest_path = write_manifest(tmp_path / "data")
 

@@ -11,6 +11,7 @@ DATASET_NAME = "bdd100k"
 DATASET_VERSION = "10k-semantic-v1"
 IMAGE_SUFFIX = ".jpg"
 TRAIN_ID_LABEL_SUFFIX = "_train_id.png"
+NUM_TRAIN_CLASSES = 19
 
 IntersectionDropReason = Literal[
     "missing_instance_annotation",
