@@ -33,11 +33,10 @@ from drivemetrics.metrics.calibration import (
 )
 from drivemetrics.metrics.confusion import compute_confusion
 from drivemetrics.models.adapters import SegmentationModel
-from drivemetrics.protocol.config import BDD100KSemanticProtocolV1, load_protocol
+from drivemetrics.protocol.config import load_protocol, split_paths
 from drivemetrics.protocol.hashing import sha256_file
 
 RUN_RECORD_FILENAME = "run_record.json"
-LOCKED_VALIDATION_SPLIT = "locked_validation"
 
 
 class EvaluationBackend(Protocol):
@@ -61,17 +60,6 @@ class EvaluationResult:
 
 def _utc_now() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def _split_roots(
-    protocol: BDD100KSemanticProtocolV1,
-    split_name: str,
-) -> tuple[str, str]:
-    """Only the locked validation cohort lives in the official validation tree."""
-
-    if split_name == LOCKED_VALIDATION_SPLIT:
-        return protocol.paths.validation_images, protocol.paths.validation_labels
-    return protocol.paths.train_images, protocol.paths.train_labels
 
 
 def _verified_path(root: Path, relative: str, expected_sha256: str) -> Path:
@@ -155,7 +143,7 @@ def evaluate_checkpoint(
     if metadata.get("protocol_sha256") != loaded_protocol.protocol_sha256:
         raise ValueError("checkpoint protocol hash does not match the evaluation protocol")
 
-    image_root_name, label_root_name = _split_roots(loaded_protocol.protocol, manifest.split_name)
+    image_root_name, label_root_name = split_paths(loaded_protocol.protocol, manifest.split_name)
     image_root = data_root / image_root_name
     label_root = data_root / label_root_name
     output_dir.mkdir(parents=True, exist_ok=True)

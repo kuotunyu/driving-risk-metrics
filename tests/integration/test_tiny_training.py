@@ -41,6 +41,7 @@ class DeterministicBackend:
 
     def __init__(self) -> None:
         self.micro_batches = 0
+        self.applied_updates = 0
 
     def seed_all(self, seed: int) -> None:
         self.seed = seed
@@ -48,9 +49,18 @@ class DeterministicBackend:
     def create_training_state(self, model_name: str, optimizer: Any) -> dict[str, Any]:
         return {"model": model_name, "optimizer": dict(optimizer), "weight": 0.0}
 
-    def run_step(self, state: Any, batch: Any, learning_rate: float) -> float:
+    def run_step(
+        self,
+        state: Any,
+        batch: Any,
+        learning_rate: float,
+        *,
+        apply_update: bool,
+    ) -> float:
         self.micro_batches += 1
-        digest = hashlib.sha256("|".join(batch).encode("utf-8")).hexdigest()
+        self.applied_updates += int(apply_update)
+        payload = "|".join(f"{sample_id}:{draw:.17g}" for sample_id, draw in batch)
+        digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
         contribution = learning_rate * (int(digest[:8], 16) % 97) / 97.0
         state["weight"] = round(state["weight"] + contribution, 12)
         return float(state["weight"])
@@ -176,6 +186,7 @@ def test_the_locked_step_budget_and_effective_batch_are_actually_executed(
 
     assert result.final_step == 30000
     assert backend.micro_batches == 30000 * 4
+    assert backend.applied_updates == 30000
 
 
 def test_a_different_approved_seed_changes_the_final_checkpoint(

@@ -12,8 +12,11 @@ artifacts, credentials, and private progress handoffs outside this Git repositor
    explicit human authorization.
 2. For every behavior change, add one focused test first and observe the intended
    failure before writing production code.
-3. Use Python 3.11 and the committed uv lock. Run `uv sync --frozen --all-groups`
-   for the CPU development environment.
+3. Use Python 3.11 and the committed uv lock. Run
+   `uv sync --frozen --all-groups --extra train` for the development environment.
+   The training extra is required by the coverage gate, because the Torch
+   training and evaluation backends are exercised against the real framework
+   rather than against fakes.
 4. Run `uv run python -m drivemetrics.dev verify` before a local checkpoint.
 5. Keep first-party statement and branch coverage at 100%. Do not use coverage
    exclusions or `pragma: no cover` in first-party executable code.

@@ -237,3 +237,21 @@ def test_trainable_parameters_delegates_to_the_backend_module() -> None:
     adapter = adapters.SegmentationAdapter(module=module, output_kind="torchvision_dict")
 
     assert adapter.trainable_parameters() is sentinel
+
+
+def test_the_output_extraction_is_reusable_without_running_inference() -> None:
+    """The training backend needs the same output normalization, but with gradients."""
+
+    adapters = load_adapters_module()
+    logits = np.zeros((1, 2, 4, 4), dtype=np.float32)
+    torchvision_adapter = adapters.SegmentationAdapter(
+        module=None,
+        output_kind="torchvision_dict",
+    )
+    segformer_adapter = adapters.SegmentationAdapter(
+        module=None,
+        output_kind="segformer_logits",
+    )
+
+    assert torchvision_adapter.extract_logits({"out": logits}) is logits
+    assert segformer_adapter.extract_logits(SimpleNamespace(logits=logits)) is logits

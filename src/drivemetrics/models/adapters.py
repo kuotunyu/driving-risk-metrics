@@ -40,7 +40,13 @@ class SegmentationAdapter:
     module: Any
     output_kind: OutputKind
 
-    def _extract_logits(self, raw_output: Any) -> Any:
+    def extract_logits(self, raw_output: Any) -> Any:
+        """Normalize one backend output to a plain logits tensor.
+
+        The training backend reuses this so a gradient-carrying forward pass
+        and the inference path can never disagree about output layout.
+        """
+
         if self.output_kind == "torchvision_dict":
             return raw_output["out"]
         if self.output_kind == "segformer_logits":
@@ -65,7 +71,7 @@ class SegmentationAdapter:
         self.module.eval()
         with torch.no_grad():
             raw_output = self.module(torch.from_numpy(image_nchw))
-        tensor = self._extract_logits(raw_output)
+        tensor = self.extract_logits(raw_output)
         height = int(image_nchw.shape[2])
         width = int(image_nchw.shape[3])
         resized = torch.nn.functional.interpolate(
@@ -76,7 +82,7 @@ class SegmentationAdapter:
         )
         return np.asarray(resized.detach().cpu().numpy(), dtype=np.float64)
 
-    def trainable_parameters(self) -> object:
+    def trainable_parameters(self) -> Any:
         """Return the backend parameters without copying or reordering them."""
 
         return self.module.parameters()
