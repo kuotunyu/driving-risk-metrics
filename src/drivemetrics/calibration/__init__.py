@@ -15,3 +15,6 @@ __all__ = [
     "fit_scalar_temperature",
     "softmax_probabilities",
 ]
+from drivemetrics.calibration.service import CalibrationResult, calibrate_checkpoint
+
+__all__ = [*__all__, "CalibrationResult", "calibrate_checkpoint"]

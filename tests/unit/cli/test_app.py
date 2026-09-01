@@ -35,7 +35,7 @@ def test_the_root_help_lists_every_declared_command() -> None:
     result = runner.invoke(app, ["--help"])
 
     assert result.exit_code == 0
-    for command in ("data", "train", "evaluate", "report", "audit-claims"):
+    for command in ("data", "train", "calibrate", "evaluate", "report", "audit-claims"):
         assert command in result.output
 
 
@@ -355,3 +355,95 @@ def test_an_unapproved_seed_is_rejected_by_the_real_training_service(
 
     assert result.exit_code != 0
     assert "seed" in result.output
+
+
+def test_calibrate_prints_one_machine_readable_status(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The nine calibration fits are launched from a notebook and parsed, not read."""
+
+    import drivemetrics.cli.calibrate as calibrate_cli
+
+    result_stub = SimpleNamespace(
+        temperature=1.37,
+        artifact_path=tmp_path / "temperature.json",
+        run_record_path=tmp_path / "run_record.json",
+        sampled_images=700,
+        pixels_per_image=2048,
+    )
+    monkeypatch.setattr(calibrate_cli, "BACKEND_FACTORY", lambda *_, **__: object())
+    monkeypatch.setattr(calibrate_cli, "CALIBRATE_SERVICE", lambda *_, **__: result_stub)
+    config = touch(tmp_path / "protocol.yaml")
+    manifest = touch(tmp_path / "calibration.json")
+    checkpoint = touch(tmp_path / "final_checkpoint.pt")
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+
+    result = runner.invoke(
+        app,
+        [
+            "calibrate",
+            "--config",
+            str(config),
+            "--manifest",
+            str(manifest),
+            "--checkpoint",
+            str(checkpoint),
+            "--data-root",
+            str(data_root),
+            "--output-dir",
+            str(tmp_path / "out"),
+        ],
+    )
+
+    assert result.exit_code == 0
+    status = status_of(result.stdout)
+    assert status["command"] == "calibrate"
+    assert status["temperature"] == 1.37
+    assert status["sampled_images"] == 700
+
+
+def test_evaluate_reports_whether_it_applied_a_temperature(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Calibrated and uncalibrated artifacts must be distinguishable after the fact."""
+
+    import drivemetrics.cli.evaluate as evaluate_cli
+
+    class Result:
+        evaluated_samples = 1000
+        artifact_paths = (tmp_path / "a.json",)
+        run_record_path = tmp_path / "run_record.json"
+
+    monkeypatch.setattr(evaluate_cli, "BACKEND_FACTORY", lambda *_, **__: object())
+    monkeypatch.setattr(evaluate_cli, "EVALUATE_SERVICE", lambda *_, **__: Result())
+    config = touch(tmp_path / "protocol.yaml")
+    manifest = touch(tmp_path / "manifest.json")
+    checkpoint = touch(tmp_path / "final_checkpoint.pt")
+    temperature = touch(tmp_path / "temperature.json")
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+
+    arguments = [
+        "evaluate",
+        "--config",
+        str(config),
+        "--manifest",
+        str(manifest),
+        "--checkpoint",
+        str(checkpoint),
+        "--data-root",
+        str(data_root),
+        "--output-dir",
+        str(tmp_path / "out"),
+    ]
+
+    uncalibrated = status_of(runner.invoke(app, arguments).stdout)
+    calibrated = status_of(
+        runner.invoke(app, [*arguments, "--temperature", str(temperature)]).stdout
+    )
+
+    assert uncalibrated["calibrated"] is False
+    assert calibrated["calibrated"] is True
