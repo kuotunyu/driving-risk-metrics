@@ -122,10 +122,34 @@ was explicitly conditional on a run staying under roughly 4.5 hours and must now
 be revisited, and 98 hours is a scale that has to be authorized on the measured
 number rather than the estimate.
 
-Two observations for whoever tunes this. Peak memory is 8.7 GiB of 40, so the
-micro batch of 4 leaves most of the card idle; and the backend sets
-`cudnn.deterministic = True` with `benchmark = False`, which buys exact
-reproducibility at a real and deliberate cost in speed. Neither is a defect.
+### What the first measurement hid
+
+Peak memory was 8.7 GiB of 40, which looked like an idle card. It was not a
+memory problem. A second measurement swept the micro batch and timed the loader
+separately, and found that **loading one effective batch took 0.743 s, 57% of a
+1.298 s step**, single-threaded and fully serial with the GPU. Filling the card
+from 8.7 to 33.2 GiB bought 1.02x, because the card was never the constraint.
+
+The batch loader now decodes across a thread pool. Measured again on the same
+hardware:
+
+| micro batch | before | after | peak GiB |
+| --- | --- | --- | --- |
+| 4 | 1.327 s | **0.873 s** | 8.7 |
+| 8 | 1.304 s | **0.827 s** | 16.9 |
+| 16 | 1.298 s | **0.786 s** | 33.2 |
+
+Loading fell from 0.743 s to 0.243 s and now accounts for 31% of a step. One
+formal run drops from 10.9 to **6.55 hours**, and nine from 97.3 to **59.0**.
+
+The change is result-neutral, and that was verified rather than assumed: the CPU
+smoke rerun through the parallel loader reproduced checkpoint SHA-256
+`dbad533f…` exactly, byte for byte. Which samples appear, in what order, and
+with which flip draw are all fixed by the engine before the loader is called.
+
+One setting is deliberately left alone: `cudnn.deterministic = True` with
+`benchmark = False`. That buys the exact reproducibility this project rests on,
+at a real cost in speed. It is not a defect and must not be tuned away.
 
 ## Reproduction
 
