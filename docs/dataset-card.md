@@ -1,0 +1,76 @@
+# Dataset card: BDD100K 10K semantic segmentation
+
+What this project evaluates on, where it came from, and what it can and cannot
+support. Frozen cohort hashes and the reproduction command live in
+[`verification/bdd100k-preflight.md`](verification/bdd100k-preflight.md).
+
+## Identity
+
+| Field | Value |
+| --- | --- |
+| Name | BDD100K, 10K semantic segmentation subset |
+| Version identifier used here | `10k-semantic-v1` |
+| Publisher | Berkeley DeepDrive |
+| Task | Dense semantic segmentation, 19 Cityscapes-compatible train IDs |
+| Ignore index | 255 |
+| Source geometry | 1280 × 720 |
+| Licence | The BDD100K licence shipped with the distribution |
+
+The dataset is not redistributed by this repository, and no image, mask, or
+manifest is committed. Users supply their own licensed copy and point
+`BDD100K_ROOT` at it.
+
+## Composition
+
+| Cohort | Images | Role |
+| --- | --- | --- |
+| `train` | 6,300 | Gradient updates only |
+| `calibration` | 700 | Scalar temperature fitting only |
+| `locked_validation` | 1,000 | Scored once per checkpoint, never fitted on |
+
+`train` and `calibration` partition the official 7,000-image train split by
+deterministic SHA-256 filename order. `locked_validation` is the official
+validation split. The official 2,000-image test split is unlabeled and unused.
+
+Instance annotations cover 6,996 train and 998 validation images. The twelve
+excluded IDs and their reasons are listed in the preflight evidence. Instance
+area tertiles are learned from the training intersection only.
+
+## What the labels mean
+
+Nineteen train IDs following the Cityscapes convention, with 255 as ignore.
+Metrics are computed at source geometry rather than on the padded 512 × 1024
+training canvas, so small instances are not erased by resizing before they are
+scored.
+
+Two naming cautions that this project treats as load-bearing:
+
+- `normalized_image_band` means the top, middle, and bottom thirds of the frame.
+  It is an image region, **not** distance or depth. Nothing in BDD100K's 2D
+  semantic labels supports a distance claim.
+- The `drivable_boundary` risk profile is a road and sidewalk false-negative
+  proxy, not an exact boundary-confusion metric.
+
+## Known limitations
+
+- **Single dataset, single geography.** BDD100K is US-centric dashcam footage.
+  Nothing here supports a claim about model behaviour in other regions.
+- **2D only.** No depth, no LiDAR, no 3D geometry. Any spatial statement is about
+  image regions.
+- **Class imbalance is severe.** In the training intersection, one instance
+  category carries 64,751 instances and another carries 59. Per-class and
+  per-tertile statistics conditioned on rare categories are thin and must be
+  reported with their support.
+- **Instance annotations come from a mirror.** The official endpoints no longer
+  serve them. The mirror hash is a local hash and is not claimed to match the
+  unavailable official archive.
+- **Not a safety argument.** Risk-weighted metrics here are a controlled study of
+  how metric choice changes model ranking. They are not evidence that any model
+  is safe to deploy.
+
+## Intended use
+
+Reproducible comparison of three segmentation architectures under standard and
+risk-weighted metrics on one frozen cohort. Not intended for model selection for
+deployment, for benchmarking against published leaderboard numbers, or for any
+commercial use the BDD100K licence does not grant.

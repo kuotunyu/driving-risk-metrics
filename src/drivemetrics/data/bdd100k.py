@@ -7,6 +7,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
+import numpy.typing as npt
+
 DATASET_NAME = "bdd100k"
 DATASET_VERSION = "10k-semantic-v1"
 IMAGE_SUFFIX = ".jpg"
@@ -83,6 +86,51 @@ def instance_label_sample_id(path: Path) -> str:
     if path.suffix.lower() != ".png":
         raise ValueError(f"unsupported BDD100K instance label filename: {path.name}")
     return path.stem
+
+
+def instance_areas(bitmask: npt.NDArray[np.uint8]) -> tuple[tuple[int, int], ...]:
+    """Return one `(category_id, area_pixels)` record per annotated instance.
+
+    The official BDD100K bitmask packs the category into red, attribute flags
+    into green, and a 16-bit annotation id across blue and alpha. Annotation id
+    zero is unlabeled background rather than an instance. Areas are counted at
+    source geometry, because that is where every metric in this project is
+    computed and a resized area would rank instances differently.
+    """
+
+    if bitmask.dtype != np.uint8:
+        raise ValueError(f"instance bitmask must be uint8, got {bitmask.dtype}")
+    if bitmask.ndim != 3 or bitmask.shape[2] != 4:
+        raise ValueError(f"instance bitmask must be RGBA, got shape {bitmask.shape}")
+
+    categories = bitmask[:, :, 0].astype(np.int64)
+    annotation_ids = (bitmask[:, :, 2].astype(np.int64) << 8) | bitmask[:, :, 3].astype(np.int64)
+
+    labelled = annotation_ids != 0
+    if not labelled.any():
+        return ()
+
+    keys = annotation_ids[labelled]
+    values = categories[labelled]
+    order = np.argsort(keys, kind="stable")
+    sorted_keys = keys[order]
+    sorted_values = values[order]
+
+    boundaries = np.flatnonzero(np.diff(sorted_keys)) + 1
+    records: list[tuple[int, int]] = []
+    for start, stop in zip(
+        (0, *boundaries.tolist()),
+        (*boundaries.tolist(), sorted_keys.size),
+        strict=True,
+    ):
+        group = sorted_values[start:stop]
+        first = int(group[0])
+        if not bool((group == first).all()):
+            raise ValueError(
+                f"annotation id {int(sorted_keys[start])} carries more than one category"
+            )
+        records.append((first, stop - start))
+    return tuple(records)
 
 
 def _index_unique_paths(
