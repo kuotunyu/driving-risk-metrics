@@ -135,25 +135,23 @@ def test_warmup_may_not_consume_the_whole_schedule() -> None:
     ("model_name", "expected"),
     [
         (
-            "fcn_resnet50",
+            "upernet_convnextv2_tiny",
             {
-                "optimizer": "sgd",
-                "learning_rate": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
+                "optimizer": "adamw",
+                "learning_rate": 0.0001,
+                "weight_decay": 0.05,
             },
         ),
         (
-            "deeplabv3_resnet50",
+            "upernet_dinov2_small",
             {
-                "optimizer": "sgd",
-                "learning_rate": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
+                "optimizer": "adamw",
+                "learning_rate": 0.0001,
+                "weight_decay": 0.05,
             },
         ),
         (
-            "segformer_b0",
+            "segformer_b2",
             {"optimizer": "adamw", "learning_rate": 0.00006, "weight_decay": 0.01},
         ),
     ],
@@ -183,10 +181,10 @@ def test_each_call_returns_an_independent_specification() -> None:
 
     schedule = load_schedule_module()
 
-    first = schedule.optimizer_spec("fcn_resnet50")
+    first = schedule.optimizer_spec("upernet_convnextv2_tiny")
     first["learning_rate"] = 999.0
 
-    assert schedule.optimizer_spec("fcn_resnet50")["learning_rate"] == 0.01
+    assert schedule.optimizer_spec("upernet_convnextv2_tiny")["learning_rate"] == 0.0001
 
 
 def test_training_package_exports_the_schedule_entry_points() -> None:

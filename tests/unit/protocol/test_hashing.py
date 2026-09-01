@@ -72,9 +72,9 @@ paths:
 input: {{resize_height: 512, resize_width: 910, padded_height: 512, padded_width: 1024, image_pad_value_after_normalization: 0.0, mask_pad_value: 255}}
 training: {{steps: 30000, warmup_steps: 1000, effective_batch_size: 16, horizontal_flip_probability: 0.5, checkpoint_selection: final_step_only}}
 models:
-  fcn_resnet50: {{optimizer: sgd, learning_rate: 0.01, momentum: 0.9, weight_decay: 0.0001}}
-  deeplabv3_resnet50: {{optimizer: sgd, learning_rate: 0.01, momentum: 0.9, weight_decay: 0.0001}}
-  segformer_b0: {{optimizer: adamw, learning_rate: 0.00006, weight_decay: 0.01}}
+  upernet_convnextv2_tiny: {{optimizer: adamw, learning_rate: 0.0001, weight_decay: 0.05}}
+  upernet_dinov2_small: {{optimizer: adamw, learning_rate: 0.0001, weight_decay: 0.05}}
+  segformer_b2: {{optimizer: adamw, learning_rate: 0.00006, weight_decay: 0.01}}
 calibration: {{method: scalar_temperature, objective: multiclass_nll}}
 statistics: {{bootstrap_resamples: 5000, bootstrap_seed: 20260831, confidence: 0.95}}
 {extra}"""
@@ -107,17 +107,15 @@ training:
   horizontal_flip_probability: 0.5
   checkpoint_selection: final_step_only
 models:
-  fcn_resnet50:
-    optimizer: sgd
-    learning_rate: 0.01
-    momentum: 0.9
-    weight_decay: 0.0001
-  deeplabv3_resnet50:
-    optimizer: sgd
-    learning_rate: 0.01
-    momentum: 0.9
-    weight_decay: 0.0001
-  segformer_b0:
+  upernet_convnextv2_tiny:
+    optimizer: adamw
+    learning_rate: 0.0001
+    weight_decay: 0.05
+  upernet_dinov2_small:
+    optimizer: adamw
+    learning_rate: 0.0001
+    weight_decay: 0.05
+  segformer_b2:
     optimizer: adamw
     learning_rate: 0.00006
     weight_decay: 0.01
@@ -171,7 +169,7 @@ def test_protocol_loader_rejects_unknown_keys(tmp_path: Path) -> None:
     [
         ("train_images: images/10k/train", "train_images: ../train", "train_images"),
         ("train_images: images/10k/train", "train_images: .", "train_images"),
-        ("learning_rate: 0.01", "learning_rate: 0.02", "learning_rate"),
+        ("learning_rate: 0.0001", "learning_rate: 0.0002", "learning_rate"),
     ],
 )
 def test_protocol_loader_rejects_unsafe_path_or_changed_fixed_model(

@@ -93,8 +93,8 @@ def workspace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]
     checkpoint = tmp_path / "final_checkpoint.pt"
     checkpoint.write_bytes(b"synthetic checkpoint")
     metadata = {
-        "model": "fcn_resnet50",
-        "run_id": "fcn_resnet50-seed-17",
+        "model": "upernet_convnextv2_tiny",
+        "run_id": "upernet_convnextv2_tiny-seed-17",
         "seed": 17,
         "protocol_sha256": protocol_hash,
         "final_step": 30000,

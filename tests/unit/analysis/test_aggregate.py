@@ -23,7 +23,7 @@ from drivemetrics.metrics.calibration import (
     quantize_confidence,
 )
 
-MODELS = ("fcn_resnet50", "deeplabv3_resnet50", "segformer_b0")
+MODELS = ("upernet_convnextv2_tiny", "upernet_dinov2_small", "segformer_b2")
 SEEDS = (17, 42, 73)
 PROTOCOL = "a" * 64
 MANIFEST = "b" * 64

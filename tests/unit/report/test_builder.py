@@ -21,8 +21,8 @@ METRICS = {
     "seed_count": 3,
     "interval_method": "two-stage paired bootstrap, 5000 resamples, seed 20260831",
     "metrics": {
-        "deeplabv3_resnet50": {"miou": 0.58, "critical_recall": 0.71},
-        "fcn_resnet50": {"miou": 0.61, "critical_recall": 0.64},
+        "upernet_dinov2_small": {"miou": 0.58, "critical_recall": 0.71},
+        "upernet_convnextv2_tiny": {"miou": 0.61, "critical_recall": 0.64},
     },
 }
 
@@ -30,7 +30,7 @@ INTERVALS = {
     "protocol_hash": PROTOCOL_HASH,
     "dataset_manifest_hash": MANIFEST_HASH,
     "intervals": {
-        "fcn_resnet50 minus deeplabv3_resnet50 (miou)": {
+        "upernet_convnextv2_tiny minus upernet_dinov2_small (miou)": {
             "estimate": 0.03,
             "low": 0.01,
             "high": 0.05,
@@ -48,8 +48,8 @@ RANKINGS = {
     "comparisons": [
         {
             "metric_name": "critical_recall",
-            "baseline_order": ["fcn_resnet50", "deeplabv3_resnet50"],
-            "comparison_order": ["deeplabv3_resnet50", "fcn_resnet50"],
+            "baseline_order": ["upernet_convnextv2_tiny", "upernet_dinov2_small"],
+            "comparison_order": ["upernet_dinov2_small", "upernet_convnextv2_tiny"],
             "reversal_observed": True,
         }
     ],
@@ -122,7 +122,7 @@ def default_claims() -> list[dict[str, Any]]:
             "protocol_hash": PROTOCOL_HASH,
             "dataset_manifest_hash": MANIFEST_HASH,
             "artifact_path": "artifacts/metrics.json",
-            "metric_path": "/metrics/fcn_resnet50/miou",
+            "metric_path": "/metrics/upernet_convnextv2_tiny/miou",
             "status": "verified",
         },
         {
@@ -132,7 +132,7 @@ def default_claims() -> list[dict[str, Any]]:
             "protocol_hash": PROTOCOL_HASH,
             "dataset_manifest_hash": MANIFEST_HASH,
             "artifact_path": "artifacts/metrics.json",
-            "metric_path": "/metrics/fcn_resnet50/miou",
+            "metric_path": "/metrics/upernet_convnextv2_tiny/miou",
             "status": "draft",
         },
     ]

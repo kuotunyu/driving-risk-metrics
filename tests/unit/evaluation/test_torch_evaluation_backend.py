@@ -31,7 +31,7 @@ def load_backends_module() -> ModuleType:
 def write_checkpoint(path: Path, metadata: dict[str, Any]) -> Any:
     """Save a real SegFormer state dictionary with one recognizable weight."""
 
-    adapter = create_model("segformer_b0", NUM_TRAIN_CLASSES, False)
+    adapter = create_model("segformer_b2", NUM_TRAIN_CLASSES, False)
     state_dict = adapter.module.state_dict()
     marker_key = next(iter(state_dict))
     state_dict[marker_key] = torch.full_like(state_dict[marker_key], 0.125)
@@ -46,7 +46,7 @@ def test_the_checkpoint_architecture_is_rebuilt_and_its_weights_restored(
 
     backends = load_backends_module()
     path = tmp_path / "final_checkpoint.pt"
-    metadata = {"run_id": "segformer_b0-seed-17", "model": "segformer_b0", "seed": 17}
+    metadata = {"run_id": "segformer_b2-seed-17", "model": "segformer_b2", "seed": 17}
     marker_key = write_checkpoint(path, metadata)
 
     model, restored_metadata = backends.TorchEvaluationBackend().load_model(path)
@@ -96,12 +96,12 @@ def test_the_restored_model_is_placed_on_the_requested_device(tmp_path: Path) ->
 
     from drivemetrics.evaluation.backends import TorchEvaluationBackend
 
-    adapter = create_model("fcn_resnet50", NUM_TRAIN_CLASSES, False)
+    adapter = create_model("upernet_convnextv2_tiny", NUM_TRAIN_CLASSES, False)
     checkpoint = tmp_path / "final_checkpoint.pt"
     torch.save(
         {
             "model": adapter.module.state_dict(),
-            "metadata": {"model": "fcn_resnet50", "run_id": "r", "seed": 17},
+            "metadata": {"model": "upernet_convnextv2_tiny", "run_id": "r", "seed": 17},
         },
         checkpoint,
     )

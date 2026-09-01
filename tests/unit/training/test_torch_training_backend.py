@@ -11,7 +11,7 @@ import dataclasses
 import json
 import shutil
 from pathlib import Path
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -59,8 +59,8 @@ class TinyModule(torch.nn.Module):
         torch.nn.init.zeros_(bias)
         torch.nn.init.constant_(self.conv.weight, 0.01)
 
-    def forward(self, images: Any) -> dict[str, Any]:
-        return {"out": self.conv(images)}
+    def forward(self, images: Any) -> SimpleNamespace:
+        return SimpleNamespace(logits=self.conv(images))
 
 
 def build_cohort(tmp_path: Path, sample_ids: tuple[str, ...]) -> tuple[Path, Any, Any]:
@@ -84,7 +84,7 @@ def build_cohort(tmp_path: Path, sample_ids: tuple[str, ...]) -> tuple[Path, Any
 
 
 def make_state(backends: ModuleType, learning_rate: float = 0.5) -> Any:
-    adapter = SegmentationAdapter(module=TinyModule(), output_kind="torchvision_dict")
+    adapter = SegmentationAdapter(module=TinyModule())
     optimizer = torch.optim.SGD(adapter.module.parameters(), lr=learning_rate)
     return backends.TorchTrainingState(adapter=adapter, optimizer=optimizer)
 
@@ -214,7 +214,7 @@ def test_a_checkpoint_from_another_run_fails_closed(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     ("model_name", "expected_type"),
-    [("fcn_resnet50", "SGD"), ("segformer_b0", "AdamW")],
+    [("upernet_convnextv2_tiny", "AdamW"), ("segformer_b2", "AdamW")],
 )
 def test_the_declared_optimizer_is_the_one_that_is_built(
     model_name: str,
@@ -236,7 +236,7 @@ def test_the_declared_optimizer_is_the_one_that_is_built(
 
     assert type(state.optimizer).__name__ == expected_type
     assert state.optimizer.param_groups[0]["weight_decay"] == (
-        0.0001 if expected_type == "SGD" else 0.01
+        0.05 if model_name.startswith("upernet") else 0.01
     )
 
 
@@ -296,7 +296,6 @@ def test_a_parameter_without_a_gradient_does_not_stop_the_update(tmp_path: Path)
     backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
     adapter = SegmentationAdapter(
         module=TinyModuleWithUnusedParameter(),
-        output_kind="torchvision_dict",
     )
     state = backends.TorchTrainingState(
         adapter=adapter,
@@ -331,7 +330,7 @@ def test_the_backend_factory_resolves_the_protocol_and_manifest(tmp_path: Path) 
             {
                 "schema_version": "drivemetrics-training-run/v1",
                 "protocol_path": "protocols/bdd100k_semseg_v1.yaml",
-                "model": "fcn_resnet50",
+                "model": "upernet_convnextv2_tiny",
                 "micro_batch_size": 4,
             }
         ),
@@ -367,8 +366,8 @@ def test_the_training_state_is_built_on_the_requested_device(tmp_path: Path) -> 
     )
 
     state = backend.create_training_state(
-        "fcn_resnet50",  # type: ignore[arg-type]
-        optimizer_spec("fcn_resnet50"),  # type: ignore[arg-type]
+        "upernet_convnextv2_tiny",  # type: ignore[arg-type]
+        optimizer_spec("upernet_convnextv2_tiny"),  # type: ignore[arg-type]
     )
 
     assert next(state.adapter.module.parameters()).device.type == "meta"
@@ -440,4 +439,18 @@ def test_a_boolean_thread_count_is_refused(tmp_path: Path) -> None:
             protocol,
             pretrained=False,
             loader_threads=True,  # type: ignore[arg-type]
+        )
+
+
+def test_an_optimizer_outside_the_protocol_fails_closed(tmp_path: Path) -> None:
+    """Falling back to a default optimizer would train a model the protocol never described."""
+
+    backends = load_backends_module()
+    data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
+    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+
+    with pytest.raises(ValueError, match="adamw"):
+        backend.create_training_state(
+            "segformer_b2",  # type: ignore[arg-type]
+            {"optimizer": "sgd", "learning_rate": 0.01, "weight_decay": 0.0001},
         )

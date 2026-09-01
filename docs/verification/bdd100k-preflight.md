@@ -9,7 +9,10 @@ content. The manifests themselves are generated locally and are never committed.
 - Preflight run: `2026-09-01T10:58:40Z` to `2026-09-01T11:04:02Z`
 - Reproducibility run: `2026-09-01T11:04Z` to `2026-09-01T11:09Z`
 - Protocol: `configs/protocols/bdd100k_semseg_v1.yaml`
-- Protocol SHA-256: `5a386b2b531481ca23f20b12f780d092a33a1d0105d5d34ace88ac2089a019cf`
+- Protocol SHA-256: `b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f`
+- Superseded protocol SHA-256: `5a386b2b531481ca23f20b12f780d092a33a1d0105d5d34ace88ac2089a019cf`, which named three older
+  architectures. The cohorts below are unchanged by that revision: they are
+  frozen from the dataset and do not depend on which models are trained.
 
 ## Dataset and licence
 

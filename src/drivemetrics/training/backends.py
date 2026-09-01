@@ -112,19 +112,18 @@ class TorchTrainingBackend:
         # why this has to be explicit rather than assumed.
         adapter.module.to(self._device)
         parameters = adapter.trainable_parameters()
-        if optimizer["optimizer"] == "sgd":
-            built: Any = torch.optim.SGD(
-                parameters,
-                lr=float(optimizer["learning_rate"]),
-                momentum=float(optimizer["momentum"]),
-                weight_decay=float(optimizer["weight_decay"]),
+        # Every approved architecture pins AdamW, and the protocol schema will
+        # not validate anything else. An unexpected value here means the caller
+        # bypassed the protocol, which must stop rather than silently fall back.
+        if optimizer["optimizer"] != "adamw":
+            raise ValueError(
+                f"optimizer must be adamw for every approved model, got {optimizer['optimizer']!r}"
             )
-        else:
-            built = torch.optim.AdamW(
-                parameters,
-                lr=float(optimizer["learning_rate"]),
-                weight_decay=float(optimizer["weight_decay"]),
-            )
+        built = torch.optim.AdamW(
+            parameters,
+            lr=float(optimizer["learning_rate"]),
+            weight_decay=float(optimizer["weight_decay"]),
+        )
         return TorchTrainingState(adapter=adapter, optimizer=built)
 
     def _prepare_one(self, sample_id: str, flip_draw: float) -> tuple[np.ndarray, np.ndarray]:

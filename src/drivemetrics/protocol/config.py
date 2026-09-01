@@ -66,23 +66,26 @@ class TrainingProtocol(StrictProtocolModel):
     checkpoint_selection: Literal["final_step_only"]
 
 
-class SGDOptimizerProtocol(StrictProtocolModel):
-    optimizer: Literal["sgd"]
-    learning_rate: float = Field(ge=0.01, le=0.01)
-    momentum: float = Field(ge=0.9, le=0.9)
-    weight_decay: float = Field(ge=0.0001, le=0.0001)
+class SegformerOptimizerProtocol(StrictProtocolModel):
+    """The published SegFormer recipe, pinned so a run cannot drift off it."""
 
-
-class AdamWOptimizerProtocol(StrictProtocolModel):
     optimizer: Literal["adamw"]
     learning_rate: float = Field(ge=0.00006, le=0.00006)
     weight_decay: float = Field(ge=0.01, le=0.01)
 
 
+class UperNetOptimizerProtocol(StrictProtocolModel):
+    """The standard UPerNet recipe, shared by both backbones under that decoder."""
+
+    optimizer: Literal["adamw"]
+    learning_rate: float = Field(ge=0.0001, le=0.0001)
+    weight_decay: float = Field(ge=0.05, le=0.05)
+
+
 class ModelProtocols(StrictProtocolModel):
-    fcn_resnet50: SGDOptimizerProtocol
-    deeplabv3_resnet50: SGDOptimizerProtocol
-    segformer_b0: AdamWOptimizerProtocol
+    segformer_b2: SegformerOptimizerProtocol
+    upernet_convnextv2_tiny: UperNetOptimizerProtocol
+    upernet_dinov2_small: UperNetOptimizerProtocol
 
 
 class CalibrationProtocol(StrictProtocolModel):

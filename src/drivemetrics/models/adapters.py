@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Literal, Protocol
+from typing import Any, Protocol
 
 import numpy as np
 import numpy.typing as npt
 
 Float32Array = npt.NDArray[np.float32]
 Float64Array = npt.NDArray[np.float64]
-
-OutputKind = Literal["torchvision_dict", "segformer_logits"]
 
 
 class SegmentationModel(Protocol):
@@ -38,20 +36,27 @@ class SegmentationAdapter:
     """
 
     module: Any
-    output_kind: OutputKind
 
     def extract_logits(self, raw_output: Any) -> Any:
         """Normalize one backend output to a plain logits tensor.
+
+        Every approved architecture exposes its dense predictions on a `logits`
+        attribute, so there is one layout rather than a branch per backend. A
+        model that does not is not one this project can score: the whole
+        calibration stage is defined on logits, and anything else reaching here
+        would be silently miscalibrated rather than rejected.
 
         The training backend reuses this so a gradient-carrying forward pass
         and the inference path can never disagree about output layout.
         """
 
-        if self.output_kind == "torchvision_dict":
-            return raw_output["out"]
-        if self.output_kind == "segformer_logits":
-            return raw_output.logits
-        raise ValueError(f"unknown adapter output kind: {self.output_kind!r}")
+        logits = getattr(raw_output, "logits", None)
+        if logits is None:
+            raise ValueError(
+                "backend output does not expose logits; every approved model must, "
+                "because calibration is defined on logits and not on probabilities"
+            )
+        return logits
 
     def logits(self, image_nchw: Float32Array) -> Float64Array:
         """Return float64 ``[N, C, H, W]`` logits for one normalized image batch.

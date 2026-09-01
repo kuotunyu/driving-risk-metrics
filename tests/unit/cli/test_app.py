@@ -469,7 +469,7 @@ def test_aggregate_prints_one_machine_readable_status(
         metrics_path=tmp_path / "metrics.json",
         intervals_path=tmp_path / "intervals.json",
         rankings_path=tmp_path / "rankings.json",
-        models=("fcn_resnet50", "deeplabv3_resnet50", "segformer_b0"),
+        models=("upernet_convnextv2_tiny", "upernet_dinov2_small", "segformer_b2"),
         sample_count=1000,
     )
     monkeypatch.setattr(aggregate_cli, "AGGREGATE_SERVICE", lambda *_, **__: result_stub)

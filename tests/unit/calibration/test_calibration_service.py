@@ -108,8 +108,8 @@ def build_workspace(tmp_path: Path, *, split_name: str = "calibration") -> dict[
 
 def backend_for(workspace: dict[str, Any], **overrides: Any) -> FakeBackend:
     metadata: dict[str, Any] = {
-        "model": "fcn_resnet50",
-        "run_id": "fcn_resnet50-seed-17",
+        "model": "upernet_convnextv2_tiny",
+        "run_id": "upernet_convnextv2_tiny-seed-17",
         "seed": 17,
         "protocol_sha256": workspace["protocol_hash"],
         "final_step": 30000,
@@ -270,7 +270,7 @@ def test_the_run_record_marks_the_fit_as_succeeded(tmp_path: Path) -> None:
     record = json.loads(result.run_record_path.read_text(encoding="utf-8"))
 
     assert record["status"] == "succeeded"
-    assert record["run_id"] == "calibrate-fcn_resnet50-seed-17"
+    assert record["run_id"] == "calibrate-upernet_convnextv2_tiny-seed-17"
     assert record["dataset_manifest_sha256"] == workspace["manifest_obj"].manifest_sha256
 
 

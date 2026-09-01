@@ -46,19 +46,17 @@ PROTOCOL_DOCUMENT: dict[str, Any] = {
         "checkpoint_selection": "final_step_only",
     },
     "models": {
-        "fcn_resnet50": {
-            "optimizer": "sgd",
-            "learning_rate": 0.01,
-            "momentum": 0.9,
-            "weight_decay": 0.0001,
+        "upernet_convnextv2_tiny": {
+            "optimizer": "adamw",
+            "learning_rate": 0.0001,
+            "weight_decay": 0.05,
         },
-        "deeplabv3_resnet50": {
-            "optimizer": "sgd",
-            "learning_rate": 0.01,
-            "momentum": 0.9,
-            "weight_decay": 0.0001,
+        "upernet_dinov2_small": {
+            "optimizer": "adamw",
+            "learning_rate": 0.0001,
+            "weight_decay": 0.05,
         },
-        "segformer_b0": {
+        "segformer_b2": {
             "optimizer": "adamw",
             "learning_rate": 0.00006,
             "weight_decay": 0.01,
@@ -176,7 +174,7 @@ def write_manifest(directory: Path, sample_count: int = 12) -> Path:
 def write_configs(
     directory: Path,
     *,
-    model: str = "fcn_resnet50",
+    model: str = "upernet_convnextv2_tiny",
     micro_batch_size: int = 4,
     protocol_overrides: dict[str, Any] | None = None,
 ) -> Path:
@@ -221,12 +219,11 @@ def test_the_backend_is_seeded_before_any_state_or_step_exists(
     assert backend.seeded == [17]
     assert backend.created == [
         (
-            "fcn_resnet50",
+            "upernet_convnextv2_tiny",
             {
-                "optimizer": "sgd",
-                "learning_rate": 0.01,
-                "momentum": 0.9,
-                "weight_decay": 0.0001,
+                "optimizer": "adamw",
+                "learning_rate": 0.0001,
+                "weight_decay": 0.05,
             },
         )
     ]
@@ -265,10 +262,15 @@ def test_every_micro_batch_in_one_optimizer_step_shares_its_learning_rate(
 
     engine.train(config_path, manifest_path, tmp_path / "out", 17, backend=backend)
 
+    # Derived from the pinned table rather than hard-coded, so this keeps
+    # testing the schedule and not one model current learning rate.
+    from drivemetrics.training.schedule import optimizer_spec
+
+    base = float(optimizer_spec("upernet_convnextv2_tiny")["learning_rate"])
     first_rates = [rate for _, rate in backend.first_steps[:4]]
     second_rates = [rate for _, rate in backend.first_steps[4:8]]
-    assert first_rates == [0.01 / 1000] * 4
-    assert second_rates == [0.01 * 2 / 1000] * 4
+    assert first_rates == [base / 1000] * 4
+    assert second_rates == [base * 2 / 1000] * 4
     assert backend.last_step is not None
     assert backend.last_step[1] == 0.0
 
@@ -314,7 +316,7 @@ def test_checkpoint_metadata_pins_the_ignored_label_and_the_run_identity(
     assert metadata["loss"]["ignore_index"] == losses.IGNORE_INDEX
     assert metadata["loss"]["ignore_index"] == PROTOCOL_DOCUMENT["input"]["mask_pad_value"]
     assert metadata["seed"] == 17
-    assert metadata["model"] == "fcn_resnet50"
+    assert metadata["model"] == "upernet_convnextv2_tiny"
     assert metadata["final_step"] == 30000
 
 
@@ -556,7 +558,7 @@ def test_an_unsafe_protocol_path_fails_closed(
             {
                 "schema_version": "drivemetrics-training-run/v1",
                 "protocol_path": protocol_path,
-                "model": "fcn_resnet50",
+                "model": "upernet_convnextv2_tiny",
                 "micro_batch_size": 4,
             }
         ),

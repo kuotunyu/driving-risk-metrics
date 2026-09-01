@@ -132,8 +132,8 @@ def checkpoint_metadata(config_path: Path) -> dict[str, Any]:
     from drivemetrics.protocol.config import load_protocol
 
     return {
-        "run_id": "fcn_resnet50-seed-17",
-        "model": "fcn_resnet50",
+        "run_id": "upernet_convnextv2_tiny-seed-17",
+        "model": "upernet_convnextv2_tiny",
         "seed": 17,
         "final_step": 30000,
         "protocol_sha256": load_protocol(config_path).protocol_sha256,
@@ -332,7 +332,7 @@ def test_the_run_record_carries_the_evaluated_checkpoint_identity(
     record = json.loads(result.run_record_path.read_text(encoding="utf-8"))
 
     assert record["status"] == "succeeded"
-    assert record["run_id"] == "eval-fcn_resnet50-seed-17"
+    assert record["run_id"] == "eval-upernet_convnextv2_tiny-seed-17"
     assert record["seed"] == 17
     assert record["commit"] == PROVENANCE["commit"]
     assert len(record["artifacts"]) == 2
