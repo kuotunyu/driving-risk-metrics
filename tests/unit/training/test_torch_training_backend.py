@@ -372,3 +372,72 @@ def test_the_training_state_is_built_on_the_requested_device(tmp_path: Path) -> 
     )
 
     assert next(state.adapter.module.parameters()).device.type == "meta"
+
+
+def test_parallel_loading_is_byte_identical_to_serial_loading(tmp_path: Path) -> None:
+    """Decoding in parallel must change the wall clock and nothing else.
+
+    On an A100 the measured step spent 57% of its time decoding images one at a
+    time while the GPU idled. Spreading that across threads is worth roughly a
+    doubling, but only if every array comes back identical: the samples, their
+    order, and their flip draws are fixed by the engine, and the loader must not
+    be able to disturb any of them.
+    """
+
+    backends = load_backends_module()
+    ids = tuple(f"t{index}" for index in range(6))
+    data_root, manifest, protocol = build_cohort(tmp_path, ids)
+    batch = tuple((sample_id, 0.0 if index % 2 else 1.0) for index, sample_id in enumerate(ids))
+
+    serial = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, pretrained=False, loader_threads=1
+    ).load_batch(batch)
+    parallel = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, pretrained=False, loader_threads=4
+    ).load_batch(batch)
+
+    assert np.array_equal(serial.images, parallel.images)
+    assert np.array_equal(serial.masks, parallel.masks)
+
+
+def test_a_sample_outside_the_manifest_is_still_refused_when_loading_in_parallel(
+    tmp_path: Path,
+) -> None:
+    """A worker thread must not be able to swallow the frozen-cohort check."""
+
+    backends = load_backends_module()
+    data_root, manifest, protocol = build_cohort(tmp_path, ("t1", "t2"))
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, pretrained=False, loader_threads=4
+    )
+
+    with pytest.raises(KeyError, match="not in the frozen manifest"):
+        backend.load_batch((("t1", 0.0), ("intruder", 0.0)))
+
+
+def test_the_loader_thread_count_must_be_positive(tmp_path: Path) -> None:
+    """Zero threads would deadlock rather than fail, hours into a paid run."""
+
+    backends = load_backends_module()
+    data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
+
+    with pytest.raises(ValueError, match="loader_threads"):
+        backends.TorchTrainingBackend(
+            data_root, manifest, protocol, pretrained=False, loader_threads=0
+        )
+
+
+def test_a_boolean_thread_count_is_refused(tmp_path: Path) -> None:
+    """`True` is an int in Python, so it would silently mean one loader thread."""
+
+    backends = load_backends_module()
+    data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
+
+    with pytest.raises(ValueError, match="must be an integer"):
+        backends.TorchTrainingBackend(
+            data_root,
+            manifest,
+            protocol,
+            pretrained=False,
+            loader_threads=True,  # type: ignore[arg-type]
+        )
