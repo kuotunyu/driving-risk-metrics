@@ -218,3 +218,19 @@ def test_dev_cli_generates_model_derived_contract_schemas(tmp_path: Path) -> Non
         "prediction_artifact_v1.json",
         "run_record_v1.json",
     )
+
+
+def test_the_typecheck_stage_covers_shipped_skill_scripts(tmp_path: Path) -> None:
+    """A validator outside the gate would rot silently while agents still run it."""
+
+    dev = load_dev()
+    observed: dict[str, tuple[str, ...]] = {}
+
+    def runner(stage: str, command: Sequence[str], cwd: Path) -> int:
+        del cwd
+        observed[stage] = tuple(command)
+        return 0
+
+    dev.verify_repository(tmp_path, runner=runner)
+
+    assert ".agents" in observed["typecheck"]

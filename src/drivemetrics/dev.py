@@ -32,7 +32,7 @@ def _stage_commands() -> dict[str, tuple[str, ...]]:
         "private_guard": (python, "-m", "drivemetrics.private_guard"),
         "format_check": (python, "-m", "ruff", "format", "--check", "."),
         "lint": (python, "-m", "ruff", "check", "."),
-        "typecheck": (python, "-m", "mypy", "src", "tests"),
+        "typecheck": (python, "-m", "mypy", "src", "tests", ".agents"),
         "unit_and_integration_tests": (python, "-m", "pytest", "--no-cov"),
         "branch_coverage_100": (
             python,
