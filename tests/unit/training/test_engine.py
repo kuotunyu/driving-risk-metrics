@@ -647,3 +647,28 @@ def test_every_committed_run_configuration_is_valid() -> None:
         models.add(config.model)
 
     assert models == set(APPROVED_MODEL_NAMES)
+
+
+def test_every_committed_config_runs_the_effective_batch_in_one_pass() -> None:
+    """Micro batching is a memory workaround, and the protocol never mentions it.
+
+    A single pass over 16 means batch norm normalizes over exactly the
+    `effective_batch_size` the protocol pins, instead of over four separate
+    groups of four. That changes the trained model, so it is pinned here rather
+    than left to whatever value a configuration file happens to carry.
+
+    Measured on an A100: 33.2 GiB of 39.5, and 1.11x faster than micro batch 4.
+    Speed is the lesser reason. If a formal run ever hits an out-of-memory error,
+    the fallback is micro batch 8 for all nine runs, never a mixture.
+    """
+
+    from drivemetrics.protocol.config import load_protocol
+    from drivemetrics.training.engine import load_run_config
+
+    repo_root = Path(__file__).resolve().parents[3]
+    for path in sorted((repo_root / "configs").glob("run_*.yaml")):
+        config, _ = load_run_config(path)
+        protocol = load_protocol(path.parent / config.protocol_path).protocol
+        assert config.micro_batch_size == protocol.training.effective_batch_size, (
+            f"{path.name} accumulates instead of running the effective batch in one pass"
+        )
