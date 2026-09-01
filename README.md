@@ -46,16 +46,21 @@ uv run driving-risk --help
 
 ## 指令
 
-五個指令都只驗證參數並呼叫套件服務，成功時把一個 JSON 狀態物件印到 stdout，
-失敗時把診斷訊息印到 stderr 並以非零狀態結束。
+七個指令都只驗證參數並呼叫套件服務，成功時把一個 JSON 狀態物件印到 stdout，
+失敗時把診斷訊息印到 stderr 並以非零狀態結束。依正式流程的順序：
 
 ```powershell
 driving-risk data preflight --config configs/protocols/bdd100k_semseg_v1.yaml --data-root PATH --output PATH
-driving-risk train --config configs/run_fcn_resnet50.yaml --manifest PATH --data-root PATH --seed 17 --output-dir PATH
-driving-risk evaluate --config configs/protocols/bdd100k_semseg_v1.yaml --manifest PATH --checkpoint PATH --data-root PATH --output-dir PATH
+driving-risk train --config configs/run_segformer_b2.yaml --manifest PATH --data-root PATH --seed 17 --output-dir PATH
+driving-risk calibrate --config configs/protocols/bdd100k_semseg_v1.yaml --manifest PATH --checkpoint PATH --data-root PATH --output-dir PATH
+driving-risk evaluate --config configs/protocols/bdd100k_semseg_v1.yaml --manifest PATH --checkpoint PATH --data-root PATH --output-dir PATH [--temperature PATH]
+driving-risk aggregate --index PATH --output-dir PATH
 driving-risk audit-claims --claims docs/claims.yaml
 driving-risk report --claims docs/claims.yaml --artifacts-dir PATH --output-dir site
 ```
+
+核准的三個模型：`segformer_b2`、`upernet_convnextv2_tiny`、`upernet_dinov2_small`，
+各有一份 `configs/run_<model>.yaml`。
 
 `train` 與 `evaluate` 需要 `DRIVEMETRICS_RUN_PROVENANCE` 環境變數，內容是含
 `commit`、`lock_sha256` 與 `hardware` 的 JSON。這個專案不猜測執行環境，缺少就
