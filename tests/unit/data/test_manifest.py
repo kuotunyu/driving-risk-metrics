@@ -311,3 +311,74 @@ def test_a_tampered_manifest_document_fails_its_own_hash(tmp_path: Path) -> None
 
     with pytest.raises(ValueError, match="SHA-256 mismatch"):
         module.load_manifest(path)
+
+
+def test_a_saved_manifest_reloads_as_the_same_frozen_cohort(tmp_path: Path) -> None:
+    """A writer and reader that disagree would make every frozen cohort unverifiable."""
+
+    module = load_manifest_module()
+    image_root, label_root = materialize_fixture(tmp_path)
+    original = module.build_paired_manifest(image_root, label_root, "train")
+    path = tmp_path / "saved.json"
+
+    module.save_manifest(original, path)
+
+    assert module.load_manifest(path) == original
+    assert path.read_text(encoding="utf-8").endswith("\n")
+
+
+def test_saving_over_an_existing_manifest_fails_closed(tmp_path: Path) -> None:
+    """Silently replacing a frozen manifest would destroy the provenance of a locked run."""
+
+    module = load_manifest_module()
+    image_root, label_root = materialize_fixture(tmp_path)
+    original = module.build_paired_manifest(image_root, label_root, "train")
+    path = tmp_path / "saved.json"
+    module.save_manifest(original, path)
+
+    with pytest.raises(FileExistsError, match="already exists"):
+        module.save_manifest(original, path)
+
+
+def test_a_subset_keeps_each_sample_paired_with_its_own_file_hashes(tmp_path: Path) -> None:
+    """Misaligned image and label hashes would silently validate the wrong file pair."""
+
+    module = load_manifest_module()
+    image_root, label_root = materialize_fixture(tmp_path)
+    original = module.build_paired_manifest(image_root, label_root, "train")
+    chosen = (original.sample_ids[1], original.sample_ids[0])
+
+    subset = module.subset_manifest(original, chosen, "calibration")
+
+    assert subset.split_name == "calibration"
+    assert subset.sample_ids == chosen
+    for position, sample_id in enumerate(chosen):
+        source = original.sample_ids.index(sample_id)
+        assert subset.relative_image_paths[position] == original.relative_image_paths[source]
+        assert subset.relative_label_paths[position] == original.relative_label_paths[source]
+        assert subset.file_sha256[2 * position] == original.file_sha256[2 * source]
+        assert subset.file_sha256[2 * position + 1] == original.file_sha256[2 * source + 1]
+    assert subset.manifest_sha256 != original.manifest_sha256
+
+
+def test_a_subset_of_an_unknown_sample_fails_closed(tmp_path: Path) -> None:
+    """Inventing a sample would produce a cohort no file on disk can support."""
+
+    module = load_manifest_module()
+    image_root, label_root = materialize_fixture(tmp_path)
+    original = module.build_paired_manifest(image_root, label_root, "train")
+
+    with pytest.raises(ValueError, match="not present"):
+        module.subset_manifest(original, ("missing-sample",), "calibration")
+
+
+def test_a_subset_with_duplicate_samples_fails_closed(tmp_path: Path) -> None:
+    """A duplicated sample would double its weight in every aggregated metric."""
+
+    module = load_manifest_module()
+    image_root, label_root = materialize_fixture(tmp_path)
+    original = module.build_paired_manifest(image_root, label_root, "train")
+    duplicated = (original.sample_ids[0], original.sample_ids[0])
+
+    with pytest.raises(ValueError, match="duplicate"):
+        module.subset_manifest(original, duplicated, "calibration")
