@@ -625,3 +625,25 @@ def test_every_sample_carries_a_deterministic_augmentation_draw(
     assert len(draws) == 32
     assert all(0.0 <= draw < 1.0 for draw in draws)
     assert len(set(draws)) > 1
+
+
+def test_every_committed_run_configuration_is_valid() -> None:
+    """A broken run configuration would only be discovered on a paid GPU."""
+
+    from drivemetrics.models import APPROVED_MODEL_NAMES
+    from drivemetrics.protocol.config import load_protocol
+    from drivemetrics.training.engine import load_run_config
+
+    repo_root = Path(__file__).resolve().parents[3]
+    committed = sorted((repo_root / "configs").glob("run_*.yaml"))
+    assert len(committed) == len(APPROVED_MODEL_NAMES)
+
+    models = set()
+    for path in committed:
+        config, digest = load_run_config(path)
+        assert len(digest) == 64
+        protocol = load_protocol(path.parent / config.protocol_path).protocol
+        assert protocol.training.effective_batch_size % config.micro_batch_size == 0
+        models.add(config.model)
+
+    assert models == set(APPROVED_MODEL_NAMES)

@@ -8,6 +8,7 @@ the fakes; a tiny real module keeps the evidence honest and the suite fast.
 from __future__ import annotations
 
 import dataclasses
+import json
 import shutil
 from pathlib import Path
 from types import ModuleType
@@ -307,3 +308,42 @@ def test_a_parameter_without_a_gradient_does_not_stop_the_update(tmp_path: Path)
 
     assert adapter.module.unused.grad is None
     assert not torch.equal(adapter.module.conv.weight.detach(), before)
+
+
+def test_the_backend_factory_resolves_the_protocol_and_manifest(tmp_path: Path) -> None:
+    """The command line must not resolve protocols itself, so the factory owns that step."""
+
+    import yaml
+
+    backends = load_backends_module()
+    data_root, manifest, _ = build_cohort(tmp_path, ("t1",))
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(dataclasses.asdict(manifest), sort_keys=True),
+        encoding="utf-8",
+    )
+    protocol_dir = tmp_path / "configs" / "protocols"
+    protocol_dir.mkdir(parents=True)
+    shutil.copyfile(PROTOCOL_SOURCE, protocol_dir / "bdd100k_semseg_v1.yaml")
+    config_path = tmp_path / "configs" / "run.yaml"
+    config_path.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": "drivemetrics-training-run/v1",
+                "protocol_path": "protocols/bdd100k_semseg_v1.yaml",
+                "model": "fcn_resnet50",
+                "micro_batch_size": 4,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    backend = backends.build_training_backend(
+        config_path,
+        manifest_path,
+        data_root,
+        pretrained=False,
+    )
+
+    assert isinstance(backend, backends.TorchTrainingBackend)
+    assert backend.load_batch((("t1", 1.0),)).images.shape == (1, 3, 512, 1024)

@@ -19,11 +19,15 @@ import numpy as np
 from PIL import Image
 
 from drivemetrics.data.bdd100k import NUM_TRAIN_CLASSES
-from drivemetrics.data.manifest import DatasetManifest
+from drivemetrics.data.manifest import DatasetManifest, load_manifest
 from drivemetrics.data.transforms import prepare_sample
 from drivemetrics.models.adapters import SegmentationAdapter
 from drivemetrics.models.registry import ModelName, create_model
-from drivemetrics.protocol.config import BDD100KSemanticProtocolV1, split_paths
+from drivemetrics.protocol.config import (
+    BDD100KSemanticProtocolV1,
+    load_protocol,
+    split_paths,
+)
 from drivemetrics.training.losses import IGNORE_INDEX
 
 
@@ -132,13 +136,19 @@ class TorchTrainingBackend:
 
     def run_step(
         self,
-        state: TorchTrainingState,
-        batch: Sequence[tuple[str, float]],
+        state: Any,
+        batch: Any,
         learning_rate: float,
         *,
         apply_update: bool,
     ) -> float:
-        """Accumulate one micro batch and, when the window closes, update once."""
+        """Accumulate one micro batch and, when the window closes, update once.
+
+        ``state`` is a :class:`TorchTrainingState` and ``batch`` is a sequence of
+        ``(sample_id, flip_draw)`` pairs. Both are annotated loosely because the
+        engine treats them as opaque, which is what the injected-backend
+        contract requires.
+        """
 
         import torch
 
@@ -176,7 +186,7 @@ class TorchTrainingBackend:
 
     def save_checkpoint(
         self,
-        state: TorchTrainingState,
+        state: Any,
         path: Path,
         metadata: Mapping[str, object],
     ) -> str:
@@ -200,3 +210,30 @@ class TorchTrainingBackend:
         if payload["metadata"] != dict(expected_metadata):
             raise ValueError("checkpoint metadata does not match the expected run")
         return payload
+
+
+def build_training_backend(
+    config_path: Path,
+    manifest_path: Path,
+    data_root: Path,
+    *,
+    device: str = "cpu",
+    pretrained: bool = True,
+) -> TorchTrainingBackend:
+    """Construct the Torch backend described by one training run configuration.
+
+    The command line never resolves protocols or manifests itself; it calls this
+    factory so the same run configuration drives both the engine and its backend.
+    """
+
+    from drivemetrics.training.engine import load_run_config
+
+    run_config, _ = load_run_config(config_path)
+    protocol = load_protocol(config_path.parent / run_config.protocol_path).protocol
+    return TorchTrainingBackend(
+        data_root,
+        load_manifest(manifest_path),
+        protocol,
+        device=device,
+        pretrained=pretrained,
+    )

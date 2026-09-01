@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>driving-risk-metrics evidence report</title>
+</head>
+<body>
+<h1>Safety-aware segmentation evidence</h1>
+
+<section id="provenance">
+<h2>What these numbers describe</h2>
+<dl>
+<dt>Cohort</dt><dd>{{ provenance.cohort }}</dd>
+<dt>Evaluated samples</dt><dd>{{ provenance.sample_count }}</dd>
+<dt>Seeds per model</dt><dd>{{ provenance.seed_count }}</dd>
+<dt>Interval method</dt><dd>{{ provenance.interval_method }}</dd>
+<dt>Protocol hash</dt><dd><code>{{ provenance.protocol_hash }}</code></dd>
+<dt>Dataset manifest hash</dt><dd><code>{{ provenance.dataset_manifest_hash }}</code></dd>
+</dl>
+</section>
+
+<section id="claims">
+<h2>Verified claims</h2>
+<table>
+<thead><tr><th>Claim</th><th>Evidence type</th><th>Artifact</th></tr></thead>
+<tbody>
+{% for claim in claims %}
+<tr>
+<td>{{ claim.text }}</td>
+<td>{{ claim.evidence_type }}</td>
+<td><code>{{ claim.artifact_path }}{{ claim.metric_path }}</code></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</section>
+
+<section id="figures">
+<h2>Results</h2>
+{% for figure in figures %}
+<figure>
+<figcaption>
+{{ figure.name }} on the {{ provenance.cohort }} cohort, {{ provenance.sample_count }} samples,
+{{ provenance.seed_count }} seeds per model, intervals from {{ provenance.interval_method }}.
+</figcaption>
+{{ figure.html | safe }}
+</figure>
+{% endfor %}
+</section>
+
+<section id="rankings">
+<h2>Ranking comparison</h2>
+<p>
+Each safety metric below is compared against the baseline metric
+<code>{{ rankings.baseline_metric }}</code>. A reversal is an observation about this
+cohort, not a success criterion.
+</p>
+<table>
+<thead><tr><th>Metric</th><th>Baseline order</th><th>Comparison order</th><th>Reversal observed</th></tr></thead>
+<tbody>
+{% for comparison in rankings.comparisons %}
+<tr>
+<td>{{ comparison.metric_name }}</td>
+<td>{{ comparison.baseline_order | join(", ") }}</td>
+<td>{{ comparison.comparison_order | join(", ") }}</td>
+<td>{{ comparison.reversal_observed }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</section>
+
+<section id="limitations">
+<h2>Limitations</h2>
+<ul>
+{% for limitation in limitations %}
+<li>{{ limitation }}</li>
+{% endfor %}
+</ul>
+</section>
+</body>
+</html>

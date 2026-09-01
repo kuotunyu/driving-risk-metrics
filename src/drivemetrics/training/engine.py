@@ -114,7 +114,7 @@ def _utc_now() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _load_run_config(path: Path) -> tuple[TrainingRunConfigV1, str]:
+def load_run_config(path: Path) -> tuple[TrainingRunConfigV1, str]:
     document = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(document, dict):
         raise TypeError("training run configuration must be a mapping")
@@ -182,7 +182,7 @@ def train(
     if isinstance(seed, bool) or not isinstance(seed, int) or seed not in APPROVED_SEEDS:
         raise ValueError(f"seed must be one of the approved seeds {APPROVED_SEEDS}")
     provenance = load_run_provenance()
-    run_config, config_sha256 = _load_run_config(config_path)
+    run_config, config_sha256 = load_run_config(config_path)
     loaded_protocol = load_protocol(config_path.parent / run_config.protocol_path)
     protocol = loaded_protocol.protocol
 

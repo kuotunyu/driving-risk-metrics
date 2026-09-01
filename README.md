@@ -38,3 +38,20 @@ uv run driving-risk --help
 ```
 
 如果驗證失敗，先處理第一個失敗項目，不要跳過或降低門檻。
+
+## 指令
+
+五個指令都只驗證參數並呼叫套件服務，成功時把一個 JSON 狀態物件印到 stdout，
+失敗時把診斷訊息印到 stderr 並以非零狀態結束。
+
+```powershell
+driving-risk data preflight --config configs/protocols/bdd100k_semseg_v1.yaml --data-root PATH --output PATH
+driving-risk train --config configs/run_fcn_resnet50.yaml --manifest PATH --data-root PATH --seed 17 --output-dir PATH
+driving-risk evaluate --config configs/protocols/bdd100k_semseg_v1.yaml --manifest PATH --checkpoint PATH --data-root PATH --output-dir PATH
+driving-risk audit-claims --claims docs/claims.yaml
+driving-risk report --claims docs/claims.yaml --artifacts-dir PATH --output-dir site
+```
+
+`train` 與 `evaluate` 需要 `DRIVEMETRICS_RUN_PROVENANCE` 環境變數，內容是含
+`commit`、`lock_sha256` 與 `hardware` 的 JSON。這個專案不猜測執行環境，缺少就
+直接失敗。
