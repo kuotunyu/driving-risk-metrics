@@ -6,7 +6,7 @@ this page explains what each constant is for and which choices are not
 negotiable once a run has started.
 
 - Schema: `bdd100k-semseg-protocol/v1`
-- Protocol SHA-256: `5a386b2b531481ca23f20b12f780d092a33a1d0105d5d34ace88ac2089a019cf`
+- Protocol SHA-256: `b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f`
 
 The hash is over the validated semantic content, not the file's formatting, so
 reindenting the YAML does not change it. Every run record carries this hash, and
@@ -56,12 +56,30 @@ choice removes the leak.
 
 | Model | Optimizer | Learning rate | Other |
 | --- | --- | --- | --- |
-| `fcn_resnet50` | SGD | 0.01 | momentum 0.9, weight decay 1e-4 |
-| `deeplabv3_resnet50` | SGD | 0.01 | momentum 0.9, weight decay 1e-4 |
-| `segformer_b0` | AdamW | 6e-5 | weight decay 0.01 |
+| `segformer_b2` | AdamW | 6e-5 | weight decay 0.01 |
+| `upernet_convnextv2_tiny` | AdamW | 1e-4 | weight decay 0.05 |
+| `upernet_dinov2_small` | AdamW | 1e-4 | weight decay 0.05 |
 
-Nine formal runs: three architectures × three seeds. Every reported number is a
-mean over seeds with an interval, never a single seed.
+Nine formal runs: three architectures times three seeds. Every reported number
+is a mean over seeds with an interval, never a single seed.
+
+The three are contemporary and each carries a different pretraining paradigm,
+because pretraining strongly shapes how confident a model is and half these
+metrics measure confidence. `segformer_b2` is supervised.
+`upernet_convnextv2_tiny` is pretrained by fully convolutional masked
+autoencoding. `upernet_dinov2_small` uses a self-supervised foundation-model
+backbone. The two UPerNet variants deliberately share a decoder, which holds
+the decoder fixed and isolates the backbone, while SegFormer varies both.
+
+Every backbone starts from classification or self-supervised weights only,
+never from a checkpoint already trained for segmentation. One model starting
+from segmentation supervision would carry a head start the others never had,
+and every ranking below would be measuring that instead.
+
+A mask-classification model such as Mask2Former is deliberately excluded. It
+can be post-processed into per-pixel probabilities, but this protocol
+calibrates on logits, and probabilities entering that stage would be silently
+miscalibrated rather than refused.
 
 ## Calibration
 

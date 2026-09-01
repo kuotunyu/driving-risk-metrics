@@ -123,13 +123,13 @@ def build_workspace(tmp_path: Path) -> dict[str, Path]:
     protocol_dir = tmp_path / "configs" / "protocols"
     protocol_dir.mkdir(parents=True)
     shutil.copyfile(PROTOCOL_SOURCE, protocol_dir / "bdd100k_semseg_v1.yaml")
-    run_config = tmp_path / "configs" / "run_fcn_resnet50.yaml"
+    run_config = tmp_path / "configs" / "run_upernet_convnextv2_tiny.yaml"
     run_config.write_text(
         yaml.safe_dump(
             {
                 "schema_version": "drivemetrics-training-run/v1",
                 "protocol_path": "protocols/bdd100k_semseg_v1.yaml",
-                "model": "fcn_resnet50",
+                "model": "upernet_convnextv2_tiny",
                 "micro_batch_size": 4,
             }
         ),
@@ -157,7 +157,7 @@ def write_analysis_artifacts(tmp_path: Path, protocol_hash: str, manifest_hash: 
                 "sample_count": 2,
                 "seed_count": 3,
                 "interval_method": "two-stage paired bootstrap, 5000 resamples, seed 20260831",
-                "metrics": {"fcn_resnet50": {"miou": 0.5}},
+                "metrics": {"upernet_convnextv2_tiny": {"miou": 0.5}},
             },
             sort_keys=True,
         ),
@@ -168,7 +168,7 @@ def write_analysis_artifacts(tmp_path: Path, protocol_hash: str, manifest_hash: 
             {
                 **common,
                 "intervals": {
-                    "fcn_resnet50 (miou)": {
+                    "upernet_convnextv2_tiny (miou)": {
                         "estimate": 0.5,
                         "low": 0.4,
                         "high": 0.6,
@@ -221,7 +221,7 @@ def write_claims(tmp_path: Path, protocol_hash: str, manifest_hash: str) -> Path
                         "protocol_hash": protocol_hash,
                         "dataset_manifest_hash": manifest_hash,
                         "artifact_path": "artifacts/metrics.json",
-                        "metric_path": "/metrics/fcn_resnet50/miou",
+                        "metric_path": "/metrics/upernet_convnextv2_tiny/miou",
                         "status": "verified",
                     }
                 ],

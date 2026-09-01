@@ -126,8 +126,8 @@ def test_torchvision_dict_output_is_unwrapped_and_returned_as_float64(
     adapters = load_adapters_module()
     torch = install_fake_torch(monkeypatch)
     logits = np.zeros((2, 19, 512, 1024), dtype=np.float32)
-    module = FakeModule(torch, {"out": FakeTensor(logits), "aux": FakeTensor(logits)})
-    adapter = adapters.SegmentationAdapter(module=module, output_kind="torchvision_dict")
+    module = FakeModule(torch, SimpleNamespace(logits=FakeTensor(logits), aux=FakeTensor(logits)))
+    adapter = adapters.SegmentationAdapter(module=module)
 
     result = adapter.logits(make_image())
 
@@ -145,7 +145,7 @@ def test_segformer_quarter_resolution_logits_are_upsampled_to_the_input_size(
     torch = install_fake_torch(monkeypatch)
     quarter = np.zeros((2, 19, 128, 256), dtype=np.float32)
     module = FakeModule(torch, SimpleNamespace(logits=FakeTensor(quarter)))
-    adapter = adapters.SegmentationAdapter(module=module, output_kind="segformer_logits")
+    adapter = adapters.SegmentationAdapter(module=module)
 
     result = adapter.logits(make_image())
 
@@ -165,8 +165,10 @@ def test_inference_runs_inside_a_no_gradient_scope(monkeypatch: pytest.MonkeyPat
 
     adapters = load_adapters_module()
     torch = install_fake_torch(monkeypatch)
-    module = FakeModule(torch, {"out": FakeTensor(np.zeros((1, 19, 8, 8), dtype=np.float32))})
-    adapter = adapters.SegmentationAdapter(module=module, output_kind="torchvision_dict")
+    module = FakeModule(
+        torch, SimpleNamespace(logits=FakeTensor(np.zeros((1, 19, 8, 8), dtype=np.float32)))
+    )
+    adapter = adapters.SegmentationAdapter(module=module)
 
     adapter.logits(np.zeros((1, 3, 8, 8), dtype=np.float32))
 
@@ -185,26 +187,30 @@ def test_inference_switches_the_backend_to_evaluation_mode(
 
     adapters = load_adapters_module()
     torch = install_fake_torch(monkeypatch)
-    module = FakeModule(torch, {"out": FakeTensor(np.zeros((1, 2, 4, 4), dtype=np.float32))})
-    adapter = adapters.SegmentationAdapter(module=module, output_kind="torchvision_dict")
+    module = FakeModule(
+        torch, SimpleNamespace(logits=FakeTensor(np.zeros((1, 2, 4, 4), dtype=np.float32)))
+    )
+    adapter = adapters.SegmentationAdapter(module=module)
 
     adapter.logits(np.zeros((1, 3, 4, 4), dtype=np.float32))
 
     assert module.modes_at_call == [False]
 
 
-def test_an_unknown_output_kind_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Guessing the output layout would silently score the wrong tensor."""
+def test_a_backend_without_logits_fails_closed(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Calibration is defined on logits, so probabilities must be refused, not scaled.
+
+    A mask-classification head can be post-processed into per-pixel
+    probabilities, and those would flow through this adapter looking correct
+    while making every temperature and every Brier score meaningless.
+    """
 
     adapters = load_adapters_module()
     torch = install_fake_torch(monkeypatch)
-    module = FakeModule(torch, {"out": FakeTensor(np.zeros((1, 2, 4, 4), dtype=np.float32))})
-    adapter = adapters.SegmentationAdapter(
-        module=module,
-        output_kind="mystery_head",  # type: ignore[arg-type]
-    )
+    payload = {"probabilities": FakeTensor(np.zeros((1, 2, 4, 4), dtype=np.float32))}
+    adapter = adapters.SegmentationAdapter(module=FakeModule(torch, payload))
 
-    with pytest.raises(ValueError, match="output kind"):
+    with pytest.raises(ValueError, match="logits"):
         adapter.logits(np.zeros((1, 3, 4, 4), dtype=np.float32))
 
 
@@ -213,8 +219,10 @@ def test_logits_rejects_a_non_float32_image(monkeypatch: pytest.MonkeyPatch) -> 
 
     adapters = load_adapters_module()
     torch = install_fake_torch(monkeypatch)
-    module = FakeModule(torch, {"out": FakeTensor(np.zeros((1, 2, 4, 4), dtype=np.float32))})
-    adapter = adapters.SegmentationAdapter(module=module, output_kind="torchvision_dict")
+    module = FakeModule(
+        torch, SimpleNamespace(logits=FakeTensor(np.zeros((1, 2, 4, 4), dtype=np.float32)))
+    )
+    adapter = adapters.SegmentationAdapter(module=module)
 
     with pytest.raises(ValueError, match="float32"):
         adapter.logits(np.zeros((1, 3, 4, 4), dtype=np.float64))
@@ -229,8 +237,10 @@ def test_logits_rejects_an_image_that_is_not_batched_nchw(
 
     adapters = load_adapters_module()
     torch = install_fake_torch(monkeypatch)
-    module = FakeModule(torch, {"out": FakeTensor(np.zeros((1, 2, 4, 4), dtype=np.float32))})
-    adapter = adapters.SegmentationAdapter(module=module, output_kind="torchvision_dict")
+    module = FakeModule(
+        torch, SimpleNamespace(logits=FakeTensor(np.zeros((1, 2, 4, 4), dtype=np.float32)))
+    )
+    adapter = adapters.SegmentationAdapter(module=module)
 
     with pytest.raises(ValueError, match="four-dimensional"):
         adapter.logits(np.zeros(shape, dtype=np.float32))
@@ -242,7 +252,7 @@ def test_trainable_parameters_delegates_to_the_backend_module() -> None:
     adapters = load_adapters_module()
     sentinel = object()
     module = SimpleNamespace(parameters=lambda: sentinel)
-    adapter = adapters.SegmentationAdapter(module=module, output_kind="torchvision_dict")
+    adapter = adapters.SegmentationAdapter(module=module)
 
     assert adapter.trainable_parameters() is sentinel
 
@@ -252,17 +262,9 @@ def test_the_output_extraction_is_reusable_without_running_inference() -> None:
 
     adapters = load_adapters_module()
     logits = np.zeros((1, 2, 4, 4), dtype=np.float32)
-    torchvision_adapter = adapters.SegmentationAdapter(
-        module=None,
-        output_kind="torchvision_dict",
-    )
-    segformer_adapter = adapters.SegmentationAdapter(
-        module=None,
-        output_kind="segformer_logits",
-    )
+    adapter = adapters.SegmentationAdapter(module=None)
 
-    assert torchvision_adapter.extract_logits({"out": logits}) is logits
-    assert segformer_adapter.extract_logits(SimpleNamespace(logits=logits)) is logits
+    assert adapter.extract_logits(SimpleNamespace(logits=logits)) is logits
 
 
 def test_inference_moves_the_input_to_the_module_device() -> None:
@@ -289,14 +291,14 @@ def test_inference_moves_the_input_to_the_module_device() -> None:
         def eval(self) -> None:
             return None
 
-        def __call__(self, image: Any) -> dict[str, Any]:
+        def __call__(self, image: Any) -> SimpleNamespace:
             self.seen = image.device
             # Return on the CPU so the rest of the path can complete and the
             # assertion below is about the input, not about meta arithmetic.
-            return {"out": torch.zeros((1, 2, 4, 4), dtype=torch.float32)}
+            return SimpleNamespace(logits=torch.zeros((1, 2, 4, 4), dtype=torch.float32))
 
     probe = DeviceProbe()
-    adapter = adapters.SegmentationAdapter(module=probe, output_kind="torchvision_dict")
+    adapter = adapters.SegmentationAdapter(module=probe)
 
     adapter.logits(np.zeros((1, 3, 4, 4), dtype=np.float32))
 
@@ -317,10 +319,10 @@ def test_a_module_without_parameters_still_runs_inference() -> None:
         def eval(self) -> None:
             return None
 
-        def __call__(self, image: Any) -> dict[str, Any]:
-            return {"out": torch.zeros((1, 2, 4, 4), dtype=torch.float32)}
+        def __call__(self, image: Any) -> SimpleNamespace:
+            return SimpleNamespace(logits=torch.zeros((1, 2, 4, 4), dtype=torch.float32))
 
-    adapter = adapters.SegmentationAdapter(module=Parameterless(), output_kind="torchvision_dict")
+    adapter = adapters.SegmentationAdapter(module=Parameterless())
 
     result = adapter.logits(np.zeros((1, 3, 4, 4), dtype=np.float32))
 

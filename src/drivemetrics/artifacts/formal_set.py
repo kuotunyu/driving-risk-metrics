@@ -18,9 +18,9 @@ from typing import Any
 
 SCHEMA_VERSION = "drivemetrics-formal-set/v1"
 APPROVED_MODELS: tuple[str, ...] = (
-    "fcn_resnet50",
-    "deeplabv3_resnet50",
-    "segformer_b0",
+    "segformer_b2",
+    "upernet_convnextv2_tiny",
+    "upernet_dinov2_small",
 )
 APPROVED_SEEDS: tuple[int, ...] = (17, 42, 73)
 REQUIRED_STATUS = "succeeded"

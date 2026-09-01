@@ -106,7 +106,7 @@ def build_workspace(tmp_path: Path) -> tuple[Path, Path]:
             {
                 "schema_version": "drivemetrics-training-run/v1",
                 "protocol_path": "protocol.yaml",
-                "model": "fcn_resnet50",
+                "model": "upernet_convnextv2_tiny",
                 "micro_batch_size": 4,
             }
         ),
@@ -224,6 +224,6 @@ def test_the_checkpoint_reloads_only_against_its_own_metadata(
 
     state = backend.load_checkpoint(result.checkpoint_path, metadata)
 
-    assert state["model"] == "fcn_resnet50"
+    assert state["model"] == "upernet_convnextv2_tiny"
     with pytest.raises(ValueError, match="metadata"):
         backend.load_checkpoint(result.checkpoint_path, {**metadata, "seed": 42})

@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-MODELS = ("fcn_resnet50", "deeplabv3_resnet50", "segformer_b0")
+MODELS = ("upernet_convnextv2_tiny", "upernet_dinov2_small", "segformer_b2")
 SEEDS = (17, 42, 73)
 PROTOCOL = "a" * 64
 MANIFEST = "b" * 64
@@ -76,12 +76,12 @@ def test_a_missing_model_and_seed_pair_is_rejected() -> None:
     incomplete["runs"] = [
         entry
         for entry in incomplete["runs"]
-        if not (entry["model"] == "segformer_b0" and entry["seed"] == 73)
+        if not (entry["model"] == "segformer_b2" and entry["seed"] == 73)
     ]
 
     found = violations(incomplete)
 
-    assert any("segformer_b0" in message and "73" in message for message in found)
+    assert any("segformer_b2" in message and "73" in message for message in found)
 
 
 def test_an_unapproved_seed_is_rejected() -> None:
@@ -97,7 +97,7 @@ def test_a_duplicated_run_is_rejected() -> None:
     """The same run counted twice weights one seed above the others."""
 
     duplicated = index()
-    duplicated["runs"].append(run_entry("fcn_resnet50", 17))
+    duplicated["runs"].append(run_entry("upernet_convnextv2_tiny", 17))
 
     assert any("duplicate" in message.lower() for message in violations(duplicated))
 

@@ -20,7 +20,7 @@ metric-sufficient artifact writing, and real content hashing.
 
 | Stage | Real or faked |
 | --- | --- |
-| Model construction (`fcn_resnet50`, 19 classes) | Real, `pretrained=False` |
+| Model construction (19 classes) | Real, `pretrained=False` |
 | Optimizer steps at effective batch 16 | Real, SGD with the pinned settings |
 | Checkpoint save and restore | Real `torch.save` and `torch.load` |
 | Evaluation and per-image artifacts | Real, through `driving-risk evaluate` |
@@ -99,7 +99,8 @@ than after.
 
 ## GPU rehearsal, measured
 
-Run on a Colab A100 at `2026-09-01T14:39Z`, on commit `60741c3`, against the
+Run on a Colab A100 at `2026-09-01T14:39Z`, on commit `60741c3`, under the
+superseded protocol whose three architectures were later replaced, against the
 uploaded copy of the cohort whose four manifest hashes were verified to match
 the frozen originals before the measurement started.
 

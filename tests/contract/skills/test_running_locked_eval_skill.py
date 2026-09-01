@@ -63,7 +63,7 @@ def evaluation_record(manifest: DatasetManifest, protocol_hash: str, **overrides
 
     document: dict[str, Any] = {
         "schema_version": "driving-risk-run/v1",
-        "run_id": "fcn_resnet50-seed-17-eval",
+        "run_id": "upernet_convnextv2_tiny-seed-17-eval",
         "commit": COMMIT,
         "config_sha256": CONFIG_HASH,
         "protocol_sha256": protocol_hash,
@@ -308,7 +308,7 @@ def test_a_verified_claim_about_the_locked_cohort_must_be_measured(
                 "protocol_hash": workspace["protocol_hash"],
                 "dataset_manifest_hash": workspace["cohort"].manifest_sha256,
                 "artifact_path": "artifacts/metrics.json",
-                "metric_path": "/metrics/fcn_resnet50/miou",
+                "metric_path": "/metrics/upernet_convnextv2_tiny/miou",
                 "status": "verified",
             }
         ],
@@ -333,7 +333,7 @@ def test_a_claim_citing_another_protocol_is_rejected(workspace: dict[str, Any]) 
                 "protocol_hash": "9" * 64,
                 "dataset_manifest_hash": workspace["cohort"].manifest_sha256,
                 "artifact_path": "artifacts/metrics.json",
-                "metric_path": "/metrics/fcn_resnet50/miou",
+                "metric_path": "/metrics/upernet_convnextv2_tiny/miou",
                 "status": "verified",
             }
         ],
@@ -358,7 +358,7 @@ def test_a_measured_verified_claim_is_accepted(workspace: dict[str, Any]) -> Non
                 "protocol_hash": workspace["protocol_hash"],
                 "dataset_manifest_hash": workspace["cohort"].manifest_sha256,
                 "artifact_path": "artifacts/metrics.json",
-                "metric_path": "/metrics/fcn_resnet50/miou",
+                "metric_path": "/metrics/upernet_convnextv2_tiny/miou",
                 "status": "verified",
             }
         ],

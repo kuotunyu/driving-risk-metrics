@@ -11,22 +11,20 @@ TOTAL_STEPS = 30000
 DECAY_POWER = 0.9
 
 _OPTIMIZER_TABLE: dict[str, dict[str, float | str]] = {
-    "fcn_resnet50": {
-        "optimizer": "sgd",
-        "learning_rate": 0.01,
-        "momentum": 0.9,
-        "weight_decay": 0.0001,
-    },
-    "deeplabv3_resnet50": {
-        "optimizer": "sgd",
-        "learning_rate": 0.01,
-        "momentum": 0.9,
-        "weight_decay": 0.0001,
-    },
-    "segformer_b0": {
+    "segformer_b2": {
         "optimizer": "adamw",
         "learning_rate": 0.00006,
         "weight_decay": 0.01,
+    },
+    "upernet_convnextv2_tiny": {
+        "optimizer": "adamw",
+        "learning_rate": 0.0001,
+        "weight_decay": 0.05,
+    },
+    "upernet_dinov2_small": {
+        "optimizer": "adamw",
+        "learning_rate": 0.0001,
+        "weight_decay": 0.05,
     },
 }
 
