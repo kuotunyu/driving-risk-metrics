@@ -86,13 +86,9 @@ than after.
 
 ## What was not done
 
-- **No GPU rehearsal.** The 20-step single-model GPU run is the other half of
-  this task and has not been executed. It requires current explicit human
-  approval for the shared local RTX 4090, which has not been given. Until it
-  runs, there is **no measured GPU throughput**, and the wall-clock estimate for
-  a formal 30,000-step run remains an estimate. CPU seconds per image do not
-  extrapolate to GPU seconds per image by any reliable constant, so no such
-  figure is offered here.
+- **No local GPU was used.** The shared RTX 4090 was never touched. The GPU
+  rehearsal was run on a Colab A100 instead, because the formal runs will be on
+  A100 and that is the only number worth having.
 - **No CamVid smoke.** The plan permits it only after its public licence and
   source are documented. The only local copy sits under a reference directory
   whose provenance cannot be established, so it is deliberately skipped.
@@ -100,6 +96,36 @@ than after.
 - **No convergence, no accuracy, no comparison.** Two optimizer steps on random
   weights over four synthetic images. Any number derived from this rehearsal
   describes the plumbing, never a model.
+
+## GPU rehearsal, measured
+
+Run on a Colab A100 at `2026-09-01T14:39Z`, on commit `60741c3`, against the
+uploaded copy of the cohort whose four manifest hashes were verified to match
+the frozen originals before the measurement started.
+
+| Quantity | Measured |
+| --- | --- |
+| Hardware | NVIDIA A100-SXM4-40GB, 40,960 MiB |
+| Stack | torch 2.13.0+cu130, CUDA 13.0 |
+| Per step | **1.309 s** at effective batch 16 |
+| Peak GPU memory | **8.7 GiB** allocated, of 40 GiB available |
+| One formal run | **10.9 hours** at 30,000 steps |
+| Nine formal runs | **98.1 hours** |
+
+One untimed warm-up step preceded the twenty timed steps, so cuDNN autotuning
+and allocator warm-up are excluded. No checkpoint and no artifact were written.
+
+**This is three to four times the 2.5-to-3.5-hour figure the plan had carried
+since the start, which was never measured.** Two consequences follow directly
+and are recorded in the private handoff: the no-resume-checkpointing decision
+was explicitly conditional on a run staying under roughly 4.5 hours and must now
+be revisited, and 98 hours is a scale that has to be authorized on the measured
+number rather than the estimate.
+
+Two observations for whoever tunes this. Peak memory is 8.7 GiB of 40, so the
+micro batch of 4 leaves most of the card idle; and the backend sets
+`cudnn.deterministic = True` with `benchmark = False`, which buys exact
+reproducibility at a real and deliberate cost in speed. Neither is a defect.
 
 ## Reproduction
 
