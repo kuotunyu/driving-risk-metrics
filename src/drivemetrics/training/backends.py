@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import random
 from collections.abc import Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -65,6 +66,7 @@ class TorchTrainingBackend:
         *,
         device: str = "cpu",
         pretrained: bool = True,
+        loader_threads: int = 8,
     ) -> None:
         image_root_name, label_root_name = split_paths(protocol, manifest.split_name)
         image_root = data_root / image_root_name
@@ -78,6 +80,11 @@ class TorchTrainingBackend:
         }
         self._device = device
         self._pretrained = pretrained
+        if isinstance(loader_threads, bool) or not isinstance(loader_threads, int):
+            raise ValueError("loader_threads must be an integer")
+        if loader_threads < 1:
+            raise ValueError("loader_threads must be at least 1")
+        self._loader_threads = loader_threads
 
     def seed_all(self, seed: int) -> None:
         """Seed every framework random source before any state is created."""
@@ -120,22 +127,45 @@ class TorchTrainingBackend:
             )
         return TorchTrainingState(adapter=adapter, optimizer=built)
 
-    def load_batch(self, batch: Sequence[tuple[str, float]]) -> PreparedBatch:
-        """Resolve, read, and preprocess one micro batch using the engine draws."""
+    def _prepare_one(self, sample_id: str, flip_draw: float) -> tuple[np.ndarray, np.ndarray]:
+        """Read and preprocess one sample. Pure with respect to its arguments."""
 
-        images: list[np.ndarray] = []
-        masks: list[np.ndarray] = []
-        for sample_id, flip_draw in batch:
-            if sample_id not in self._paths:
-                raise KeyError(f"sample {sample_id!r} is not in the frozen manifest")
-            image_path, label_path = self._paths[sample_id]
-            with Image.open(image_path) as handle:
-                image = np.asarray(handle.convert("RGB"), dtype=np.uint8)
-            with Image.open(label_path) as handle:
-                mask = np.asarray(handle, dtype=np.uint8)
-            prepared = prepare_sample(image, mask, training=True, flip_draw=flip_draw)
-            images.append(prepared.image_chw)
-            masks.append(prepared.mask_hw)
+        if sample_id not in self._paths:
+            raise KeyError(f"sample {sample_id!r} is not in the frozen manifest")
+        image_path, label_path = self._paths[sample_id]
+        with Image.open(image_path) as handle:
+            image = np.asarray(handle.convert("RGB"), dtype=np.uint8)
+        with Image.open(label_path) as handle:
+            mask = np.asarray(handle, dtype=np.uint8)
+        prepared = prepare_sample(image, mask, training=True, flip_draw=flip_draw)
+        return prepared.image_chw, prepared.mask_hw
+
+    def load_batch(self, batch: Sequence[tuple[str, float]]) -> PreparedBatch:
+        """Resolve, read, and preprocess one micro batch using the engine draws.
+
+        Decoding runs on a thread pool because it dominated the measured step
+        time on an A100 while the card idled, and PIL and NumPy release the GIL
+        for most of that work. Determinism is unaffected: which samples appear,
+        in what order, and with which flip draw are all decided by the engine
+        before this is called, and the results are assembled back in index order.
+        """
+
+        prepared: list[tuple[np.ndarray, np.ndarray] | None] = [None] * len(batch)
+        if self._loader_threads == 1 or len(batch) == 1:
+            for position, (sample_id, flip_draw) in enumerate(batch):
+                prepared[position] = self._prepare_one(sample_id, flip_draw)
+        else:
+            workers = min(self._loader_threads, len(batch))
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                futures = {
+                    pool.submit(self._prepare_one, sample_id, flip_draw): position
+                    for position, (sample_id, flip_draw) in enumerate(batch)
+                }
+                for future in futures:
+                    prepared[futures[future]] = future.result()
+
+        images = [entry[0] for entry in prepared if entry is not None]
+        masks = [entry[1] for entry in prepared if entry is not None]
         return PreparedBatch(images=np.stack(images), masks=np.stack(masks))
 
     def run_step(
