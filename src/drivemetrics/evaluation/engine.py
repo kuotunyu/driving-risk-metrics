@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -17,7 +18,8 @@ from drivemetrics.artifacts.predictions import (
     write_prediction_artifact,
 )
 from drivemetrics.artifacts.run_record import RunRecordV1, load_run_provenance
-from drivemetrics.calibration.temperature import softmax_probabilities
+from drivemetrics.calibration.service import TEMPERATURE_SCHEMA_VERSION
+from drivemetrics.calibration.temperature import apply_temperature, softmax_probabilities
 from drivemetrics.data.manifest import DatasetManifest, load_manifest
 from drivemetrics.data.transforms import (
     CANVAS_WIDTH,
@@ -70,11 +72,45 @@ def _verified_path(root: Path, relative: str, expected_sha256: str) -> Path:
     return path
 
 
+def load_temperature(
+    temperature_path: Path,
+    *,
+    expected_protocol_sha256: str,
+    expected_checkpoint_sha256: str,
+) -> float:
+    """Read one fitted temperature and prove it belongs to this exact run.
+
+    A temperature is only meaningful for the weights it was fitted on, under the
+    protocol it was fitted under. Both bindings are checked here rather than
+    trusted, because a mismatched temperature produces confident-looking numbers
+    that describe nothing.
+    """
+
+    document = json.loads(temperature_path.read_text(encoding="utf-8"))
+    if not isinstance(document, dict):
+        raise ValueError("temperature artifact must be a JSON object")
+    if document.get("schema_version") != TEMPERATURE_SCHEMA_VERSION:
+        raise ValueError(
+            f"temperature artifact must declare {TEMPERATURE_SCHEMA_VERSION}, "
+            f"got {document.get('schema_version')!r}"
+        )
+    if document.get("protocol_sha256") != expected_protocol_sha256:
+        raise ValueError("temperature protocol hash does not match the evaluation protocol")
+    if document.get("checkpoint_sha256") != expected_checkpoint_sha256:
+        raise ValueError("temperature was fitted for a different checkpoint")
+
+    temperature = float(document["temperature"])
+    if not math.isfinite(temperature) or temperature <= 0.0:
+        raise ValueError(f"temperature must be finite and positive, got {temperature}")
+    return temperature
+
+
 def _evaluate_sample(
     model: SegmentationModel,
     image_path: Path,
     label_path: Path,
     sample_id: str,
+    temperature: float,
 ) -> tuple[PredictionRecord, Any]:
     with Image.open(image_path) as handle:
         image = np.asarray(handle.convert("RGB"), dtype=np.uint8)
@@ -86,7 +122,8 @@ def _evaluate_sample(
     num_classes = int(logits.shape[1])
     canvas = np.ascontiguousarray(logits[0].transpose(1, 2, 0))
     content = canvas[:, prepared.pad_left : CANVAS_WIDTH - prepared.pad_right]
-    canvas_probabilities = softmax_probabilities(content.reshape(-1, num_classes))
+    scaled = apply_temperature(content.reshape(-1, num_classes), temperature)
+    canvas_probabilities = softmax_probabilities(scaled)
 
     valid = mask != MASK_PAD_VALUE
     probabilities = canvas_probabilities[restore_index_map(prepared)[valid]]
@@ -123,6 +160,7 @@ def evaluate_checkpoint(
     output_dir: Path,
     *,
     backend: EvaluationBackend,
+    temperature_path: Path | None = None,
 ) -> EvaluationResult:
     """Score one checkpoint over one frozen cohort and publish per-image evidence.
 
@@ -143,6 +181,14 @@ def evaluate_checkpoint(
     if metadata.get("protocol_sha256") != loaded_protocol.protocol_sha256:
         raise ValueError("checkpoint protocol hash does not match the evaluation protocol")
 
+    temperature = 1.0
+    if temperature_path is not None:
+        temperature = load_temperature(
+            temperature_path,
+            expected_protocol_sha256=loaded_protocol.protocol_sha256,
+            expected_checkpoint_sha256=sha256_file(checkpoint_path),
+        )
+
     image_root_name, label_root_name = split_paths(loaded_protocol.protocol, manifest.split_name)
     image_root = data_root / image_root_name
     label_root = data_root / label_root_name
@@ -162,7 +208,7 @@ def evaluate_checkpoint(
             manifest.relative_label_paths[position],
             manifest.file_sha256[2 * position + 1],
         )
-        record, ece = _evaluate_sample(model, image_path, label_path, sample_id)
+        record, ece = _evaluate_sample(model, image_path, label_path, sample_id, temperature)
         artifact_path = output_dir / f"{sample_id}.json"
         artifact = write_prediction_artifact(
             artifact_path,
