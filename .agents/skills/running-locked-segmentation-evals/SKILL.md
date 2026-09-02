@@ -24,10 +24,10 @@ locked cohort's value is entirely in never having been fit on.
 
 | Cohort | Size | May be used for | Must never be used for |
 | --- | --- | --- | --- |
-| `source_train` | 7,000 | Deriving the train/calibration split | Direct training |
-| `train` | 6,300 | Gradient updates | Calibration, any selection |
+| `source_train` | 7,000 assigned, 6,996 eligible | Deriving the train/calibration split | Direct training |
+| `train` | 6,300 assigned, 6,296 eligible | Gradient updates | Calibration, any selection |
 | `calibration` | 700 | Fitting the scalar temperature | Gradient updates, reporting |
-| `locked_validation` | 1,000 | Scoring a finished checkpoint, once | Anything that changes a run |
+| `locked_validation` | 1,000 assigned, 998 eligible | Scoring a finished checkpoint, once | Anything that changes a run |
 
 "Anything that changes a run" is broader than it sounds. It includes choosing a
 checkpoint, choosing a threshold, choosing which seed to report, deciding
@@ -233,7 +233,7 @@ the current machine.
 | Checkpoint selection | Final step only |
 | Steps / warmup / effective batch | 30,000 / 1,000 / 16 |
 | Bootstrap | 5,000 resamples, seed 20260831, 95% |
-| Locked cohort size | 1,000 |
+| Locked cohort size | 1,000 assigned, 998 eligible (amendment A1) |
 | Where scores are computed | Source geometry, not padded geometry |
 | GPU policy | Colab A100 first; local GPU needs current explicit approval |
 

@@ -22,19 +22,35 @@ manifest is committed. Users supply their own licensed copy and point
 
 ## Composition
 
-| Cohort | Images | Role |
-| --- | --- | --- |
-| `train` | 6,300 | Gradient updates only |
-| `calibration` | 700 | Scalar temperature fitting only |
-| `locked_validation` | 1,000 | Scored once per checkpoint, never fitted on |
+| Cohort | Assigned | Eligible | Role |
+| --- | --- | --- | --- |
+| `train` | 6,300 | 6,296 | Gradient updates only |
+| `calibration` | 700 | 700 | Scalar temperature fitting only |
+| `locked_validation` | 1,000 | 998 | Scored once per checkpoint, never fitted on |
 
 `train` and `calibration` partition the official 7,000-image train split by
 deterministic SHA-256 filename order. `locked_validation` is the official
 validation split. The official 2,000-image test split is unlabeled and unused.
 
-Instance annotations cover 6,996 train and 998 validation images. The twelve
-excluded IDs and their reasons are listed in the preflight evidence. Instance
-area tertiles are learned from the training intersection only.
+**Eligibility (amendment A1, 2026-09-02, before any formal training).** A pair
+is eligible only if its image and its label share one pixel geometry. Six
+official pairs fail this: the JPEG is stored as a 720x1280 portrait beside a
+1280x720 label, with no EXIF orientation tag, and no rotation, transpose or
+resize of the image aligns it with the label (edge alignment at the level of
+deliberately misaligned controls; see the preflight evidence). Such a pair has
+no usable supervision and no scorable prediction. The rule is decided from file
+headers alone, applied after cohort assignment so that no other membership
+moves, and every excluded ID is listed with its reason inside the frozen
+manifest and covered by its hash.
+
+- `train`: `3d581db5-2564fb7e`, `52e3fd10-c205dec2`, `781756b0-61e0a182`, `78ac84ba-07bd30c2`
+- `locked_validation`: `80a9e37d-e4548ac1`, `9342e334-33d167eb`
+
+Instance annotations cover 6,996 train and 998 validation images; the six
+geometry-ineligible IDs are exactly the six that the instance mirror also
+lacks. The twelve intersection exclusions and their reasons are listed in the
+preflight evidence. Instance area tertiles are learned from the training
+intersection only.
 
 ## What the labels mean
 

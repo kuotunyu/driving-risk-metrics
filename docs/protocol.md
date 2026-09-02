@@ -37,6 +37,17 @@ by mapping predictions back before scoring. Scoring on the padded canvas would
 let padding and resampling change per-class results, and would shrink small
 instances before the metric that exists to protect them ever sees them.
 
+## Eligibility
+
+A pair enters a cohort by assignment and is used only if it is eligible: its
+image and its label must share one pixel geometry. Ineligibility is decided from
+file headers, never from labels, metrics or models; it is applied after the
+deterministic assignment so that no other sample moves; and every ineligible ID
+is recorded with its reason inside the frozen manifest and covered by its hash.
+Under `bdd100k_semseg_v1` six official pairs are ineligible, four assigned to
+`train` and two to `locked_validation`; the dataset card names them. Eligible
+counts are therefore 6,296 / 700 / 998, and the locked denominator is 998.
+
 ## Training
 
 | Constant | Value |
