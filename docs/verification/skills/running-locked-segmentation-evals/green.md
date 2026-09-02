@@ -173,3 +173,68 @@ Full eight-stage verification run from `2026-09-01T09:54:40Z` to
 `typecheck`, `unit_and_integration_tests`, `branch_coverage_100`,
 `schema_contracts` and `docs_links`, with 704 tests passing twice and 2,314
 statements and 696 branches at 100.00%.
+
+## Refresh of 2026-09-02: the index gate, and a defect the forward test found
+
+The sequence gained step 6, `driving-risk index`, because nine succeeded runs
+are not a formal set until the index has re-checked every binding and
+`aggregate` reads the index rather than the directories. Editing a skill
+without re-running its forward test is the same violation as editing code
+without a test, so the same fixed prompt was run again under the same
+read-only bound by a fresh agent with the edited skill available.
+
+- Captured: `2026-09-02T13:08Z`, repository at `67cbeee` with the edit uncommitted
+- RED for the edit: `pytest tests/contract/skills/test_running_locked_eval_skill.py -k index_gate`
+  failed at `13:03:15Z` because the document did not contain `driving-risk index`;
+  GREEN at `13:03:54Z`.
+
+### The index step is used, and it has a decision
+
+The forward run produced eight phases. Phase 6 is the index, with the exact
+command, a statement of what the gate re-checks, and its decision:
+
+> *Decide:* all nine pairs accepted.
+
+It also read the builder and reported, correctly, that the index gate checks
+status, protocol hash, seed, run ID, the checkpoint-to-temperature binding, the
+locked manifest hash on both evaluations and identical image sets, and does not
+compare against the assigned cohort size, so amendment A1 does not trip it.
+
+### The forward test found a real defect in the validator
+
+Running the validator against the real locked-validation manifest and the only
+run record on disk, the agent observed:
+
+```
+locked_validation split must contain exactly 1000 paired samples, found 998
+```
+
+The validator compared the eligible count (998 after amendment A1) with the
+protocol's assigned count (1,000). Its contract test built a 1,000-sample
+cohort with no ineligible members, so the suite stayed green while every real
+evaluation would have been rejected. The preflight had been updated at A1
+(`len(sample_ids) + len(ineligible_sample_ids)`); the validator had not.
+
+Fixed under the micro-cycle. RED at `13:16:26Z`:
+`test_a_cohort_short_only_by_its_ineligible_members_is_accepted` builds the
+1,000-sample cohort, marks two members ineligible with `mark_ineligible`, and
+requires exit 0 with the 998 eligible count in the status; it failed with the
+message above. GREEN at `13:17:25Z` after the validator counts assigned members
+and reports `sample_count`, `assigned_count` and `ineligible_count`: 17 passed.
+Against the real manifest the validator now reports only the two violations
+that belong to the synthetic smoke record (its protocol hash and its manifest).
+
+### Two more observations from the same run
+
+- The private handoff contradicted itself: its dataset section still listed
+  the superseded 2026-09-01 manifest hashes as current while the completed-work
+  section carried the A1 values. Corrected in the handoff, with both sets kept
+  and labelled.
+- The agent measured `NVIDIA GeForce RTX 4090, 24564 MiB` with CPU-only Torch
+  and again concluded the string must never enter a Colab run record.
+
+### Conclusion about the scores, unchanged
+
+No BDD100K run record, checkpoint, index or claim existed on the machine; run 01
+was mid-training on Colab. The agent reported that no score exists, named every
+missing input, and declined to present any plan or smoke figure as a result.

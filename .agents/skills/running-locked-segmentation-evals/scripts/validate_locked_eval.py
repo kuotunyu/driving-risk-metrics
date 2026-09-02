@@ -59,15 +59,19 @@ def validate(
     manifest = load_manifest(manifest_path)
 
     expected = _expected_counts(loaded.protocol)
-    actual_count = len(manifest.sample_ids)
+    # The protocol counts assigned samples. Amendment A1 keeps a defective pair
+    # assigned to its cohort, as ineligible, so the hash and every other
+    # membership stay put; the eligible count alone is therefore short by design.
+    eligible_count = len(manifest.sample_ids)
+    assigned_count = eligible_count + len(manifest.ineligible_sample_ids)
     if manifest.split_name not in expected:
         violations.append(
             f"manifest split name {manifest.split_name!r} is not one of {sorted(expected)}"
         )
-    elif actual_count != expected[manifest.split_name]:
+    elif assigned_count != expected[manifest.split_name]:
         violations.append(
             f"{manifest.split_name} split must contain exactly "
-            f"{expected[manifest.split_name]} paired samples, found {actual_count}"
+            f"{expected[manifest.split_name]} paired samples, found {assigned_count}"
         )
 
     try:
@@ -107,7 +111,9 @@ def validate(
     status: dict[str, object] = {
         "validator": "validate_locked_eval",
         "split_name": manifest.split_name,
-        "sample_count": actual_count,
+        "sample_count": eligible_count,
+        "assigned_count": assigned_count,
+        "ineligible_count": len(manifest.ineligible_sample_ids),
         "protocol_sha256": protocol_hash,
         "dataset_manifest_sha256": manifest.manifest_sha256,
         "seed": record.seed,
