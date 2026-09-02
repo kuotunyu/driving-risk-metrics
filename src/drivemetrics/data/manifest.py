@@ -5,9 +5,10 @@ from __future__ import annotations
 import json
 import re
 import secrets
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path, PurePosixPath
+from typing import Any
 
 from drivemetrics.data.bdd100k import (
     DATASET_NAME,
@@ -36,7 +37,13 @@ def _validate_relative_posix_path(value: str) -> None:
 
 @dataclass(frozen=True)
 class DatasetManifest:
-    """A root-independent snapshot; file hashes interleave image then label by sample."""
+    """A root-independent snapshot; file hashes interleave image then label by sample.
+
+    ``sample_ids`` are the eligible samples a consumer may train on, calibrate on
+    or score. ``ineligible_sample_ids`` were assigned to this cohort but carry a
+    source defect named in ``ineligibility_reasons``; they are listed so that the
+    exclusion is on record and hashed, never silent.
+    """
 
     dataset_name: str
     dataset_version: str
@@ -46,9 +53,20 @@ class DatasetManifest:
     relative_label_paths: tuple[str, ...]
     file_sha256: tuple[str, ...]
     manifest_sha256: str
+    ineligible_sample_ids: tuple[str, ...] = ()
+    ineligibility_reasons: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         sample_count = len(self.sample_ids)
+        ineligible = self.ineligible_sample_ids
+        if len(ineligible) != len(self.ineligibility_reasons):
+            raise ValueError("ineligible sample IDs and reasons must be aligned")
+        if len(set(ineligible)) != len(ineligible):
+            raise ValueError("manifest contains duplicate ineligible sample IDs")
+        if set(ineligible) & set(self.sample_ids):
+            raise ValueError("a sample cannot be both eligible and ineligible")
+        if any(not reason for reason in self.ineligibility_reasons):
+            raise ValueError("every ineligible sample needs a reason")
         if not self.dataset_name or not self.dataset_version or not self.split_name:
             raise ValueError("manifest identity fields must be nonempty")
         if sample_count == 0:
@@ -62,7 +80,7 @@ class DatasetManifest:
             raise ValueError("manifest contains duplicate sample IDs")
         if any(
             not value or value in {".", ".."} or "/" in value or "\\" in value
-            for value in self.sample_ids
+            for value in (*self.sample_ids, *ineligible)
         ):
             raise ValueError("manifest sample IDs must be nonempty path-free names")
         for value in (*self.relative_image_paths, *self.relative_label_paths):
@@ -81,6 +99,12 @@ class DatasetManifest:
         values = asdict(self)
         del values["manifest_sha256"]
         return values
+
+
+def _finalize(**fields: Any) -> DatasetManifest:
+    """Mint the manifest hash over exactly the semantic fields and build the manifest."""
+
+    return DatasetManifest(**fields, manifest_sha256=canonical_manifest_sha256(fields))
 
 
 def _index_files(
@@ -135,16 +159,7 @@ def build_paired_manifest(
         for sample_id in sample_ids
         for digest in (sha256_file(images[sample_id]), sha256_file(labels[sample_id]))
     )
-    without_hash: dict[str, object] = {
-        "dataset_name": DATASET_NAME,
-        "dataset_version": DATASET_VERSION,
-        "split_name": split_name,
-        "sample_ids": sample_ids,
-        "relative_image_paths": relative_image_paths,
-        "relative_label_paths": relative_label_paths,
-        "file_sha256": file_sha256,
-    }
-    return DatasetManifest(
+    return _finalize(
         dataset_name=DATASET_NAME,
         dataset_version=DATASET_VERSION,
         split_name=split_name,
@@ -152,7 +167,8 @@ def build_paired_manifest(
         relative_image_paths=relative_image_paths,
         relative_label_paths=relative_label_paths,
         file_sha256=file_sha256,
-        manifest_sha256=canonical_manifest_sha256(without_hash),
+        ineligible_sample_ids=(),
+        ineligibility_reasons=(),
     )
 
 
@@ -165,6 +181,8 @@ MANIFEST_FIELDS: tuple[str, ...] = (
     "relative_label_paths",
     "file_sha256",
     "manifest_sha256",
+    "ineligible_sample_ids",
+    "ineligibility_reasons",
 )
 
 
@@ -185,6 +203,8 @@ def load_manifest(path: Path) -> DatasetManifest:
         relative_label_paths=tuple(document["relative_label_paths"]),
         file_sha256=tuple(document["file_sha256"]),
         manifest_sha256=document["manifest_sha256"],
+        ineligible_sample_ids=tuple(document["ineligible_sample_ids"]),
+        ineligibility_reasons=tuple(document["ineligibility_reasons"]),
     )
 
 
@@ -213,38 +233,71 @@ def subset_manifest(
 
     Paths and the interleaved image/label hashes follow the requested sample
     order exactly, so a cohort can never inherit another sample file hashes.
+    Cohort assignment covers every source ID, eligible or not, so a chosen ID
+    that is ineligible in the source travels into the subset as ineligible,
+    with its reason.
     """
 
     chosen = tuple(sample_ids)
     if len(set(chosen)) != len(chosen):
         raise ValueError("manifest subset contains duplicate sample IDs")
     index = {sample_id: position for position, sample_id in enumerate(manifest.sample_ids)}
-    missing = tuple(value for value in chosen if value not in index)
+    reasons = dict(zip(manifest.ineligible_sample_ids, manifest.ineligibility_reasons, strict=True))
+    missing = tuple(value for value in chosen if value not in index and value not in reasons)
     if missing:
         raise ValueError(f"sample IDs are not present in the source manifest: {missing}")
 
-    positions = tuple(index[value] for value in chosen)
-    relative_image_paths = tuple(manifest.relative_image_paths[value] for value in positions)
-    relative_label_paths = tuple(manifest.relative_label_paths[value] for value in positions)
-    file_sha256 = tuple(
-        digest for value in positions for digest in manifest.file_sha256[2 * value : 2 * value + 2]
-    )
-    without_hash: dict[str, object] = {
-        "dataset_name": manifest.dataset_name,
-        "dataset_version": manifest.dataset_version,
-        "split_name": split_name,
-        "sample_ids": chosen,
-        "relative_image_paths": relative_image_paths,
-        "relative_label_paths": relative_label_paths,
-        "file_sha256": file_sha256,
-    }
-    return DatasetManifest(
+    eligible = tuple(value for value in chosen if value in index)
+    ineligible = tuple(value for value in chosen if value in reasons)
+    positions = tuple(index[value] for value in eligible)
+    return _finalize(
         dataset_name=manifest.dataset_name,
         dataset_version=manifest.dataset_version,
         split_name=split_name,
-        sample_ids=chosen,
-        relative_image_paths=relative_image_paths,
-        relative_label_paths=relative_label_paths,
-        file_sha256=file_sha256,
-        manifest_sha256=canonical_manifest_sha256(without_hash),
+        sample_ids=eligible,
+        relative_image_paths=tuple(manifest.relative_image_paths[value] for value in positions),
+        relative_label_paths=tuple(manifest.relative_label_paths[value] for value in positions),
+        file_sha256=tuple(
+            digest
+            for value in positions
+            for digest in manifest.file_sha256[2 * value : 2 * value + 2]
+        ),
+        ineligible_sample_ids=ineligible,
+        ineligibility_reasons=tuple(reasons[value] for value in ineligible),
+    )
+
+
+def mark_ineligible(manifest: DatasetManifest, reasons: Mapping[str, str]) -> DatasetManifest:
+    """Move the named samples out of the eligible list, keeping each reason on record.
+
+    Ineligibility is decided from file geometry alone, never from labels,
+    metrics or models, and it never changes which cohort a sample was assigned
+    to: the sample stays listed under its cohort, as ineligible, with its reason.
+    """
+
+    missing = tuple(value for value in reasons if value not in manifest.sample_ids)
+    if missing:
+        raise ValueError(f"sample IDs are not present in the manifest: {missing}")
+    if any(not reason for reason in reasons.values()):
+        raise ValueError("every ineligible sample needs a reason")
+
+    kept = tuple(
+        position for position, value in enumerate(manifest.sample_ids) if value not in reasons
+    )
+    newly = tuple(value for value in manifest.sample_ids if value in reasons)
+    return _finalize(
+        dataset_name=manifest.dataset_name,
+        dataset_version=manifest.dataset_version,
+        split_name=manifest.split_name,
+        sample_ids=tuple(manifest.sample_ids[value] for value in kept),
+        relative_image_paths=tuple(manifest.relative_image_paths[value] for value in kept),
+        relative_label_paths=tuple(manifest.relative_label_paths[value] for value in kept),
+        file_sha256=tuple(
+            digest for value in kept for digest in manifest.file_sha256[2 * value : 2 * value + 2]
+        ),
+        ineligible_sample_ids=(*manifest.ineligible_sample_ids, *newly),
+        ineligibility_reasons=(
+            *manifest.ineligibility_reasons,
+            *(reasons[value] for value in newly),
+        ),
     )

@@ -51,6 +51,8 @@ def tiny_manifest(
         "relative_image_paths": ("image.ppm",),
         "relative_label_paths": ("mask.pgm",),
         "file_sha256": (image_sha, mask_sha),
+        "ineligible_sample_ids": (),
+        "ineligibility_reasons": (),
     }
     return DatasetManifest(**values, manifest_sha256=canonical_sha256(values))  # type: ignore[arg-type]
 

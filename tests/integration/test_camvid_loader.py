@@ -32,6 +32,8 @@ def test_synthetic_camvid_manifest_loads_and_prepares_without_randomness() -> No
         "relative_image_paths": ("image.ppm",),
         "relative_label_paths": ("mask.pgm",),
         "file_sha256": (image_sha, mask_sha),
+        "ineligible_sample_ids": (),
+        "ineligibility_reasons": (),
     }
     canonical = json.dumps(
         values,
