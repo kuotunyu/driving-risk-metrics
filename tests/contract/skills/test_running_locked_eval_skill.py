@@ -196,6 +196,14 @@ def test_the_skill_routes_through_the_validator_rather_than_inspection() -> None
     assert "validate_locked_eval.py" in text
 
 
+def test_the_sequence_names_the_formal_index_gate() -> None:
+    """Nine runs are only a formal set once the index has re-checked every binding."""
+
+    text = SKILL_DOC.read_text(encoding="utf-8")
+
+    assert "driving-risk index" in text
+
+
 def test_a_consistent_locked_evaluation_is_accepted(workspace: dict[str, Any]) -> None:
     """A validator that rejects a correct run would be abandoned on first use."""
 
@@ -224,6 +232,36 @@ def test_a_wrong_split_count_is_rejected(
 
     assert result.returncode != 0
     assert "1000" in result.stderr
+
+
+def test_a_cohort_short_only_by_its_ineligible_members_is_accepted(
+    tmp_path: Path,
+    protocol_hash: str,
+) -> None:
+    """Amendment A1 keeps ineligible pairs assigned; the validator must count them."""
+
+    from drivemetrics.data.manifest import mark_ineligible
+
+    assigned = build_cohort(tmp_path / "locked", LOCKED_VALIDATION_COUNT, "locked_validation")
+    cohort = mark_ineligible(
+        assigned,
+        {
+            "sample00000": "portrait image beside landscape label",
+            "sample00001": "portrait image beside landscape label",
+        },
+    )
+    assert len(cohort.sample_ids) == LOCKED_VALIDATION_COUNT - 2
+    manifest_path = write_manifest(cohort, tmp_path / "locked_validation.json")
+    record_path = tmp_path / "run_record.json"
+    record_path.write_text(
+        json.dumps(evaluation_record(cohort, protocol_hash), sort_keys=True), encoding="utf-8"
+    )
+    claims_path = write_claims(tmp_path / "claims.yaml", [])
+
+    result = run_validator(manifest_path, record_path, claims_path)
+
+    assert result.returncode == 0, result.stderr
+    assert "998" in result.stdout
 
 
 def test_training_on_the_locked_cohort_is_rejected(workspace: dict[str, Any]) -> None:

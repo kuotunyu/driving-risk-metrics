@@ -73,9 +73,26 @@ selection rule, not a storage limitation.
 checkpoint. It re-hashes every file against the manifest before it runs, so a
 mismatch stops the job rather than producing numbers for a different cohort.
 
-**6. Validate before trusting anything.** See "Run the validator" below.
+**6. Index the set.** Nine succeeded runs are not a formal set until
+`driving-risk index` has built the immutable run index from them:
 
-**7. Publish.** Only claims the audit can reproduce reach the report.
+```bash
+uv run --frozen driving-risk index --runs-root <runs> \n  --config configs/protocols/bdd100k_semseg_v1.yaml \n  --manifest artifacts/manifests/bdd100k_semseg_v1/locked_validation.json \n  --risk-profile configs/risk_profiles/vru_priority.yaml \n  --output <runs>/formal_run_index.json
+```
+
+It reads the four records every `<model>/seed-<seed>/` directory must hold,
+re-checks every binding (status, protocol hash, seed, the checkpoint hash against
+the temperature artifact, the locked manifest against both evaluations, identical
+image sets across the two evaluations) and refuses to overwrite. `aggregate`
+consumes the index, never the directories, so a run the index rejected cannot
+reach a published number by another road.
+
+**Decide:** did the index accept all nine (model, seed) pairs? A missing pair or a
+rejected binding stops the study here, before any statistic exists to be tempted by.
+
+**7. Validate before trusting anything.** See "Run the validator" below.
+
+**8. Publish.** Only claims the audit can reproduce reach the report.
 
 ## Provenance is measured, never typed
 
