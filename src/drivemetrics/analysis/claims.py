@@ -97,7 +97,9 @@ def _resolve_json_pointer(document: object, pointer: str) -> object:
     return current
 
 
-def _text_numbers(text: str) -> tuple[Decimal, ...]:
+def text_numbers(text: str) -> tuple[Decimal, ...]:
+    """Return every number a statement states, in order, with any percent sign dropped."""
+
     return tuple(
         Decimal(match.group().removesuffix("%")) for match in _NUMBER_PATTERN.finditer(text)
     )
@@ -119,6 +121,22 @@ def _json_numbers(value: object) -> set[Decimal]:
             numbers.update(_json_numbers(child))
         return numbers
     return set()
+
+
+def metric_numbers(claim: ClaimV1, repository_root: Path) -> set[Decimal]:
+    """Return every number at the claim's metric pointer.
+
+    A missing artifact raises ``FileNotFoundError`` and a pointer that resolves to
+    nothing raises ``LookupError``; neither may read as an empty set, because an
+    empty set would make a statement with no backing look like one with none to
+    check.
+    """
+
+    artifact: Any = json.loads(
+        (repository_root / claim.artifact_path).read_text(encoding="utf-8"),
+        parse_constant=_reject_json_constant,
+    )
+    return _json_numbers(_resolve_json_pointer(artifact, claim.metric_path))
 
 
 def audit_claims(claims_path: Path, repository_root: Path) -> tuple[str, ...]:
@@ -168,7 +186,7 @@ def audit_claims(claims_path: Path, repository_root: Path) -> tuple[str, ...]:
             continue
 
         metric_numbers = _json_numbers(metric)
-        for number in _text_numbers(claim.text):
+        for number in text_numbers(claim.text):
             if number not in metric_numbers:
                 violations.append(f"{claim.claim_id}: claim number is absent from metric: {number}")
 
