@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import io
 import shutil
 from pathlib import Path
 from types import ModuleType
 
 import pytest
+from PIL import Image
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 PROTOCOL_SOURCE = REPO_ROOT / "configs" / "protocols" / "bdd100k_semseg_v1.yaml"
@@ -27,8 +29,22 @@ def load_preflight_module() -> ModuleType:
     return preflight
 
 
+def _encoded(size: tuple[int, int], fmt: str) -> bytes:
+    buffer = io.BytesIO()
+    Image.new("RGB" if fmt == "JPEG" else "L", size).save(buffer, fmt)
+    return buffer.getvalue()
+
+
+TINY_JPEG = _encoded((8, 4), "JPEG")
+TINY_PNG = _encoded((8, 4), "PNG")
+
+
 def write_pairs(data_root: Path, image_dir: str, label_dir: str, count: int) -> None:
-    """Create one tiny paired image and train-ID label per synthetic sample."""
+    """Create one tiny paired image and train-ID label per synthetic sample.
+
+    The files are real 8x4 encodings because the preflight reads image headers
+    to compare image and label geometry.
+    """
 
     images = data_root / image_dir
     labels = data_root / label_dir
@@ -37,8 +53,8 @@ def write_pairs(data_root: Path, image_dir: str, label_dir: str, count: int) -> 
     prefix = "t" if "train" in image_dir else "v"
     for index in range(count):
         sample_id = f"{prefix}{index:05d}"
-        (images / f"{sample_id}.jpg").write_bytes(b"i")
-        (labels / f"{sample_id}_train_id.png").write_bytes(b"l")
+        (images / f"{sample_id}.jpg").write_bytes(TINY_JPEG)
+        (labels / f"{sample_id}_train_id.png").write_bytes(TINY_PNG)
 
 
 def build_workspace(

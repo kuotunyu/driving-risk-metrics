@@ -96,6 +96,7 @@ def test_preflight_prints_one_machine_readable_status(
         counts={"train": 6300},
         manifest_sha256={"train": "b" * 64},
         manifest_paths={"train": tmp_path / "train.json"},
+        ineligible={},
     )
 
     monkeypatch.setattr(data_cli, "PREFLIGHT_SERVICE", lambda *_: result_stub)

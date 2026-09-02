@@ -32,6 +32,7 @@ def preflight_command(
             "command": "data preflight",
             "protocol_sha256": result.protocol_sha256,
             "counts": dict(result.counts),
+            "ineligible": {name: dict(reasons) for name, reasons in result.ineligible.items()},
             "manifest_sha256": dict(result.manifest_sha256),
             "manifests": {name: str(path) for name, path in result.manifest_paths.items()},
         }
