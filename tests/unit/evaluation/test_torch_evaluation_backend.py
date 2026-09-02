@@ -49,7 +49,7 @@ def test_the_checkpoint_architecture_is_rebuilt_and_its_weights_restored(
     metadata = {"run_id": "segformer_b2-seed-17", "model": "segformer_b2", "seed": 17}
     marker_key = write_checkpoint(path, metadata)
 
-    model, restored_metadata = backends.TorchEvaluationBackend().load_model(path)
+    model, restored_metadata = backends.TorchEvaluationBackend(device="cpu").load_model(path)
 
     assert restored_metadata == metadata
     weight = model.module.state_dict()[marker_key]
@@ -66,7 +66,7 @@ def test_a_checkpoint_that_does_not_name_its_architecture_fails_closed(
     torch.save({"model": {}, "metadata": {"run_id": "anonymous", "seed": 17}}, path)
 
     with pytest.raises(ValueError, match="model"):
-        backends.TorchEvaluationBackend().load_model(path)
+        backends.TorchEvaluationBackend(device="cpu").load_model(path)
 
 
 def test_a_checkpoint_naming_an_unapproved_architecture_fails_closed(
@@ -79,7 +79,7 @@ def test_a_checkpoint_naming_an_unapproved_architecture_fails_closed(
     torch.save({"model": {}, "metadata": {"model": "setr", "run_id": "x", "seed": 17}}, path)
 
     with pytest.raises(ValueError, match="approved"):
-        backends.TorchEvaluationBackend().load_model(path)
+        backends.TorchEvaluationBackend(device="cpu").load_model(path)
 
 
 def test_evaluation_package_exports_the_backend() -> None:

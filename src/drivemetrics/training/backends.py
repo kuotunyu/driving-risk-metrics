@@ -64,7 +64,7 @@ class TorchTrainingBackend:
         manifest: DatasetManifest,
         protocol: BDD100KSemanticProtocolV1,
         *,
-        device: str = "cpu",
+        device: str,
         pretrained: bool = True,
         loader_threads: int = 8,
     ) -> None:
@@ -250,13 +250,18 @@ def build_training_backend(
     manifest_path: Path,
     data_root: Path,
     *,
-    device: str = "cpu",
+    device: str,
     pretrained: bool = True,
 ) -> TorchTrainingBackend:
     """Construct the Torch backend described by one training run configuration.
 
     The command line never resolves protocols or manifests itself; it calls this
     factory so the same run configuration drives both the engine and its backend.
+
+    ``device`` has no default on purpose. This factory once supplied ``"cpu"``
+    when the caller said nothing, and the first formal run trained on the CPU for
+    7.4 hours on a machine with an idle A100. A device is a decision, and the
+    caller has to make it.
     """
 
     from drivemetrics.training.engine import load_run_config

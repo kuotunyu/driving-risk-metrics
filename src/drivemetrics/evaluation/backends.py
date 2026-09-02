@@ -18,9 +18,14 @@ from drivemetrics.models.registry import ModelName, create_model
 
 @dataclass(frozen=True)
 class TorchEvaluationBackend:
-    """Rebuild the architecture a checkpoint names and restore exactly its weights."""
+    """Rebuild the architecture a checkpoint names and restore exactly its weights.
 
-    device: str = "cpu"
+    ``device`` has no default. With one, every locked-cohort evaluation would run
+    on the CPU beside an idle accelerator, with no error and no symptom beyond
+    being slow, which is exactly what the first formal run did in training.
+    """
+
+    device: str
 
     def load_model(
         self,

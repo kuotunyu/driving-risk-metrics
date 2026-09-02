@@ -53,6 +53,7 @@ def test_the_root_help_lists_every_declared_command() -> None:
     [
         ["data", "preflight"],
         ["train"],
+        ["calibrate"],
         ["evaluate"],
         ["report"],
         ["audit-claims"],
@@ -159,6 +160,8 @@ def test_train_prints_one_machine_readable_status(
             "17",
             "--output-dir",
             str(tmp_path / "out"),
+            "--device",
+            "cpu",
         ],
     )
 
@@ -204,6 +207,8 @@ def test_evaluate_prints_one_machine_readable_status(
             str(data_root),
             "--output-dir",
             str(tmp_path / "out"),
+            "--device",
+            "cpu",
         ],
     )
 
@@ -360,6 +365,8 @@ def test_an_unapproved_seed_is_rejected_by_the_real_training_service(
             "5",
             "--output-dir",
             str(tmp_path / "out"),
+            "--device",
+            "cpu",
         ],
     )
 
@@ -404,6 +411,8 @@ def test_calibrate_prints_one_machine_readable_status(
             str(data_root),
             "--output-dir",
             str(tmp_path / "out"),
+            "--device",
+            "cpu",
         ],
     )
 
@@ -448,6 +457,8 @@ def test_evaluate_reports_whether_it_applied_a_temperature(
         str(data_root),
         "--output-dir",
         str(tmp_path / "out"),
+        "--device",
+        "cpu",
     ]
 
     uncalibrated = status_of(runner.invoke(app, arguments).stdout)
@@ -457,6 +468,109 @@ def test_evaluate_reports_whether_it_applied_a_temperature(
 
     assert uncalibrated["calibrated"] is False
     assert calibrated["calibrated"] is True
+
+
+def compute_arguments(command: str, tmp_path: Path) -> list[str]:
+    """A complete, valid argument list for one of the three device-bound commands."""
+
+    config = touch(tmp_path / "config.yaml")
+    manifest = touch(tmp_path / "manifest.json")
+    data_root = tmp_path / "data"
+    data_root.mkdir(exist_ok=True)
+    common = [
+        command,
+        "--config",
+        str(config),
+        "--manifest",
+        str(manifest),
+        "--data-root",
+        str(data_root),
+        "--output-dir",
+        str(tmp_path / "out"),
+    ]
+    if command == "train":
+        return [*common, "--seed", "17"]
+    return [*common, "--checkpoint", str(touch(tmp_path / "final_checkpoint.pt"))]
+
+
+def stub_services(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[str, dict[str, Any]]:
+    """Replace every backend factory with one that records how it was called."""
+
+    import drivemetrics.cli.calibrate as calibrate_cli
+    import drivemetrics.cli.evaluate as evaluate_cli
+    import drivemetrics.cli.train as train_cli
+
+    received: dict[str, dict[str, Any]] = {}
+
+    def factory_for(command: str) -> Any:
+        def factory(*_: Any, **kwargs: Any) -> object:
+            received[command] = dict(kwargs)
+            return object()
+
+        return factory
+
+    train_result = SimpleNamespace(
+        final_step=30000,
+        checkpoint_path=tmp_path / "final_checkpoint.pt",
+        checkpoint_sha256="c" * 64,
+        run_record_path=tmp_path / "run_record.json",
+    )
+    calibrate_result = SimpleNamespace(
+        temperature=1.0,
+        artifact_path=tmp_path / "temperature.json",
+        run_record_path=tmp_path / "run_record.json",
+        sampled_images=1,
+        pixels_per_image=1,
+    )
+    evaluate_result = SimpleNamespace(
+        evaluated_samples=1, artifact_paths=(), run_record_path=tmp_path / "run_record.json"
+    )
+    monkeypatch.setattr(train_cli, "BACKEND_FACTORY", factory_for("train"))
+    monkeypatch.setattr(train_cli, "TRAIN_SERVICE", lambda *_, **__: train_result)
+    monkeypatch.setattr(calibrate_cli, "BACKEND_FACTORY", factory_for("calibrate"))
+    monkeypatch.setattr(calibrate_cli, "CALIBRATE_SERVICE", lambda *_, **__: calibrate_result)
+    monkeypatch.setattr(evaluate_cli, "BACKEND_FACTORY", factory_for("evaluate"))
+    monkeypatch.setattr(evaluate_cli, "EVALUATE_SERVICE", lambda *_, **__: evaluate_result)
+    return received
+
+
+@pytest.mark.parametrize("command", ["train", "calibrate", "evaluate"])
+def test_the_requested_device_reaches_the_backend_unchanged(
+    command: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The first formal run trained on the CPU for 7.4 hours beside an idle A100.
+
+    The backends had a device parameter and a CPU default, and no command ever
+    set it. Every unit test passed on the CPU. This is the test that was missing:
+    the device named on the command line must be the one the backend is built
+    with, and it is checked with a name no default could ever produce.
+    """
+
+    received = stub_services(monkeypatch, tmp_path)
+
+    result = runner.invoke(app, [*compute_arguments(command, tmp_path), "--device", "meta"])
+
+    assert result.exit_code == 0, result.output
+    assert received[command]["device"] == "meta"
+
+
+@pytest.mark.parametrize("command", ["train", "calibrate", "evaluate"])
+def test_a_compute_command_without_a_device_is_refused(
+    command: str,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """No default, ever. A silent fallback to the CPU is exactly what cost the first run."""
+
+    received = stub_services(monkeypatch, tmp_path)
+
+    result = runner.invoke(app, compute_arguments(command, tmp_path))
+
+    assert result.exit_code != 0
+    assert "device" in result.output.lower()
+    assert received == {}
 
 
 def test_aggregate_prints_one_machine_readable_status(

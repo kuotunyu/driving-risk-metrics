@@ -66,11 +66,23 @@ def train_command(
     data_root: Annotated[Path, typer.Option("--data-root", exists=True, file_okay=False)],
     seed: Annotated[int, typer.Option("--seed")],
     output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False)],
+    device: Annotated[
+        str,
+        typer.Option(
+            "--device",
+            help="Torch device the model trains on, such as cuda or cpu. There is no default.",
+        ),
+    ],
 ) -> None:
-    """Run one locked training job and write its single final-step checkpoint."""
+    """Run one locked training job and write its single final-step checkpoint.
+
+    The device is required rather than defaulted. The first formal run trained on
+    the CPU for seven hours beside an idle A100 because nothing in this chain ever
+    said which device to use and the backend quietly assumed one.
+    """
 
     def operation() -> dict[str, Any]:
-        backend = BACKEND_FACTORY(config, manifest, data_root)
+        backend = BACKEND_FACTORY(config, manifest, data_root, device=device)
         result = TRAIN_SERVICE(
             config, manifest, output_dir, seed, backend=backend, on_step=progress_printer()
         )
