@@ -269,6 +269,8 @@ def test_the_whole_pipeline_runs_through_the_command_line(
             "17",
             "--output-dir",
             str(tmp_path / "run"),
+            "--device",
+            "cpu",
         ]
     )
     assert trained["final_step"] == 30000
@@ -293,6 +295,8 @@ def test_the_whole_pipeline_runs_through_the_command_line(
             str(paths["data_root"]),
             "--output-dir",
             str(tmp_path / "predictions"),
+            "--device",
+            "cpu",
         ]
     )
     assert evaluated["evaluated_samples"] == 2

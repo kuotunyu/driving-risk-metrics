@@ -214,6 +214,8 @@ def test_the_train_command_wires_a_progress_hook(
             "17",
             "--output-dir",
             str(tmp_path / "out"),
+            "--device",
+            "cpu",
         ],
     )
 

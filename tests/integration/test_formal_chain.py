@@ -173,7 +173,7 @@ def test_nine_runs_flow_from_training_to_the_published_report(
 
     paths = build_workspace(tmp_path)
     runs_root = tmp_path / "runs"
-    common = ["--data-root", str(paths["data_root"])]
+    common = ["--data-root", str(paths["data_root"]), "--device", "cpu"]
 
     for model in APPROVED_MODEL_NAMES:
         for seed in APPROVED_SEEDS:

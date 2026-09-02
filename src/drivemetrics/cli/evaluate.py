@@ -30,6 +30,13 @@ def evaluate_command(
     ],
     data_root: Annotated[Path, typer.Option("--data-root", exists=True, file_okay=False)],
     output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False)],
+    device: Annotated[
+        str,
+        typer.Option(
+            "--device",
+            help="Torch device the model runs on, such as cuda or cpu. There is no default.",
+        ),
+    ],
     temperature: Annotated[
         Path | None,
         typer.Option("--temperature", exists=True, dir_okay=False, readable=True),
@@ -44,7 +51,7 @@ def evaluate_command(
             checkpoint,
             data_root,
             output_dir,
-            backend=BACKEND_FACTORY(),
+            backend=BACKEND_FACTORY(device=device),
             temperature_path=temperature,
         )
         return {

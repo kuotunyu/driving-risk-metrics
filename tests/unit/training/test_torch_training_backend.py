@@ -100,7 +100,9 @@ def test_gradients_accumulate_and_the_optimizer_updates_once_per_window(
 
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1", "t2", "t3", "t4"))
-    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
     state = make_state(backends)
     before = weight_of(state)
 
@@ -126,7 +128,9 @@ def test_accumulated_micro_batches_match_one_larger_batch(tmp_path: Path) -> Non
 
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1", "t2", "t3", "t4"))
-    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
     batch = (("t1", 1.0), ("t2", 1.0), ("t3", 1.0), ("t4", 1.0))
 
     single = make_state(backends)
@@ -144,7 +148,9 @@ def test_the_engine_learning_rate_reaches_the_optimizer(tmp_path: Path) -> None:
 
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
-    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
     state = make_state(backends, learning_rate=99.0)
 
     backend.run_step(state, (("t1", 1.0),), 0.25, apply_update=True)
@@ -157,7 +163,9 @@ def test_ignored_pixels_never_contribute_to_the_loss(tmp_path: Path) -> None:
 
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
-    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
     labels = data_root / TRAIN_LABELS
     ignored = np.full((SOURCE_HEIGHT, SOURCE_WIDTH), 255, dtype=np.uint8)
     Image.fromarray(ignored).save(labels / "t1_train_id.png")
@@ -172,7 +180,9 @@ def test_the_engine_supplied_draw_decides_the_horizontal_flip(tmp_path: Path) ->
 
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
-    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
 
     flipped = backend.load_batch((("t1", 0.0),))
     unflipped = backend.load_batch((("t1", 1.0),))
@@ -186,7 +196,9 @@ def test_a_checkpoint_round_trips_with_its_own_metadata(tmp_path: Path) -> None:
 
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
-    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
     state = make_state(backends)
     metadata = {"run_id": "tiny-seed-17", "seed": 17, "final_step": 1}
     path = tmp_path / "final_checkpoint.pt"
@@ -203,7 +215,9 @@ def test_a_checkpoint_from_another_run_fails_closed(tmp_path: Path) -> None:
 
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
-    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
     state = make_state(backends)
     path = tmp_path / "final_checkpoint.pt"
     backend.save_checkpoint(state, path, {"run_id": "tiny-seed-17", "seed": 17})
@@ -227,7 +241,9 @@ def test_the_declared_optimizer_is_the_one_that_is_built(
 
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
-    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
 
     state = backend.create_training_state(
         model_name,  # type: ignore[arg-type]
@@ -245,7 +261,9 @@ def test_seeding_makes_model_initialization_reproducible(tmp_path: Path) -> None
 
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
-    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
 
     backend.seed_all(17)
     first = torch.nn.Conv2d(3, NUM_CLASSES, kernel_size=1).weight.detach().clone()
@@ -263,7 +281,9 @@ def test_an_unknown_sample_fails_closed(tmp_path: Path) -> None:
 
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
-    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
 
     with pytest.raises(KeyError, match="not in the frozen manifest"):
         backend.load_batch((("unknown", 1.0),))
@@ -293,7 +313,9 @@ def test_a_parameter_without_a_gradient_does_not_stop_the_update(tmp_path: Path)
 
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
-    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
     adapter = SegmentationAdapter(
         module=TinyModuleWithUnusedParameter(),
     )
@@ -341,11 +363,72 @@ def test_the_backend_factory_resolves_the_protocol_and_manifest(tmp_path: Path) 
         config_path,
         manifest_path,
         data_root,
+        device="cpu",
         pretrained=False,
     )
 
     assert isinstance(backend, backends.TorchTrainingBackend)
     assert backend.load_batch((("t1", 1.0),)).images.shape == (1, 3, 512, 1024)
+
+
+def test_the_factory_builds_its_backend_on_the_requested_device(tmp_path: Path) -> None:
+    """The command line reaches the backend only through this factory.
+
+    The backend honoured its device from the start; the factory was the link the
+    first formal run fell through, because the command never named one and the
+    factory quietly supplied the CPU.
+    """
+
+    from drivemetrics.training.schedule import optimizer_spec
+
+    backends = load_backends_module()
+    _, manifest, _ = build_cohort(tmp_path, ("t1",))
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps(dataclasses.asdict(manifest)), encoding="utf-8")
+    config_path = tmp_path / "run.yaml"
+    config_path.write_text(
+        "schema_version: drivemetrics-training-run/v1\n"
+        "protocol_path: protocol.yaml\n"
+        "model: upernet_convnextv2_tiny\n"
+        "micro_batch_size: 8\n",
+        encoding="utf-8",
+    )
+
+    backend = backends.build_training_backend(
+        config_path, manifest_path, tmp_path / "data", device="meta", pretrained=False
+    )
+    state = backend.create_training_state(
+        "upernet_convnextv2_tiny",  # type: ignore[arg-type]
+        optimizer_spec("upernet_convnextv2_tiny"),  # type: ignore[arg-type]
+    )
+
+    assert next(state.adapter.module.parameters()).device.type == "meta"
+
+
+def test_no_device_is_ever_implied(tmp_path: Path) -> None:
+    """A default device is a decision nobody made. Every constructor refuses to make it."""
+
+    backends = load_backends_module()
+    data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(json.dumps(dataclasses.asdict(manifest)), encoding="utf-8")
+    config_path = tmp_path / "run.yaml"
+    config_path.write_text(
+        "schema_version: drivemetrics-training-run/v1\n"
+        "protocol_path: protocol.yaml\n"
+        "model: upernet_convnextv2_tiny\n"
+        "micro_batch_size: 8\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(TypeError, match="device"):
+        backends.TorchTrainingBackend(  # type: ignore[call-arg]
+            data_root, manifest, protocol, pretrained=False
+        )
+    with pytest.raises(TypeError, match="device"):
+        backends.build_training_backend(  # type: ignore[call-arg]
+            config_path, manifest_path, data_root, pretrained=False
+        )
 
 
 def test_the_training_state_is_built_on_the_requested_device(tmp_path: Path) -> None:
@@ -389,10 +472,10 @@ def test_parallel_loading_is_byte_identical_to_serial_loading(tmp_path: Path) ->
     batch = tuple((sample_id, 0.0 if index % 2 else 1.0) for index, sample_id in enumerate(ids))
 
     serial = backends.TorchTrainingBackend(
-        data_root, manifest, protocol, pretrained=False, loader_threads=1
+        data_root, manifest, protocol, device="cpu", pretrained=False, loader_threads=1
     ).load_batch(batch)
     parallel = backends.TorchTrainingBackend(
-        data_root, manifest, protocol, pretrained=False, loader_threads=4
+        data_root, manifest, protocol, device="cpu", pretrained=False, loader_threads=4
     ).load_batch(batch)
 
     assert np.array_equal(serial.images, parallel.images)
@@ -407,7 +490,7 @@ def test_a_sample_outside_the_manifest_is_still_refused_when_loading_in_parallel
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1", "t2"))
     backend = backends.TorchTrainingBackend(
-        data_root, manifest, protocol, pretrained=False, loader_threads=4
+        data_root, manifest, protocol, device="cpu", pretrained=False, loader_threads=4
     )
 
     with pytest.raises(KeyError, match="not in the frozen manifest"):
@@ -422,7 +505,7 @@ def test_the_loader_thread_count_must_be_positive(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="loader_threads"):
         backends.TorchTrainingBackend(
-            data_root, manifest, protocol, pretrained=False, loader_threads=0
+            data_root, manifest, protocol, device="cpu", pretrained=False, loader_threads=0
         )
 
 
@@ -437,6 +520,7 @@ def test_a_boolean_thread_count_is_refused(tmp_path: Path) -> None:
             data_root,
             manifest,
             protocol,
+            device="cpu",
             pretrained=False,
             loader_threads=True,  # type: ignore[arg-type]
         )
@@ -447,7 +531,9 @@ def test_an_optimizer_outside_the_protocol_fails_closed(tmp_path: Path) -> None:
 
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
-    backend = backends.TorchTrainingBackend(data_root, manifest, protocol, pretrained=False)
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
 
     with pytest.raises(ValueError, match="adamw"):
         backend.create_training_state(
