@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import re
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -354,3 +355,38 @@ def test_two_sample_ids_draw_different_pixels(tmp_path: Path) -> None:
     second = service.sample_pixel_indices(mask, sample_id="c0001", pixels=8)
 
     assert first.tolist() != second.tolist()
+
+
+def test_calibration_creates_a_nested_output_directory(tmp_path: Path) -> None:
+    """The same requirement the analysis stage has, for the same reason.
+
+    Every real invocation writes several levels deep, and failing after the
+    temperature has been fitted wastes the fit.
+    """
+
+    workspace = build_workspace(tmp_path)
+    output = tmp_path / "artifacts" / "calibration" / "upernet_convnextv2_tiny-seed-17"
+
+    run(workspace, output)
+
+    assert (output / "temperature.json").is_file()
+    assert (output / "run_record.json").is_file()
+
+
+def test_the_written_calibration_has_sorted_keys(tmp_path: Path) -> None:
+    """Key order is part of the bytes, and a claim cites the bytes.
+
+    Without `sort_keys=True` the file follows the model's field declaration
+    order, which is meaningful rather than alphabetical, so an unrelated field
+    reorder would change the artifact hash and detach every claim that cited
+    it.
+    """
+
+    workspace = build_workspace(tmp_path)
+    output = tmp_path / "out"
+    run(workspace, output)
+
+    for name in ("temperature", "run_record"):
+        text = (output / f"{name}.json").read_text(encoding="utf-8")
+        keys = re.findall(r'^  "([^"]+)":', text, re.MULTILINE)
+        assert keys == sorted(keys), f"{name}.json top-level keys are not sorted: {keys}"

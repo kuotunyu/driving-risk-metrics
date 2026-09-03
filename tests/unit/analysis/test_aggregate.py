@@ -9,6 +9,7 @@ metrics rather than each metric answering a slightly different question.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -375,3 +376,38 @@ def test_the_paired_statistic_orients_every_run_by_its_own_label() -> None:
     values = signed(np.array([2.0, 2.0, 2.0], dtype=np.float64))
 
     assert values.tolist() == [-2.0, 2.0, -2.0]
+
+
+def test_the_analysis_creates_a_nested_output_directory(tmp_path: Path) -> None:
+    """An operator names the output path; the stage does not get to require its parents.
+
+    `mkdir(parents=True)` is the difference between `--output-dir
+    artifacts/analysis/bdd100k_semseg_v1` working on a clean checkout and
+    failing with a bare FileNotFoundError after the analysis has already been
+    computed. Every real invocation writes several levels deep.
+    """
+
+    output = tmp_path / "artifacts" / "analysis" / "bdd100k_semseg_v1"
+
+    run(tmp_path / "runs", output)
+
+    assert (output / "metrics.json").is_file()
+
+
+def test_the_written_analysis_has_sorted_keys(tmp_path: Path) -> None:
+    """Key order is part of the bytes, and the bytes are what a claim cites.
+
+    Without `sort_keys=True` the file follows dict insertion order, so the same
+    analysis rewritten under a different Python or after an unrelated field
+    reorder produces different bytes and a different hash. Nothing else in the
+    pipeline pins this, because the models themselves are declared in a
+    meaningful rather than alphabetical order.
+    """
+
+    output = tmp_path / "out"
+    run(tmp_path / "runs", output)
+
+    for name in ("metrics", "intervals", "rankings"):
+        text = (output / f"{name}.json").read_text(encoding="utf-8")
+        keys = re.findall(r'^  "([^"]+)":', text, re.MULTILINE)
+        assert keys == sorted(keys), f"{name}.json top-level keys are not sorted: {keys}"

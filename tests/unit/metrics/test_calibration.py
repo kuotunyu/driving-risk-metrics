@@ -329,3 +329,24 @@ def test_the_correctness_bitset_has_a_pinned_wire_format() -> None:
 
     assert module.pack_correctness(correct) == b"\x4d"
     np.testing.assert_array_equal(module.unpack_correctness(b"\x4d", 8), correct)
+
+
+def test_out_of_range_probabilities_are_refused_even_when_the_row_still_sums_to_one() -> None:
+    """The range guard has to hold on its own, not lean on the row-sum check.
+
+    `[1.5, -0.5]` sums to exactly 1.0, so the row-sum check is satisfied and
+    the only thing standing between it and the metric is the range test. If
+    that test were written `(p < 0.0) & (p > 1.0)` instead of `|`, no value
+    could ever satisfy both halves, the guard would never fire, and a
+    probability of 1.5 would flow into a published Brier score.
+
+    The assertion names the range message specifically. A test that accepted
+    any ValueError would pass on the row-sum message and prove nothing.
+    """
+
+    module = load_calibration()
+    probabilities = np.array([[1.5, -0.5]], dtype=np.float64)
+    targets = np.array([0], dtype=np.int64)
+
+    with pytest.raises(ValueError, match=r"^probability values must be finite and within"):
+        module.multiclass_brier_sums(probabilities, targets, num_classes=2)
