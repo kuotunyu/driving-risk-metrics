@@ -248,3 +248,20 @@ def test_metrics_package_exports_p1_07_public_interfaces() -> None:
     assert metrics.InstanceCoverage is load_instances_module().InstanceCoverage
     assert metrics.instance_coverages is load_instances_module().instance_coverages
     assert metrics.learn_area_tertiles is load_instances_module().learn_area_tertiles
+
+
+def test_the_tertile_edges_are_the_hand_computed_ranks() -> None:
+    """The edge indices decide which instances count as small, medium and large.
+
+    Six observations is chosen because the two indices are sensitive there:
+    `(6 - 1) // 3` is 1 and `(2 * 6 - 1) // 3` is 3, so any arithmetic slip in
+    either expression lands on a different observation and moves the size
+    boundary for every instance in the class.
+    """
+
+    instances = load_instances_module()
+
+    edges = instances.learn_area_tertiles([(0, 60), (0, 10), (0, 40), (0, 20), (0, 50), (0, 30)])
+
+    # Sorted areas are [10, 20, 30, 40, 50, 60]; the edges are ranks 1 and 3.
+    assert edges == {0: (20, 40)}
