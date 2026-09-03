@@ -208,3 +208,20 @@ def test_out_of_range_label_errors_hold_across_class_counts(
 
     with pytest.raises(ValueError, match=invalid_array):
         confusion.compute_confusion(y_true, y_pred, num_classes)
+
+
+def test_class_zero_is_a_valid_critical_class() -> None:
+    """Zero is a class ID, not a sentinel.
+
+    A guard written `class_id <= 0` instead of `< 0` would reject the first
+    class in the taxonomy, and BDD100K's class 0 is `road` — the largest class
+    in the dataset. The rejection would look like a configuration error rather
+    than a bug in the validator.
+    """
+
+    risk = pytest.importorskip("drivemetrics.metrics.risk")
+    confusion = np.zeros((3, 3), dtype=np.int64)
+    confusion[0, 0] = 8
+    confusion[0, 1] = 2
+
+    assert risk.critical_false_negative_rate(confusion, (0,)) == pytest.approx(0.2)
