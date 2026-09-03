@@ -332,3 +332,46 @@ def test_an_artifact_from_another_protocol_is_refused(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="protocol hash"):
         aggregate.aggregate_runs(index_path, tmp_path / "out", resamples=20)
+
+
+def test_a_written_document_is_byte_exact_and_key_sorted(tmp_path: Path) -> None:
+    """Analysis documents are cited by hash, so their bytes are the contract.
+
+    Indentation, key order, encoding and the trailing newline are all part of
+    what a claim's ``artifact_path`` resolves to. A reformat that changes any of
+    them changes every hash that ever cited the file.
+    """
+
+    aggregate = load_aggregate()
+    path = tmp_path / "document.json"
+
+    aggregate._write(path, {"b": 2, "a": {"d": 4, "c": 3}})
+
+    assert path.read_bytes() == b'{\n  "a": {\n    "c": 3,\n    "d": 4\n  },\n  "b": 2\n}\n'
+
+
+def test_the_paired_statistic_is_oriented_left_minus_right() -> None:
+    """A flipped sign turns "A beats B" into "B beats A" with the same interval.
+
+    Nothing downstream can detect it: the interval is still finite, still the
+    right width, and still centred on a plausible number. Only the sign of the
+    orientation says which model the estimate is about.
+    """
+
+    aggregate = load_aggregate()
+
+    signed = aggregate._signed_difference_statistic(lambda summed: summed, (0, 1))
+    values = signed(np.array([3.0, 5.0], dtype=np.float64))
+
+    assert values.tolist() == [3.0, -5.0]
+
+
+def test_the_paired_statistic_orients_every_run_by_its_own_label() -> None:
+    """Runs arrive interleaved, so the sign must follow the label, not the index."""
+
+    aggregate = load_aggregate()
+
+    signed = aggregate._signed_difference_statistic(lambda summed: summed, (1, 0, 1))
+    values = signed(np.array([2.0, 2.0, 2.0], dtype=np.float64))
+
+    assert values.tolist() == [-2.0, 2.0, -2.0]

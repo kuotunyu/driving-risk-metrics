@@ -273,4 +273,8 @@ def _signed_difference_statistic(statistic, labels: tuple[int, ...]):
 
 
 def _write(path: Path, document: dict[str, Any]) -> None:
-    path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(document, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )

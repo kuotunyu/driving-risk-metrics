@@ -307,3 +307,48 @@ def test_an_image_with_fewer_labelled_pixels_than_the_budget_is_padded(
 
     assert result.temperature > 0.0
     assert result.pixels_per_image == SOURCE_HEIGHT * SOURCE_WIDTH * 2
+
+
+def test_a_cohort_at_exactly_the_budget_is_returned_whole(tmp_path: Path) -> None:
+    """The boundary decides whether an image is sampled or taken entire.
+
+    At exactly the budget both branches return the same count, so only the
+    identity of the returned pixels separates them: sampling would reorder and
+    drop, while the contract says take every labelled pixel once.
+    """
+
+    del tmp_path
+    service = load_service()
+    mask = np.arange(4, dtype=np.uint8).reshape(2, 2)
+
+    indices = service.sample_pixel_indices(mask, sample_id="c0000", pixels=4)
+
+    assert indices.tolist() == [0, 1, 2, 3]
+
+
+def test_the_sample_is_the_same_every_time_for_one_sample_id(tmp_path: Path) -> None:
+    """A calibration fit that redraws its pixels is not reproducible."""
+
+    del tmp_path
+    service = load_service()
+    mask = np.arange(64, dtype=np.uint8).reshape(8, 8)
+
+    first = service.sample_pixel_indices(mask, sample_id="c0000", pixels=8)
+    second = service.sample_pixel_indices(mask, sample_id="c0000", pixels=8)
+
+    assert first.tolist() == second.tolist()
+    assert len(set(first.tolist())) == 8, "a pixel was drawn twice and would be double-weighted"
+    assert first.tolist() == sorted(first.tolist())
+
+
+def test_two_sample_ids_draw_different_pixels(tmp_path: Path) -> None:
+    """A seed that ignores the sample ID would give every image the same pixels."""
+
+    del tmp_path
+    service = load_service()
+    mask = np.arange(64, dtype=np.uint8).reshape(8, 8)
+
+    first = service.sample_pixel_indices(mask, sample_id="c0000", pixels=8)
+    second = service.sample_pixel_indices(mask, sample_id="c0001", pixels=8)
+
+    assert first.tolist() != second.tolist()

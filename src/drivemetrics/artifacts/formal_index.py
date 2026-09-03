@@ -235,7 +235,11 @@ def build_formal_run_index(
         raise ValueError("assembled index failed its own gate: " + "; ".join(violations))
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    output_path.write_text(
+        json.dumps(document, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
     return FormalIndexResult(
         index_path=output_path,
         run_count=len(runs),
