@@ -280,3 +280,24 @@ def test_seed_zero_is_a_usable_seed() -> None:
     interval = bootstrap.two_stage_paired_bootstrap(values, (0, 1), resamples=32, seed=0)
 
     assert interval.seed == 0
+
+
+@pytest.mark.parametrize("shape", [(0, 2, 2), (2, 0, 2), (2, 2, 0)])
+def test_an_empty_dimension_is_refused(shape: tuple[int, int, int]) -> None:
+    """Each of the three axes must be checked, not just whichever one is first.
+
+    The guard is a chain of `or`, and every link matters: a run-by-image-by-
+    component array with no images resamples an empty cohort, and one with no
+    components has nothing to sum. Written with `and` instead, only an array
+    empty on ALL THREE axes would be refused, and every partially empty array
+    would reach the estimator.
+    """
+
+    bootstrap = load_bootstrap_module()
+
+    with pytest.raises(ValueError, match=r"^components must contain at least one run"):
+        bootstrap.two_stage_paired_bootstrap_statistic(
+            np.ones(shape, dtype=np.float64),
+            tuple(range(shape[0])),
+            lambda summed: summed[:, 0],
+        )

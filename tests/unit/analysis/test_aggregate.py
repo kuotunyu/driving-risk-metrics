@@ -411,3 +411,39 @@ def test_the_written_analysis_has_sorted_keys(tmp_path: Path) -> None:
         text = (output / f"{name}.json").read_text(encoding="utf-8")
         keys = re.findall(r'^  "([^"]+)":', text, re.MULTILINE)
         assert keys == sorted(keys), f"{name}.json top-level keys are not sorted: {keys}"
+
+
+def test_the_cohort_name_is_read_from_the_index(tmp_path: Path) -> None:
+    """The recorded cohort names WHICH locked set produced the numbers.
+
+    The existing test asserts `locked_validation`, which is also the fallback,
+    so it passes whether the key is read or not. A different name is what
+    proves the lookup happens: if the key were misspelled in the reader, every
+    analysis would silently claim to be over the default cohort.
+    """
+
+    output = tmp_path / "out"
+    run(tmp_path / "runs", output, cohort="locked_validation_rev2")
+
+    assert documents(output)["metrics"]["cohort"] == "locked_validation_rev2"
+
+
+def test_an_index_without_a_cohort_falls_back_to_the_locked_validation_set(
+    tmp_path: Path,
+) -> None:
+    """The pair to the test above, which is what pins the fallback itself.
+
+    With the key present and equal to the fallback, nothing distinguishes a
+    changed default from a correct one.
+    """
+
+    output = tmp_path / "out"
+    index = build_index(tmp_path / "runs")
+    document = json.loads(index.read_text(encoding="utf-8"))
+    del document["cohort"]
+    index.write_text(json.dumps(document, indent=2, sort_keys=True), encoding="utf-8")
+
+    aggregate = load_aggregate()
+    aggregate.aggregate_runs(index, output, resamples=60)
+
+    assert documents(output)["metrics"]["cohort"] == "locked_validation"
