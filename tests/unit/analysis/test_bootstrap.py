@@ -225,3 +225,58 @@ def test_bootstrap_rejects_non_integer_model_labels(model_seed_ids: tuple[object
             resamples=8,
             seed=1,
         )
+
+
+def test_the_protocol_defaults_are_recorded_in_the_interval() -> None:
+    """5,000 resamples and seed 20260831 are cited by every published interval.
+
+    They are arguments with defaults rather than constants precisely so a
+    caller can vary them, which means nothing else pins what the default IS.
+    A run that quietly used 5,001 resamples or seed 20260832 would still
+    reproduce from its own record and would not reproduce from the protocol.
+    """
+
+    bootstrap = load_bootstrap_module()
+    values = np.array([[0.1, 0.2, 0.3, 0.4], [0.2, 0.3, 0.4, 0.5]], dtype=np.float64)
+
+    interval = bootstrap.two_stage_paired_bootstrap(values, (0, 1))
+
+    assert interval.resamples == 5000
+    assert interval.seed == 20260831
+
+
+def test_the_component_estimator_carries_the_same_defaults() -> None:
+    """The two estimators must not drift apart in what they default to.
+
+    They are documented as generating their draws in the same order, which is
+    only meaningful if they start from the same seed and take the same number
+    of resamples.
+    """
+
+    bootstrap = load_bootstrap_module()
+    components = np.ones((2, 4, 3), dtype=np.float64)
+
+    interval = bootstrap.two_stage_paired_bootstrap_statistic(
+        components,
+        (0, 1),
+        lambda summed: summed[:, 0],
+    )
+
+    assert interval.resamples == 5000
+    assert interval.seed == 20260831
+
+
+def test_seed_zero_is_a_usable_seed() -> None:
+    """Zero is a seed like any other, and it is the one a careless caller passes.
+
+    A guard written `seed <= 0` instead of `< 0` would refuse it, which turns a
+    perfectly reproducible run into an error the operator cannot explain from
+    the message.
+    """
+
+    bootstrap = load_bootstrap_module()
+    values = np.array([[0.1, 0.2, 0.3, 0.4], [0.2, 0.3, 0.4, 0.5]], dtype=np.float64)
+
+    interval = bootstrap.two_stage_paired_bootstrap(values, (0, 1), resamples=32, seed=0)
+
+    assert interval.seed == 0
