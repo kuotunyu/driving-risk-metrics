@@ -93,13 +93,48 @@ def test_ignore_pixels_are_dropped_before_prediction_range_validation() -> None:
 @pytest.mark.parametrize(
     ("y_true", "y_pred", "num_classes", "expected"),
     [
-        (np.zeros((2, 2), dtype=np.int64), np.zeros(4, dtype=np.int64), 2, "same shape"),
-        (np.array([0, 2], dtype=np.int64), np.array([0, 1], dtype=np.int64), 2, "true"),
-        (np.array([0, 1], dtype=np.int64), np.array([0, -1], dtype=np.int64), 2, "predicted"),
-        (np.array([0], dtype=np.int32), np.array([0], dtype=np.int64), 2, "int64"),
-        (np.array([0], dtype=np.int64), np.array([0], dtype=np.int32), 2, "int64"),
-        (np.array([0], dtype=np.int64), np.array([0], dtype=np.int64), 0, "positive integer"),
-        (np.array([0], dtype=np.int64), np.array([0], dtype=np.int64), True, "positive integer"),
+        (
+            np.zeros((2, 2), dtype=np.int64),
+            np.zeros(4, dtype=np.int64),
+            2,
+            r"^y_true and y_pred must have the same shape$",
+        ),
+        (
+            np.array([0, 2], dtype=np.int64),
+            np.array([0, 1], dtype=np.int64),
+            2,
+            r"^true class ID is outside the declared class range$",
+        ),
+        (
+            np.array([0, 1], dtype=np.int64),
+            np.array([0, -1], dtype=np.int64),
+            2,
+            r"^predicted class ID is outside the declared class range$",
+        ),
+        (
+            np.array([0], dtype=np.int32),
+            np.array([0], dtype=np.int64),
+            2,
+            r"^y_true and y_pred must have int64 dtype$",
+        ),
+        (
+            np.array([0], dtype=np.int64),
+            np.array([0], dtype=np.int32),
+            2,
+            r"^y_true and y_pred must have int64 dtype$",
+        ),
+        (
+            np.array([0], dtype=np.int64),
+            np.array([0], dtype=np.int64),
+            0,
+            r"^num_classes must be a positive integer$",
+        ),
+        (
+            np.array([0], dtype=np.int64),
+            np.array([0], dtype=np.int64),
+            True,
+            r"^num_classes must be a positive integer$",
+        ),
     ],
 )
 def test_compute_confusion_rejects_shape_dtype_class_and_label_errors(
@@ -117,11 +152,14 @@ def test_compute_confusion_rejects_shape_dtype_class_and_label_errors(
 @pytest.mark.parametrize(
     ("matrix", "expected"),
     [
-        (np.zeros((2, 3), dtype=np.int64), "square"),
-        (np.zeros(3, dtype=np.int64), "two-dimensional"),
-        (np.array([[1, -1], [0, 1]], dtype=np.int64), "nonnegative"),
-        (np.eye(2, dtype=np.int32), "int64"),
-        (np.zeros((0, 0), dtype=np.int64), "at least one class"),
+        (np.zeros((2, 3), dtype=np.int64), r"^confusion matrix must be square$"),
+        (np.zeros(3, dtype=np.int64), r"^confusion matrix must be two-dimensional$"),
+        (np.array([[1, -1], [0, 1]], dtype=np.int64), r"^confusion counts must be nonnegative$"),
+        (np.eye(2, dtype=np.int32), r"^confusion matrix must have int64 dtype$"),
+        (
+            np.zeros((0, 0), dtype=np.int64),
+            r"^confusion matrix must contain at least one class$",
+        ),
     ],
 )
 def test_summarize_confusion_rejects_invalid_matrices(matrix: np.ndarray, expected: str) -> None:

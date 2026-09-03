@@ -128,7 +128,7 @@ def test_instance_coverages_requires_int64_arrays(array_name: str) -> None:
     }
     arrays[array_name] = arrays[array_name].astype(np.int32)
 
-    with pytest.raises(TypeError, match="int64"):
+    with pytest.raises(TypeError, match=rf"^{array_name} must have int64 dtype$"):
         instances.instance_coverages(
             arrays["y_true"],
             arrays["y_pred"],
@@ -161,15 +161,16 @@ def test_instance_coverages_requires_matching_shapes(array_name: str) -> None:
 @pytest.mark.parametrize(
     ("valid_instance_classes", "tertile_edges", "expected"),
     [
-        ({0: 2}, {2: (1, 2)}, "positive"),
-        ({True: 2}, {2: (1, 2)}, "integer"),
-        ({5: True}, {1: (1, 2)}, "class"),
-        ({5: -1}, {-1: (1, 2)}, "nonnegative"),
-        ({5: 2}, {}, "tertile"),
-        ({5: 2}, {2: (0, 2)}, "positive"),
-        ({5: 2}, {2: (3, 2)}, "ordered"),
-        ({5: 2}, {2: [1, 2]}, "pairs"),
-        ({5: 2}, {2: (True, 2)}, "pairs"),
+        ({0: 2}, {2: (1, 2)}, r"^instance IDs must be positive$"),
+        ({True: 2}, {2: (1, 2)}, r"^instance IDs must be integers$"),
+        ({5: True}, {1: (1, 2)}, r"^class IDs must be integers$"),
+        ({5: -1}, {-1: (1, 2)}, r"^class IDs must be nonnegative$"),
+        ({5: 2}, {}, r"^tertile edges are missing for class 2$"),
+        ({5: 2}, {2: (0, 2)}, r"^tertile edges must be positive$"),
+        ({5: 2}, {2: (3, 2)}, r"^tertile edges must be ordered$"),
+        ({5: 2}, {2: [1, 2]}, r"^tertile edges must be integer pairs$"),
+        ({5: 2}, {2: (True, 2)}, r"^tertile edges must be integer pairs$"),
+        ({5: 2}, {2: (1, 0)}, r"^tertile edges must be positive$"),
     ],
 )
 def test_instance_coverages_rejects_invalid_mappings_and_edges(
@@ -195,9 +196,17 @@ def test_instance_coverages_rejects_invalid_mappings_and_edges(
 @pytest.mark.parametrize(
     ("y_true", "instance_ids", "expected"),
     [
-        (np.full((1, 2), 2, dtype=np.int64), np.full((1, 2), 8, dtype=np.int64), "absent"),
-        (np.full((1, 2), 255, dtype=np.int64), np.full((1, 2), 5, dtype=np.int64), "non-ignored"),
-        (np.full((1, 2), 3, dtype=np.int64), np.full((1, 2), 5, dtype=np.int64), "semantic"),
+        (
+            np.full((1, 2), 2, dtype=np.int64),
+            np.full((1, 2), 8, dtype=np.int64),
+            r"^declared instance ID 5 is absent$",
+        ),
+        (
+            np.full((1, 2), 255, dtype=np.int64),
+            np.full((1, 2), 5, dtype=np.int64),
+            r"non-ignored",
+        ),
+        (np.full((1, 2), 3, dtype=np.int64), np.full((1, 2), 5, dtype=np.int64), r"semantic"),
     ],
 )
 def test_instance_coverages_rejects_missing_ignored_or_misclassified_instances(
@@ -218,11 +227,11 @@ def test_instance_coverages_rejects_missing_ignored_or_misclassified_instances(
 @pytest.mark.parametrize(
     ("training_instances", "expected"),
     [
-        ([], "training"),
-        ([(True, 10)], "class"),
-        ([(-1, 10)], "nonnegative"),
-        ([(2, True)], "area"),
-        ([(2, 0)], "positive"),
+        ([], r"^training instances must not be empty$"),
+        ([(True, 10)], r"^training class IDs must be integers$"),
+        ([(-1, 10)], r"^training class IDs must be nonnegative$"),
+        ([(2, True)], r"^training instance area must be an integer$"),
+        ([(2, 0)], r"^training instance areas must be positive$"),
     ],
 )
 def test_learn_area_tertiles_rejects_invalid_training_observations(
@@ -290,3 +299,98 @@ def test_class_zero_is_a_valid_instance_class() -> None:
 
     assert record.class_id == 0
     assert record.correct_fraction == 0.75
+
+
+@pytest.mark.parametrize(
+    ("count", "expected"),
+    [(7, (30, 50)), (8, (30, 60))],
+    ids=["the first rank index moves at seven", "the second rank index moves at eight"],
+)
+def test_the_tertile_edges_move_where_the_rank_arithmetic_is_sensitive(
+    count: int,
+    expected: tuple[int, int],
+) -> None:
+    """Six observations, used by the neighbouring test, separate none of the arithmetic.
+
+    The edges are `areas[(n - 1) // 3]` and `areas[(2n - 1) // 3]`. At six,
+    `(6-1)//3`, `(6-2)//3` and `5//4` are all 1, and `(12-1)//3` and `(12-2)//3`
+    are both 3, so every off-by-one in either expression lands on the same
+    observation and the test that names those indices cannot see it.
+
+    Seven and eight do separate them. Areas here are 10, 20, ..., 10n:
+
+    * count 7: ranks `(7-1)//3 = 2` and `(14-1)//3 = 4` give (30, 50); the
+      altered first expressions give rank 1 and therefore 20.
+    * count 8: ranks `(8-1)//3 = 2` and `(16-1)//3 = 5` give (30, 60); the
+      altered second expression gives rank 4 and therefore 50.
+    """
+
+    instances = load_instances_module()
+    areas = [(0, 10 * (index + 1)) for index in range(count)]
+
+    assert instances.learn_area_tertiles(areas) == {0: expected}
+
+
+def test_the_smallest_admissible_instance_contract_is_accepted() -> None:
+    """One-pixel instances and unit tertile edges are the boundary, not an error.
+
+    Every guard here is a strict-positivity test, so the value one must pass
+    all of them: instance ID 1, area 1, and edges (1, 1) where the low and high
+    thresholds coincide. Written `<= 1` or `>=` any of them would refuse the
+    smallest well-formed input, and the refusal would read as malformed data
+    rather than as an off-by-one bound.
+    """
+
+    instances = load_instances_module()
+    y_true = np.array([[4, 4]], dtype=np.int64)
+    y_pred = np.array([[4, 0]], dtype=np.int64)
+    instance_ids = np.array([[1, 1]], dtype=np.int64)
+
+    result = instances.instance_coverages(
+        y_true,
+        y_pred,
+        instance_ids,
+        valid_instance_classes={1: 4},
+        tertile_edges={4: (1, 1)},
+    )
+
+    assert len(result) == 1
+    assert result[0].instance_id == 1
+    assert result[0].area_pixels == 2
+
+
+def test_a_single_pixel_training_instance_is_a_valid_observation() -> None:
+    """Area one is the smallest real instance and must reach the tertile learner.
+
+    A guard written `<= 1` instead of `<= 0` would silently drop every
+    one-pixel instance from the training intersection, which would shift the
+    learned small-instance boundary for the whole cohort without any error.
+    """
+
+    instances = load_instances_module()
+
+    edges = instances.learn_area_tertiles([(0, 1), (0, 2), (0, 3)])
+
+    assert edges == {0: (1, 2)}
+
+
+def test_a_non_integer_instance_id_is_rejected_before_its_sign_is_examined() -> None:
+    """The type guard and the sign guard are separate, and the type one comes first.
+
+    Written `and` instead of `or`, a non-integer that is not a bool would slip
+    past the type check and be compared against zero, which for a string raises
+    a TypeError from Python itself rather than this module's message. The
+    caller would be told that `str` and `int` cannot be ordered instead of
+    being told which contract they broke.
+    """
+
+    instances = load_instances_module()
+
+    with pytest.raises(TypeError, match=r"^instance IDs must be integers$"):
+        instances.instance_coverages(
+            np.array([[2, 2]], dtype=np.int64),
+            np.array([[2, 2]], dtype=np.int64),
+            np.array([[5, 5]], dtype=np.int64),
+            valid_instance_classes={"5": 2},  # type: ignore[dict-item]
+            tertile_edges={2: (1, 2)},
+        )

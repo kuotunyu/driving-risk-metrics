@@ -156,15 +156,30 @@ def test_selective_risk_curve_rejects_a_non_boolean_correctness_array() -> None:
         )
 
 
-def test_selective_risk_curve_rejects_multidimensional_input() -> None:
-    """A per-image matrix would flatten into a curve that no coverage grid describes."""
+@pytest.mark.parametrize(
+    ("confidence_shape", "correctness_shape"),
+    [((2, 2), (2, 2)), ((2, 2), (4,)), ((4,), (2, 2))],
+    ids=["both are matrices", "only confidence is a matrix", "only correctness is a matrix"],
+)
+def test_selective_risk_curve_rejects_multidimensional_input(
+    confidence_shape: tuple[int, ...],
+    correctness_shape: tuple[int, ...],
+) -> None:
+    """A per-image matrix would flatten into a curve that no coverage grid describes.
+
+    Either array on its own is enough to refuse the call. The both-matrices row
+    cannot show that: written `and` instead of `or` the check still fires there,
+    and only a mixed pair reveals that one bad array would pass. The mixed rows
+    keep the total sizes equal, so the length check downstream cannot stand in
+    for the dimensionality check.
+    """
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match=r"^confidence and correctness must be one-dimensional"):
+    with pytest.raises(ValueError, match=r"^confidence and correctness must be one-dimensional$"):
         selective.selective_risk_curve(
-            np.zeros((2, 2), dtype=np.float64),
-            np.ones((2, 2), dtype=np.bool_),
+            np.zeros(confidence_shape, dtype=np.float64),
+            np.ones(correctness_shape, dtype=np.bool_),
         )
 
 
@@ -229,18 +244,28 @@ def test_risk_coverage_area_rejects_a_non_increasing_coverage_grid() -> None:
         )
 
 
-@pytest.mark.parametrize("grid", [[0.0, 1.0], [0.5, 1.5]])
+@pytest.mark.parametrize(
+    "grid",
+    [[0.0, 1.0], [0.5, 1.5], [0.25, 0.5, 1.5]],
+    ids=["zero coverage", "final point above one", "final point above one on a longer grid"],
+)
 def test_risk_coverage_area_rejects_coverage_outside_the_unit_interval(
     grid: list[float],
 ) -> None:
-    """Coverage is a retained fraction; zero or above one is not a reportable operating point."""
+    """Coverage is a retained fraction; zero or above one is not a reportable operating point.
+
+    The upper bound is checked on the LAST point, because the grid is already
+    known to be strictly increasing. On a two-point grid `coverage[-1]` and
+    `coverage[1]` are the same element, so the third row is what separates
+    them: there the offending value is at the end and position 1 is innocent.
+    """
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match=r"\(0, 1\]"):
+    with pytest.raises(ValueError, match=r"^coverage values must lie in \(0, 1\]$"):
         selective.area_under_risk_coverage(
             np.array(grid, dtype=np.float64),
-            np.array([0.1, 0.2], dtype=np.float64),
+            np.array([0.1, 0.2, 0.3][: len(grid)], dtype=np.float64),
         )
 
 
@@ -252,7 +277,7 @@ def test_risk_coverage_area_rejects_risk_outside_the_unit_interval(
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match=r"\[0, 1\]"):
+    with pytest.raises(ValueError, match=r"^risk values must lie in \[0, 1\]$"):
         selective.area_under_risk_coverage(
             np.array([0.5, 1.0], dtype=np.float64),
             np.array(bad_risk, dtype=np.float64),
