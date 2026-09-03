@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import sys
+import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, TextIO
 
 import typer
 
@@ -13,6 +16,39 @@ from drivemetrics.evaluation.engine import evaluate_checkpoint
 
 EVALUATE_SERVICE = evaluate_checkpoint
 BACKEND_FACTORY = TorchEvaluationBackend
+
+# Scoring the locked cohort and copying its artifacts takes most of an hour, and
+# the first formal session was interrupted by hand because that whole time was
+# silent: a working run and a hung one looked identical. One line every fifty
+# images is enough to tell them apart.
+PROGRESS_EVERY = 50
+
+
+def format_sample_progress(done: int, total: int, *, elapsed_seconds: float) -> str:
+    """One heartbeat line: how far the cohort has been scored and what remains."""
+
+    remaining = (total - done) * elapsed_seconds / done
+    return (
+        f"scored {done}/{total}  elapsed {elapsed_seconds / 60:.1f}m  "
+        f"remaining {remaining / 60:.1f}m"
+    )
+
+
+def sample_progress_printer(
+    every: int = PROGRESS_EVERY,
+    stream: TextIO | None = None,
+    clock: Callable[[], float] = time.perf_counter,
+) -> Callable[[int, int], None]:
+    """Build a sample observer that writes a heartbeat on the interval and at the end."""
+
+    started = clock()
+
+    def observe(done: int, total: int) -> None:
+        if done % every == 0 or done == total:
+            line = format_sample_progress(done, total, elapsed_seconds=clock() - started)
+            print(line, file=sys.stderr if stream is None else stream, flush=True)
+
+    return observe
 
 
 def evaluate_command(
@@ -53,6 +89,7 @@ def evaluate_command(
             output_dir,
             backend=BACKEND_FACTORY(device=device),
             temperature_path=temperature,
+            on_sample=sample_progress_printer(),
         )
         return {
             "command": "evaluate",
