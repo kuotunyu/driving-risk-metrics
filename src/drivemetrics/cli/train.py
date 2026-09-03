@@ -73,18 +73,39 @@ def train_command(
             help="Torch device the model trains on, such as cuda or cpu. There is no default.",
         ),
     ],
+    resume_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "--resume-dir",
+            file_okay=False,
+            help=(
+                "Directory holding this run's resume point. When given, the run records "
+                "its progress periodically and continues from the last recorded step. "
+                "Absent by default, which is exactly the behaviour of a run without it."
+            ),
+        ),
+    ] = None,
 ) -> None:
     """Run one locked training job and write its single final-step checkpoint.
 
     The device is required rather than defaulted. The first formal run trained on
     the CPU for seven hours beside an idle A100 because nothing in this chain ever
     said which device to use and the backend quietly assumed one.
+
+    ``--resume-dir`` is optional and off by default, so a run launched without it
+    executes the same code path as the runs that predate the flag.
     """
 
     def operation() -> dict[str, Any]:
         backend = BACKEND_FACTORY(config, manifest, data_root, device=device)
         result = TRAIN_SERVICE(
-            config, manifest, output_dir, seed, backend=backend, on_step=progress_printer()
+            config,
+            manifest,
+            output_dir,
+            seed,
+            backend=backend,
+            on_step=progress_printer(),
+            resume_dir=resume_dir,
         )
         return {
             "command": "train",

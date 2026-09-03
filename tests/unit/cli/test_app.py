@@ -647,3 +647,164 @@ def test_index_prints_one_machine_readable_status(
     status = status_of(result.stdout)
     assert status["command"] == "index"
     assert status["run_count"] == 9
+
+
+def test_train_passes_the_resume_directory_through_to_the_engine(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A flag the notebook sets but the engine never receives protects nothing."""
+
+    import drivemetrics.cli.train as train_cli
+
+    class Result:
+        final_step = 30000
+        checkpoint_path = tmp_path / "final_checkpoint.pt"
+        checkpoint_sha256 = "c" * 64
+        run_record_path = tmp_path / "run_record.json"
+
+    seen: dict[str, Any] = {}
+
+    def record(*args: Any, **kwargs: Any) -> Result:
+        seen.update(kwargs)
+        return Result()
+
+    monkeypatch.setattr(train_cli, "BACKEND_FACTORY", lambda *_, **__: object())
+    monkeypatch.setattr(train_cli, "TRAIN_SERVICE", record)
+    config = touch(tmp_path / "run.yaml")
+    manifest = touch(tmp_path / "manifest.json")
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+    resume_dir = tmp_path / "resume"
+
+    result = runner.invoke(
+        app,
+        [
+            "train",
+            "--config",
+            str(config),
+            "--manifest",
+            str(manifest),
+            "--data-root",
+            str(data_root),
+            "--seed",
+            "17",
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--device",
+            "cpu",
+            "--resume-dir",
+            str(resume_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert seen["resume_dir"] == resume_dir
+
+
+def test_train_defaults_to_no_resume_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Runs 01 to 03 were produced without it, so absent must stay the default."""
+
+    import drivemetrics.cli.train as train_cli
+
+    class Result:
+        final_step = 30000
+        checkpoint_path = tmp_path / "final_checkpoint.pt"
+        checkpoint_sha256 = "c" * 64
+        run_record_path = tmp_path / "run_record.json"
+
+    seen: dict[str, Any] = {}
+
+    def record(*args: Any, **kwargs: Any) -> Result:
+        seen.update(kwargs)
+        return Result()
+
+    monkeypatch.setattr(train_cli, "BACKEND_FACTORY", lambda *_, **__: object())
+    monkeypatch.setattr(train_cli, "TRAIN_SERVICE", record)
+    config = touch(tmp_path / "run.yaml")
+    manifest = touch(tmp_path / "manifest.json")
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+
+    result = runner.invoke(
+        app,
+        [
+            "train",
+            "--config",
+            str(config),
+            "--manifest",
+            str(manifest),
+            "--data-root",
+            str(data_root),
+            "--seed",
+            "17",
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--device",
+            "cpu",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert seen["resume_dir"] is None
+
+
+def test_evaluate_reports_progress_while_it_scores(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A silent forty-five minute cell is indistinguishable from a hung one.
+
+    The first formal session was interrupted by hand because evaluation printed
+    nothing between its start and its end, and a stalled run and a working one
+    looked exactly alike.
+    """
+
+    import drivemetrics.cli.evaluate as evaluate_cli
+
+    class Result:
+        evaluated_samples = 998
+        artifact_paths = ()
+        run_record_path = tmp_path / "run_record.json"
+
+    seen: dict[str, Any] = {}
+
+    def record(*args: Any, **kwargs: Any) -> Result:
+        seen.update(kwargs)
+        observer = kwargs["on_sample"]
+        observer(1, 998)
+        observer(500, 998)
+        return Result()
+
+    monkeypatch.setattr(evaluate_cli, "BACKEND_FACTORY", lambda *_, **__: object())
+    monkeypatch.setattr(evaluate_cli, "EVALUATE_SERVICE", record)
+    config = touch(tmp_path / "protocol.yaml")
+    manifest = touch(tmp_path / "manifest.json")
+    checkpoint = touch(tmp_path / "final_checkpoint.pt")
+    data_root = tmp_path / "data"
+    data_root.mkdir()
+
+    result = runner.invoke(
+        app,
+        [
+            "evaluate",
+            "--config",
+            str(config),
+            "--manifest",
+            str(manifest),
+            "--checkpoint",
+            str(checkpoint),
+            "--data-root",
+            str(data_root),
+            "--output-dir",
+            str(tmp_path / "out"),
+            "--device",
+            "cpu",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert callable(seen["on_sample"])

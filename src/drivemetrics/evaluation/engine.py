@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import math
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -37,6 +37,11 @@ from drivemetrics.metrics.confusion import compute_confusion
 from drivemetrics.models.adapters import SegmentationModel
 from drivemetrics.protocol.config import load_protocol, split_paths
 from drivemetrics.protocol.hashing import sha256_file
+
+# Called once per scored image with (completed, total). Purely observational: the
+# engine reads nothing back, so a run with an observer and a run without one
+# produce identical artifacts.
+SampleObserver = Callable[[int, int], None]
 
 RUN_RECORD_FILENAME = "run_record.json"
 
@@ -149,6 +154,7 @@ def _write_run_record(path: Path, document: dict[str, Any]) -> None:
     path.write_text(
         json.dumps(record.model_dump(mode="json"), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
+        newline="\n",
     )
 
 
@@ -161,6 +167,7 @@ def evaluate_checkpoint(
     *,
     backend: EvaluationBackend,
     temperature_path: Path | None = None,
+    on_sample: SampleObserver | None = None,
 ) -> EvaluationResult:
     """Score one checkpoint over one frozen cohort and publish per-image evidence.
 
@@ -219,6 +226,8 @@ def evaluate_checkpoint(
         )
         artifact_paths.append(artifact_path)
         artifacts[sample_id] = artifact.payload_sha256
+        if on_sample is not None:
+            on_sample(position + 1, len(manifest.sample_ids))
 
     run_record_path = output_dir / RUN_RECORD_FILENAME
     _write_run_record(

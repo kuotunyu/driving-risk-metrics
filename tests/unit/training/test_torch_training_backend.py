@@ -540,3 +540,135 @@ def test_an_optimizer_outside_the_protocol_fails_closed(tmp_path: Path) -> None:
             "segformer_b2",  # type: ignore[arg-type]
             {"optimizer": "sgd", "learning_rate": 0.01, "weight_decay": 0.0001},
         )
+
+
+def make_adamw_state(backends: ModuleType) -> Any:
+    """A state whose optimizer actually carries moments, as the real runs do.
+
+    ``make_state`` uses plain SGD, which keeps no per-parameter state at all, so
+    it cannot show whether the optimizer was restored. The formal runs use
+    AdamW, and its moments are exactly what a resumed run must not lose.
+    """
+
+    adapter = SegmentationAdapter(module=TinyModule())
+    optimizer = torch.optim.AdamW(adapter.module.parameters(), lr=0.5)
+    return backends.TorchTrainingState(adapter=adapter, optimizer=optimizer)
+
+
+def optimizer_fingerprint(state: Any) -> str:
+    """Hash the optimizer's tensors so a test can see them move and come back."""
+
+    import hashlib
+
+    digest = hashlib.sha256()
+    for entry in state.optimizer.state_dict()["state"].values():
+        for value in entry.values():
+            if isinstance(value, torch.Tensor):
+                digest.update(value.detach().cpu().numpy().tobytes())
+            else:
+                digest.update(repr(value).encode("utf-8"))
+    return digest.hexdigest()
+
+
+def test_resume_state_restores_the_weights_and_the_optimizer(tmp_path: Path) -> None:
+    """Restoring weights without the optimizer would reset Adam's moments.
+
+    The schedule would then be applied to a cold optimizer and the resumed run
+    would follow a different trajectory from an uninterrupted one, which is the
+    failure this pair of methods exists to prevent.
+    """
+
+    backends = load_backends_module()
+    data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
+    state = make_adamw_state(backends)
+    backend.run_step(state, (("t1", 0.0),), 0.01, apply_update=True)
+    # The engine hands the checkpoint metadata in and the resume file records
+    # its own step on top, so what is written and what is expected differ by
+    # exactly that one key.
+    metadata = {"run_id": "tiny-seed-17", "seed": 17}
+    path = tmp_path / "resume_state.pt"
+
+    digest = backend.save_resume_state(state, path, {**metadata, "completed_step": 5})
+
+    assert len(digest) == 64
+    saved_weights = {
+        name: value.clone() for name, value in state.adapter.module.state_dict().items()
+    }
+    saved_optimizer = optimizer_fingerprint(state)
+    assert saved_optimizer != optimizer_fingerprint(make_adamw_state(backends)), (
+        "the optimizer carries no state, so this test could not detect losing it"
+    )
+
+    backend.run_step(state, (("t1", 1.0),), 0.01, apply_update=True)
+    assert optimizer_fingerprint(state) != saved_optimizer
+
+    completed = backend.load_resume_state(state, path, metadata)
+
+    assert completed == 5
+    restored = state.adapter.module.state_dict()
+    for name, value in saved_weights.items():
+        assert torch.equal(restored[name], value), name
+    assert optimizer_fingerprint(state) == saved_optimizer
+
+
+def test_resume_state_from_another_run_fails_closed(tmp_path: Path) -> None:
+    """Continuing another pair's weights would corrupt this run invisibly."""
+
+    backends = load_backends_module()
+    data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
+    state = make_adamw_state(backends)
+    path = tmp_path / "resume_state.pt"
+    backend.save_resume_state(state, path, {"run_id": "tiny-seed-17", "completed_step": 5})
+
+    with pytest.raises(ValueError, match="resume state"):
+        backend.load_resume_state(state, path, {"run_id": "tiny-seed-42"})
+
+
+def test_a_resume_state_without_a_completed_step_is_refused(tmp_path: Path) -> None:
+    """A resume file that cannot say where it stopped cannot be continued from."""
+
+    backends = load_backends_module()
+    data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
+    state = make_adamw_state(backends)
+    path = tmp_path / "resume_state.pt"
+    torch.save({"model": {}, "optimizer": {}, "metadata": {"run_id": "tiny-seed-17"}}, path)
+
+    with pytest.raises(ValueError, match="completed_step"):
+        backend.load_resume_state(state, path, {"run_id": "tiny-seed-17"})
+
+
+def test_a_half_written_resume_file_does_not_replace_the_last_good_one(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A session killed mid-write must not leave an unloadable resume point."""
+
+    backends = load_backends_module()
+    data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
+    backend = backends.TorchTrainingBackend(
+        data_root, manifest, protocol, device="cpu", pretrained=False
+    )
+    state = make_adamw_state(backends)
+    backend.run_step(state, (("t1", 0.0),), 0.01, apply_update=True)
+    metadata = {"run_id": "tiny-seed-17"}
+    path = tmp_path / "resume_state.pt"
+    backend.save_resume_state(state, path, {**metadata, "completed_step": 5})
+    good_bytes = path.read_bytes()
+
+    def die_while_saving(*args: Any, **kwargs: Any) -> None:
+        raise OSError("the session was killed mid-write")
+
+    monkeypatch.setattr(torch, "save", die_while_saving)
+    with pytest.raises(OSError):
+        backend.save_resume_state(state, path, {**metadata, "completed_step": 10})
+
+    assert path.read_bytes() == good_bytes

@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import sys
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, runtime_checkable
 
 import numpy as np
 import yaml
@@ -28,6 +29,12 @@ from drivemetrics.training.schedule import optimizer_spec, polynomial_learning_r
 APPROVED_SEEDS: tuple[int, ...] = (17, 42, 73)
 CHECKPOINT_FILENAME = "final_checkpoint.pt"
 RUN_RECORD_FILENAME = "run_record.json"
+RESUME_FILENAME = "resume_state.pt"
+
+#: How often a resumable run records its progress. Two thousand optimizer
+#: steps is roughly half an hour on an A100, which bounds what a dropped
+#: session can cost without writing a large file often enough to matter.
+RESUME_EVERY_STEPS = 2000
 
 # Called once per optimizer step with (step, total_steps, mean micro-batch loss).
 # Purely observational: the engine never reads anything back from it, so a run
@@ -75,6 +82,32 @@ class TrainingBackend(Protocol):
 
     def load_checkpoint(self, path: Path, expected_metadata: Mapping[str, object]) -> object:
         """Load a checkpoint, failing closed when its metadata does not match."""
+
+
+@runtime_checkable
+class ResumableTrainingBackend(TrainingBackend, Protocol):
+    """A backend that can also put a run down and pick it up again.
+
+    Resuming is a separate capability rather than part of every backend, because
+    a backend that cannot resume is still a perfectly good training backend; the
+    engine simply refuses ``resume_dir`` for one rather than pretending.
+    """
+
+    def save_resume_state(
+        self,
+        state: object,
+        path: Path,
+        metadata: Mapping[str, object],
+    ) -> str:
+        """Persist enough state to continue this run, and return its SHA-256."""
+
+    def load_resume_state(
+        self,
+        state: object,
+        path: Path,
+        expected_metadata: Mapping[str, object],
+    ) -> int:
+        """Restore a saved run into ``state`` and return the step it had completed."""
 
 
 @dataclass(frozen=True)
@@ -162,7 +195,38 @@ def _write_run_record(path: Path, document: dict[str, Any]) -> None:
     path.write_text(
         json.dumps(record.model_dump(mode="json"), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
+        newline="\n",
     )
+
+
+def _record_resume_point(
+    backend: ResumableTrainingBackend,
+    state: object,
+    resume_path: Path,
+    checkpoint_metadata: Mapping[str, Any],
+    step: int,
+) -> None:
+    """Write a resume point, and never let failing to write one end the run.
+
+    The resume point is a convenience, not evidence: nothing downstream reads it
+    and no published number depends on it. A network drive that refuses one
+    write should therefore cost the run its safety net for half an hour, not the
+    eight hours of training it was there to protect. The warning goes to stderr
+    so a session that quietly lost its net still says so.
+    """
+
+    try:
+        backend.save_resume_state(
+            state,
+            resume_path,
+            {**dict(checkpoint_metadata), "completed_step": step},
+        )
+    except OSError as error:
+        print(
+            f"warning: could not write the resume point at step {step}: {error}",
+            file=sys.stderr,
+            flush=True,
+        )
 
 
 def train(
@@ -173,6 +237,8 @@ def train(
     *,
     backend: TrainingBackend,
     on_step: StepObserver | None = None,
+    resume_dir: Path | None = None,
+    resume_every: int = RESUME_EVERY_STEPS,
 ) -> TrainingResult:
     """Run one locked training job and return its single final-step checkpoint.
 
@@ -183,6 +249,16 @@ def train(
     behind ``backend``, so this orchestration is fully testable on CPU without a
     training framework. A failed run still writes a ``failed`` run record before
     the original error propagates, so a partial job never looks finished.
+
+    ``resume_dir`` is opt-in and changes nothing about the training itself. When
+    it is given, the run records its progress every ``resume_every`` steps and
+    continues from the last recorded step if that file is already there. This is
+    exact rather than approximate because the whole micro-batch plan, including
+    every augmentation draw, is computed from the seed before the first step and
+    the loop consumes no randomness of its own: restoring the weights, the
+    optimizer and the step number is therefore the entire state of the run. The
+    resume file is deleted on success and deliberately kept on failure, and it is
+    never a checkpoint the protocol may select, which stays final-step only.
     """
 
     if isinstance(seed, bool) or not isinstance(seed, int) or seed not in APPROVED_SEEDS:
@@ -217,16 +293,37 @@ def train(
         "started_at_utc": _utc_now(),
     }
 
+    checkpoint_metadata: dict[str, Any] = {
+        "run_id": identity["run_id"],
+        "model": run_config.model,
+        "seed": seed,
+        "final_step": total_steps,
+        "config_sha256": config_sha256,
+        "protocol_sha256": loaded_protocol.protocol_sha256,
+        "dataset_manifest_sha256": manifest.manifest_sha256,
+        "loss": cross_entropy_spec(),
+    }
+    resume_path: Path | None = None
+    if resume_dir is not None:
+        if not isinstance(backend, ResumableTrainingBackend):
+            raise TypeError("this backend cannot save or restore a resume point")
+        resume_dir.mkdir(parents=True, exist_ok=True)
+        resume_path = resume_dir / RESUME_FILENAME
+
     try:
         backend.seed_all(seed)
         state = backend.create_training_state(run_config.model, optimizer)
+        completed_step = 0
+        if resume_path is not None and resume_path.is_file():
+            assert isinstance(backend, ResumableTrainingBackend)  # narrowed above
+            completed_step = backend.load_resume_state(state, resume_path, checkpoint_metadata)
         plan = _sampling_plan(
             manifest.sample_ids,
             seed,
             run_config.micro_batch_size,
             total_steps * accumulation_steps,
         )
-        for step in range(1, total_steps + 1):
+        for step in range(completed_step + 1, total_steps + 1):
             learning_rate = polynomial_learning_rate(
                 step,
                 base_lr=base_lr,
@@ -247,22 +344,12 @@ def train(
                 )
             if on_step is not None:
                 on_step(step, total_steps, sum(losses) / len(losses))
+            if resume_path is not None and step != total_steps and step % resume_every == 0:
+                assert isinstance(backend, ResumableTrainingBackend)  # narrowed above
+                _record_resume_point(backend, state, resume_path, checkpoint_metadata, step)
 
         checkpoint_path = output_dir / CHECKPOINT_FILENAME
-        checkpoint_sha256 = backend.save_checkpoint(
-            state,
-            checkpoint_path,
-            {
-                "run_id": identity["run_id"],
-                "model": run_config.model,
-                "seed": seed,
-                "final_step": total_steps,
-                "config_sha256": config_sha256,
-                "protocol_sha256": loaded_protocol.protocol_sha256,
-                "dataset_manifest_sha256": manifest.manifest_sha256,
-                "loss": cross_entropy_spec(),
-            },
-        )
+        checkpoint_sha256 = backend.save_checkpoint(state, checkpoint_path, checkpoint_metadata)
     except Exception:
         _write_run_record(
             run_record_path,
@@ -270,6 +357,8 @@ def train(
         )
         raise
 
+    if resume_path is not None and resume_path.is_file():
+        resume_path.unlink()
     _write_run_record(
         run_record_path,
         {

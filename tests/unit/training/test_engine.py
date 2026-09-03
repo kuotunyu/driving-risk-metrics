@@ -106,6 +106,8 @@ class FakeBackend:
         self.saves: list[tuple[Path, dict[str, Any]]] = []
         self.update_flags: list[bool] = []
         self.applied_updates = 0
+        self.resume_saves: list[tuple[Path, dict[str, Any]]] = []
+        self.resume_loads: list[int] = []
 
     def seed_all(self, seed: int) -> None:
         self.seeded.append(seed)
@@ -150,14 +152,36 @@ class FakeBackend:
             raise ValueError("checkpoint metadata does not match the expected run")
         return payload["state"]
 
+    def save_resume_state(self, state: Any, path: Path, metadata: Any) -> str:
+        payload = json.dumps(
+            {"state": state, "metadata": dict(metadata)},
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        path.write_bytes(payload)
+        self.resume_saves.append((path, dict(metadata)))
+        return hashlib.sha256(payload).hexdigest()
+
+    def load_resume_state(self, state: Any, path: Path, expected_metadata: Any) -> int:
+        payload = json.loads(path.read_bytes())
+        recorded = dict(payload["metadata"])
+        completed_step = int(recorded.pop("completed_step"))
+        if recorded != dict(expected_metadata):
+            raise ValueError("resume state does not belong to this run")
+        state.update(payload["state"])
+        self.resume_loads.append(completed_step)
+        return completed_step
+
 
 def write_manifest(directory: Path, sample_count: int = 12) -> Path:
     from drivemetrics.data.manifest import build_paired_manifest
 
     image_root = directory / "images"
     label_root = directory / "labels"
-    image_root.mkdir(parents=True)
-    label_root.mkdir(parents=True)
+    # Resumed runs rebuild the same cohort in the same place, and the manifest
+    # hash must come out identical or the resume metadata check refuses it.
+    image_root.mkdir(parents=True, exist_ok=True)
+    label_root.mkdir(parents=True, exist_ok=True)
     for index in range(sample_count):
         (image_root / f"sample{index:03d}.jpg").write_bytes(f"image-{index}".encode())
         (label_root / f"sample{index:03d}_train_id.png").write_bytes(f"label-{index}".encode())
@@ -182,6 +206,7 @@ def write_configs(
     if protocol_overrides is not None:
         for section, values in protocol_overrides.items():
             document[section].update(values)
+    directory.mkdir(parents=True, exist_ok=True)
     (directory / "protocol.yaml").write_text(yaml.safe_dump(document), encoding="utf-8")
     run_config_path = directory / "run.yaml"
     run_config_path.write_text(
@@ -679,3 +704,271 @@ def test_every_committed_config_uses_the_same_safe_micro_batch() -> None:
 
     assert len(set(observed.values())) == 1, f"micro batch is not uniform: {observed}"
     assert next(iter(observed.values())) == 8, observed
+
+
+# The protocol pins 30,000 steps as a literal, so a resume test runs the real
+# schedule with one micro batch per optimizer step: the fake backend makes that
+# cheap, and it keeps the arithmetic below identical to the formal runs'.
+RESUME_EVERY = 5000
+CRASH_AT_STEP = 12000
+LAST_SAVED_STEP = 10000
+TOTAL_STEPS = 30000
+
+
+def train_run(
+    engine: ModuleType,
+    tmp_path: Path,
+    backend: FakeBackend,
+    *,
+    name: str = "out",
+    model: str = "upernet_convnextv2_tiny",
+    **overrides: Any,
+) -> Any:
+    """Run one full job with a single micro batch per optimizer step."""
+
+    config_path = write_configs(tmp_path / name, model=model, micro_batch_size=16)
+    manifest_path = write_manifest(tmp_path / f"data-{name}")
+    return engine.train(
+        config_path,
+        manifest_path,
+        tmp_path / name / "out",
+        17,
+        backend=backend,
+        **overrides,
+    )
+
+
+def test_without_a_resume_directory_no_resume_state_is_written(
+    tmp_path: Path,
+    provenance: None,
+) -> None:
+    """The feature is opt-in, so a run that does not ask for it is untouched."""
+
+    engine = load_engine_module()
+    backend = FakeBackend()
+
+    train_run(engine, tmp_path, backend)
+
+    assert backend.resume_saves == []
+    assert list((tmp_path / "out" / "out").glob("resume_state*")) == []
+
+
+def test_resuming_is_byte_identical_to_never_being_interrupted(
+    tmp_path: Path,
+    provenance: None,
+) -> None:
+    """This is the whole claim: the safety net must not change the science.
+
+    An uninterrupted run and a run that died and resumed must produce the same
+    final checkpoint. If they can differ, the nine formal runs are no longer
+    comparable and the feature is worse than the outage it prevents.
+    """
+
+    engine = load_engine_module()
+    plain = train_run(engine, tmp_path, FakeBackend(), name="plain")
+
+    resume_dir = tmp_path / "resume"
+    with pytest.raises(RuntimeError):
+        train_run(
+            engine,
+            tmp_path,
+            FakeBackend(fail_at_step=CRASH_AT_STEP),
+            name="interrupted",
+            resume_dir=resume_dir,
+            resume_every=RESUME_EVERY,
+        )
+    recovered = FakeBackend()
+    resumed = train_run(
+        engine,
+        tmp_path,
+        recovered,
+        name="interrupted",
+        resume_dir=resume_dir,
+        resume_every=RESUME_EVERY,
+    )
+
+    assert recovered.resume_loads != [], "the second attempt ignored the saved state"
+    assert resumed.checkpoint_sha256 == plain.checkpoint_sha256
+    assert resumed.final_step == plain.final_step
+
+
+def test_a_resumed_run_repeats_only_the_steps_after_the_saved_one(
+    tmp_path: Path,
+    provenance: None,
+) -> None:
+    """Resuming that silently retrained from zero would save no time at all."""
+
+    engine = load_engine_module()
+    resume_dir = tmp_path / "resume"
+    with pytest.raises(RuntimeError):
+        train_run(
+            engine,
+            tmp_path,
+            FakeBackend(fail_at_step=CRASH_AT_STEP),
+            name="interrupted",
+            resume_dir=resume_dir,
+            resume_every=RESUME_EVERY,
+        )
+    recovered = FakeBackend()
+    train_run(
+        engine,
+        tmp_path,
+        recovered,
+        name="interrupted",
+        resume_dir=resume_dir,
+        resume_every=RESUME_EVERY,
+    )
+
+    assert recovered.resume_loads == [LAST_SAVED_STEP]
+    assert recovered.step_count == TOTAL_STEPS - LAST_SAVED_STEP
+
+
+def test_the_resume_state_is_deleted_once_the_run_succeeds(
+    tmp_path: Path,
+    provenance: None,
+) -> None:
+    """A stale resume file would make the next run of this pair start mid-way."""
+
+    engine = load_engine_module()
+    resume_dir = tmp_path / "resume"
+
+    train_run(
+        engine,
+        tmp_path,
+        FakeBackend(),
+        resume_dir=resume_dir,
+        resume_every=RESUME_EVERY,
+    )
+
+    assert list(resume_dir.glob("*")) == []
+
+
+def test_the_resume_state_survives_a_failed_run(
+    tmp_path: Path,
+    provenance: None,
+) -> None:
+    """Deleting it on failure would throw away the hours it exists to protect."""
+
+    engine = load_engine_module()
+    resume_dir = tmp_path / "resume"
+
+    with pytest.raises(RuntimeError):
+        train_run(
+            engine,
+            tmp_path,
+            FakeBackend(fail_at_step=CRASH_AT_STEP),
+            resume_dir=resume_dir,
+            resume_every=RESUME_EVERY,
+        )
+
+    assert (resume_dir / engine.RESUME_FILENAME).is_file()
+
+
+def test_a_resume_state_from_another_run_is_refused(
+    tmp_path: Path,
+    provenance: None,
+) -> None:
+    """Silently continuing another run's weights would corrupt this one invisibly."""
+
+    engine = load_engine_module()
+    resume_dir = tmp_path / "resume"
+    with pytest.raises(RuntimeError):
+        train_run(
+            engine,
+            tmp_path,
+            FakeBackend(fail_at_step=CRASH_AT_STEP),
+            name="first",
+            resume_dir=resume_dir,
+            resume_every=RESUME_EVERY,
+        )
+
+    with pytest.raises(ValueError, match="resume state"):
+        train_run(
+            engine,
+            tmp_path,
+            FakeBackend(),
+            name="second",
+            model="segformer_b2",
+            resume_dir=resume_dir,
+            resume_every=RESUME_EVERY,
+        )
+
+
+def test_the_final_step_is_not_written_as_a_resume_point(
+    tmp_path: Path,
+    provenance: None,
+) -> None:
+    """The last step already has a real checkpoint; a second copy is only confusion."""
+
+    engine = load_engine_module()
+    backend = FakeBackend()
+
+    train_run(
+        engine,
+        tmp_path,
+        backend,
+        resume_dir=tmp_path / "resume",
+        resume_every=RESUME_EVERY,
+    )
+
+    saved_steps = [metadata["completed_step"] for _, metadata in backend.resume_saves]
+    assert saved_steps == [5000, 10000, 15000, 20000, 25000]
+
+
+class NonResumableBackend(FakeBackend):
+    """A perfectly good training backend that simply cannot put a run down."""
+
+    save_resume_state = None  # type: ignore[assignment]
+    load_resume_state = None  # type: ignore[assignment]
+
+
+def test_a_backend_that_cannot_resume_refuses_a_resume_directory(
+    tmp_path: Path,
+    provenance: None,
+) -> None:
+    """Accepting the flag and ignoring it would promise a safety net that is not there."""
+
+    engine = load_engine_module()
+
+    with pytest.raises(TypeError, match="cannot save or restore"):
+        train_run(
+            engine,
+            tmp_path,
+            NonResumableBackend(),
+            resume_dir=tmp_path / "resume",
+            resume_every=RESUME_EVERY,
+        )
+
+
+class UnwritableResumeBackend(FakeBackend):
+    """A backend whose resume writes fail, as a full or flaky network drive would."""
+
+    def save_resume_state(self, state: Any, path: Path, metadata: Any) -> str:
+        raise OSError("no space left on device")
+
+
+def test_a_resume_point_that_cannot_be_written_does_not_end_the_run(
+    tmp_path: Path,
+    provenance: None,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """Losing the safety net must cost the net, not the eight hours it protects.
+
+    Nothing downstream reads a resume point and no published number depends on
+    one, so a drive that refuses the write has no business failing the run.
+    """
+
+    engine = load_engine_module()
+    plain = train_run(engine, tmp_path, FakeBackend(), name="plain")
+
+    result = train_run(
+        engine,
+        tmp_path,
+        UnwritableResumeBackend(),
+        name="unwritable",
+        resume_dir=tmp_path / "resume",
+        resume_every=RESUME_EVERY,
+    )
+
+    assert result.checkpoint_sha256 == plain.checkpoint_sha256
+    assert "could not write the resume point at step 5000" in capsys.readouterr().err

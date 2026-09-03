@@ -244,6 +244,61 @@ class TorchTrainingBackend:
             raise ValueError("checkpoint metadata does not match the expected run")
         return payload
 
+    def save_resume_state(
+        self,
+        state: Any,
+        path: Path,
+        metadata: Mapping[str, object],
+    ) -> str:
+        """Persist everything a dropped session needs to continue this run.
+
+        The optimizer is saved beside the weights because Adam's moments are
+        part of the trajectory: restoring weights alone would restart the
+        optimizer cold and take the run down a different path from the one an
+        uninterrupted session would have followed.
+
+        The write goes to a temporary file first and is then moved into place,
+        so a session that dies mid-write leaves the previous resume point intact
+        rather than a truncated file that cannot be loaded.
+        """
+
+        import torch
+
+        path.parent.mkdir(parents=True, exist_ok=True)
+        staging = path.with_name(path.name + ".partial")
+        torch.save(
+            {
+                "model": state.adapter.module.state_dict(),
+                "optimizer": state.optimizer.state_dict(),
+                "metadata": dict(metadata),
+            },
+            staging,
+        )
+        staging.replace(path)
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def load_resume_state(
+        self,
+        state: Any,
+        path: Path,
+        expected_metadata: Mapping[str, object],
+    ) -> int:
+        """Restore a saved run into ``state`` and return the step it had reached."""
+
+        import torch
+
+        payload = torch.load(path, map_location=self._device, weights_only=False)
+        recorded = dict(payload["metadata"])
+        if "completed_step" not in recorded:
+            raise ValueError("resume state does not record a completed_step")
+        completed_step = int(recorded.pop("completed_step"))
+        if recorded != dict(expected_metadata):
+            raise ValueError("resume state does not belong to this run")
+        state.adapter.module.load_state_dict(payload["model"])
+        state.optimizer.load_state_dict(payload["optimizer"])
+        state.pending_micro_batches = 0
+        return completed_step
+
 
 def build_training_backend(
     config_path: Path,
