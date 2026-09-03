@@ -177,7 +177,7 @@ def test_manifest_rejects_misaligned_fields_or_invalid_hash() -> None:
             manifest_sha256="c" * 64,
         )
 
-    with pytest.raises(ValueError, match="SHA-256"):
+    with pytest.raises(ValueError, match=r"^file SHA-256 values must be lowercase 64-digit hex"):
         manifest.DatasetManifest(
             dataset_name="bdd100k",
             dataset_version="10k-semantic-v1",
@@ -197,9 +197,9 @@ def test_manifest_rejects_duplicate_ids_and_manifest_hash_drift(tmp_path: Path) 
 
     with pytest.raises(ValueError, match=r"^manifest contains duplicate sample IDs"):
         replace(built, sample_ids=("sample-a", "sample-a"))
-    with pytest.raises(ValueError, match="manifest SHA-256 must"):
+    with pytest.raises(ValueError, match=r"^manifest SHA-256 must be lowercase 64-digit hex"):
         replace(built, manifest_sha256="X" * 64)
-    with pytest.raises(ValueError, match="manifest SHA-256 mismatch"):
+    with pytest.raises(ValueError, match=r"^manifest SHA-256 mismatch"):
         replace(built, manifest_sha256="0" * 64)
 
 
@@ -309,7 +309,7 @@ def test_a_tampered_manifest_document_fails_its_own_hash(tmp_path: Path) -> None
     document["split_name"] = "locked_validation"
     path.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="SHA-256 mismatch"):
+    with pytest.raises(ValueError, match=r"^manifest SHA-256 mismatch"):
         module.load_manifest(path)
 
 

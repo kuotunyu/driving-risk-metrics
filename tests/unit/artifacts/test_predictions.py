@@ -749,7 +749,7 @@ def test_reader_rejects_wrong_payload_hash(tmp_path: Path) -> None:
     payload_path = tmp_path / manifest.payload_file
     payload_path.write_bytes(payload_path.read_bytes() + b"tamper")
 
-    with pytest.raises(ValueError, match="payload SHA-256 mismatch"):
+    with pytest.raises(ValueError, match=r"^payload SHA-256 mismatch"):
         prediction.read_prediction_artifact(manifest_path)
 
 

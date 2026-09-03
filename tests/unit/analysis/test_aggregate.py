@@ -277,7 +277,7 @@ def test_an_artifact_from_another_cohort_is_refused(tmp_path: Path) -> None:
         root / f"{MODELS[0]}-seed-17", sizes=(400, 1200, 800), accuracy=0.6, manifest="c" * 64
     )
 
-    with pytest.raises(ValueError, match="manifest"):
+    with pytest.raises(ValueError, match=r"^artifact v0001 in upernet_convnextv2_tiny-seed-17"):
         aggregate.aggregate_runs(index_path, tmp_path / "out", resamples=20)
 
 
@@ -330,7 +330,7 @@ def test_an_artifact_from_another_protocol_is_refused(tmp_path: Path) -> None:
         root / f"{MODELS[0]}-seed-17", sizes=(400, 1200, 800), accuracy=0.6, protocol="d" * 64
     )
 
-    with pytest.raises(ValueError, match="protocol hash"):
+    with pytest.raises(ValueError, match=r"^artifact v0001 in upernet_convnextv2_tiny-seed-17"):
         aggregate.aggregate_runs(index_path, tmp_path / "out", resamples=20)
 
 

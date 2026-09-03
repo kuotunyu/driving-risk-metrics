@@ -97,7 +97,9 @@ def test_exact_intersection_needs_no_opt_in_and_has_no_drops(tmp_path: Path) -> 
 def test_instance_filename_parser_rejects_non_png_artifacts() -> None:
     bdd100k = load_bdd100k_module()
 
-    with pytest.raises(ValueError, match="instance label filename"):
+    with pytest.raises(
+        ValueError, match=r"^unsupported BDD100K instance label filename: sample-a\.jpg"
+    ):
         bdd100k.instance_label_sample_id(Path("sample-a.jpg"))
 
 
