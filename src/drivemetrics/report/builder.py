@@ -103,6 +103,7 @@ def build_report(
         figure_path.write_text(
             json.dumps(figures[name], indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
+            newline="\n",
         )
         figure_paths.append(figure_path)
         rendered.append(
@@ -127,7 +128,11 @@ def build_report(
         limitations=LIMITATIONS,
     )
     index_path = output_dir / "index.html"
-    index_path.write_text(page, encoding="utf-8")
+    index_path.write_text(
+        page,
+        encoding="utf-8",
+        newline="\n",
+    )
     return ReportResult(
         index_path=index_path,
         figure_paths=tuple(figure_paths),

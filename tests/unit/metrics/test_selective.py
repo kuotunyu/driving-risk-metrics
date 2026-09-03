@@ -291,3 +291,24 @@ def test_risk_coverage_area_rejects_multidimensional_arrays() -> None:
         selective.area_under_risk_coverage(matrix, valid)
     with pytest.raises(ValueError, match="risk must be one-dimensional"):
         selective.area_under_risk_coverage(valid, matrix)
+
+
+def test_the_curve_follows_confidence_order_rather_than_array_order() -> None:
+    """Scoring in array order would report a different study's risk curve.
+
+    The whole point of a selective-risk curve is that samples are accepted in
+    descending confidence. If the ordering step were dropped, the curve would
+    still be finite, monotone-looking and plausible, which is exactly why it
+    needs a case where the two orders disagree.
+    """
+
+    selective = load_selective_module()
+    # Least confident first, and it is the only wrong one.
+    confidence = np.array([0.1, 0.8, 0.9], dtype=np.float64)
+    correctness = np.array([False, True, True], dtype=np.bool_)
+
+    _, risk = selective.selective_risk_curve(confidence, correctness)
+
+    # Confidence order accepts the two correct samples first, so risk stays at
+    # zero until the last sample; array order would put the error first.
+    assert risk.tolist() == [0.0, 0.0, pytest.approx(1.0 / 3.0)]

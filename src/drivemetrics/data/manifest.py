@@ -221,6 +221,7 @@ def save_manifest(manifest: DatasetManifest, path: Path) -> None:
     path.write_text(
         json.dumps(asdict(manifest), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
+        newline="\n",
     )
 
 

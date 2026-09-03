@@ -227,7 +227,9 @@ def calibrate_checkpoint(
         "sampling_seed": SAMPLING_SEED,
     }
     artifact_path.write_text(
-        json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        json.dumps(document, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
     )
 
     run_record_path = output_dir / RUN_RECORD_FILENAME
@@ -251,6 +253,7 @@ def calibrate_checkpoint(
     run_record_path.write_text(
         json.dumps(record.model_dump(mode="json"), indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
+        newline="\n",
     )
 
     return CalibrationResult(
