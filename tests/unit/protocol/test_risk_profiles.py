@@ -92,7 +92,7 @@ def test_loader_accepts_valid_partial_taxonomy_profile(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("content", "expected"),
     [
-        ("- not\n- a\n- mapping\n", "mapping"),
+        ("- not\n- a\n- mapping\n", r"^risk profile document must be a mapping$"),
         (profile_yaml(extra="name: tiny"), "duplicate mapping key"),
         (profile_yaml(extra="unexpected: true"), "unexpected"),
         (profile_yaml(schema_version="bdd100k-risk-profile/v2"), "schema_version"),
@@ -191,7 +191,7 @@ def test_loader_accepts_only_yaml_extension(tmp_path: Path) -> None:
     path = tmp_path / "tiny.txt"
     path.write_text(profile_yaml(), encoding="utf-8")
 
-    with pytest.raises(ValueError, match=r"\.yaml"):
+    with pytest.raises(ValueError, match=r"^risk profile path must use the \.yaml extension$"):
         profiles.load_risk_profile(path)
 
 
