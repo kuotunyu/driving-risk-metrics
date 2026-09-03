@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from types import ModuleType
 
 import numpy as np
@@ -301,3 +302,23 @@ def test_an_empty_dimension_is_refused(shape: tuple[int, int, int]) -> None:
             tuple(range(shape[0])),
             lambda summed: summed[:, 0],
         )
+
+
+def test_a_single_resample_is_a_usable_draw_count() -> None:
+    """One resample is a degenerate but well-formed request, and the guard says so.
+
+    The bound is strict positivity, so one must pass it. Written `<= 1` the
+    validator would refuse the smallest interval anybody can ask for, and the
+    refusal would read as a malformed call rather than as an off-by-one bound.
+    The interval it returns is degenerate, which is the caller's problem, not
+    the validator's.
+    """
+
+    bootstrap = load_bootstrap_module()
+    values = np.array([[0.1, 0.2], [0.3, 0.4]], dtype=np.float64)
+
+    interval = bootstrap.two_stage_paired_bootstrap(values, (0, 1), resamples=1, seed=1)
+
+    assert interval.resamples == 1
+    assert math.isfinite(interval.estimate)
+    assert interval.low <= interval.estimate <= interval.high

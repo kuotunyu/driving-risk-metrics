@@ -200,3 +200,69 @@ def test_protocol_loader_rejects_wrong_document_shape_or_version(
 
     with pytest.raises((TypeError, ValidationError)):
         config.load_protocol(path)
+
+
+def test_the_protocol_hash_is_the_digest_of_the_validated_semantics(tmp_path: Path) -> None:
+    """The hash is recomputed here independently, because it is the study's identity.
+
+    Every artifact carries this digest and every consumer refuses anything that
+    disagrees with it. Computed over a constant instead of over the loaded
+    protocol, every protocol version would share one digest, every
+    cross-protocol guard in the repository would pass, and results from two
+    different studies would pool without complaint.
+
+    Recomputing it from the model dump also pins WHAT is hashed: the validated
+    semantics, not the YAML text, which is what makes two differently formatted
+    files agree.
+    """
+
+    from drivemetrics.artifacts.envelope import canonical_json_bytes
+
+    config = load_config_module()
+    path = tmp_path / "protocol.yaml"
+    path.write_text(protocol_yaml(), encoding="utf-8")
+
+    loaded = config.load_protocol(path)
+
+    expected = hashlib.sha256(
+        canonical_json_bytes(loaded.protocol.model_dump(mode="json"))
+    ).hexdigest()
+    assert loaded.protocol_sha256 == expected
+    assert len(loaded.protocol_sha256) == 64
+
+
+def test_a_protocol_document_that_is_not_a_mapping_says_so(tmp_path: Path) -> None:
+    """The shape error is reported before validation, and it must name the shape.
+
+    A YAML list parses cleanly and then fails somewhere inside pydantic with a
+    message about missing fields, which sends an operator looking for a typo in
+    a field name rather than at the top-level structure. This check exists to
+    say the real thing, so its wording is part of the contract.
+    """
+
+    config = load_config_module()
+    path = tmp_path / "sequence.yaml"
+    path.write_text("- not-a-mapping\n", encoding="utf-8")
+
+    with pytest.raises(TypeError, match=r"^protocol document must be a mapping$"):
+        config.load_protocol(path)
+
+
+def test_reading_a_file_in_chunks_gives_the_same_digest_as_reading_it_whole(
+    tmp_path: Path,
+) -> None:
+    """The chunk size is a memory bound, never a change to the digest.
+
+    Checkpoints are gigabytes, so the hash is streamed. A reader that streams
+    must agree with one that does not, or every hash in the study would depend
+    on a buffer size nobody records.
+    """
+
+    hashing = load_hashing_module()
+    payload = bytes(range(256)) * 8
+    path = tmp_path / "payload.bin"
+    path.write_bytes(payload)
+
+    assert hashing.sha256_file(path) == hashlib.sha256(payload).hexdigest()
+    assert hashing.sha256_file(path, chunk_size=7) == hashlib.sha256(payload).hexdigest()
+    assert hashing.sha256_file(path, chunk_size=len(payload)) == hashlib.sha256(payload).hexdigest()

@@ -557,14 +557,17 @@ def test_each_sample_is_verified_against_its_own_label_hash(tmp_path: Path) -> N
             labels / manifest.relative_label_paths[position]
         )
 
-    assert service.calibrate_checkpoint(
-        workspace["protocol"],
-        workspace["manifest"],
-        workspace["checkpoint"],
-        workspace["data_root"],
-        tmp_path / "out",
-        backend=backend_for(workspace),
-    ).temperature > 0.0
+    assert (
+        service.calibrate_checkpoint(
+            workspace["protocol"],
+            workspace["manifest"],
+            workspace["checkpoint"],
+            workspace["data_root"],
+            tmp_path / "out",
+            backend=backend_for(workspace),
+        ).temperature
+        > 0.0
+    )
 
 
 def test_the_recorded_timestamps_are_read_from_a_utc_clock(
@@ -739,5 +742,6 @@ def test_a_smaller_budget_actually_reduces_the_sampled_rows(tmp_path: Path) -> N
     assert mask.size > 64
     assert service.sample_pixel_indices(mask, sample_id="c0000", pixels=64).size == 64
     assert (
-        service.sample_pixel_indices(mask, sample_id="c0000", pixels=mask.size + 1).size == mask.size
+        service.sample_pixel_indices(mask, sample_id="c0000", pixels=mask.size + 1).size
+        == mask.size
     )
