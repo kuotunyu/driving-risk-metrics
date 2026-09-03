@@ -59,6 +59,43 @@ def test_tied_confidence_keeps_the_original_index_order() -> None:
     np.testing.assert_allclose(risk, np.array([1.0, 0.5]))
 
 
+def test_the_tie_ordering_matches_an_independently_computed_stable_order() -> None:
+    """The two-sample test above names the right property but cannot detect its loss.
+
+    NumPy's introsort falls back to insertion sort below sixteen elements, and
+    insertion sort is stable, so a two-element case gives the same answer with
+    or without ``kind="stable"``. The property was documented, asserted, and
+    unprotected.
+
+    The reference here is computed independently, with Python's own ``sorted``,
+    whose stability is a language guarantee rather than a NumPy implementation
+    detail. That makes the test fail for ANY reordering of tied samples instead
+    of only for the inputs where this NumPy version happens to reorder them.
+
+    It matters on real data rather than in principle: confidence is stored
+    quantized to uint16, so exact ties are expected, not unusual. Without a
+    stable sort the selective-risk curve — and therefore every reported AURC —
+    would depend on NumPy's partitioning rather than on the model.
+    """
+
+    selective = load_selective_module()
+    generator = np.random.default_rng(20260903)
+    count = 200
+    # Five distinct confidence levels over two hundred samples, shuffled: every
+    # level is a heavily tied block, which is the shape quantized confidence
+    # actually produces.
+    confidence = generator.integers(0, 5, size=count).astype(np.float64) / 4.0
+    correctness = generator.random(count) < 0.6
+
+    _, risk = selective.selective_risk_curve(confidence, correctness)
+
+    expected_order = sorted(range(count), key=lambda index: (-confidence[index], index))
+    accepted = np.arange(1, count + 1, dtype=np.float64)
+    expected = np.cumsum(~correctness[np.asarray(expected_order)], dtype=np.float64) / accepted
+
+    np.testing.assert_allclose(risk, expected)
+
+
 def test_fully_incorrect_predictions_have_full_risk_at_every_coverage() -> None:
     """A curve that decays toward zero would hide a model that is always wrong."""
 
