@@ -118,7 +118,10 @@ def test_running_record_requires_unfinished_timestamp() -> None:
     values = valid_run_values()
     values["status"] = "running"
 
-    with pytest.raises(ValidationError, match="running run must not have finished_at_utc"):
+    with pytest.raises(
+        ValidationError,
+        match=r"Value error, running run must not have finished_at_utc \[type=value_error,",
+    ):
         run_record.RunRecordV1.model_validate(values)
 
     values["finished_at_utc"] = None
@@ -135,7 +138,10 @@ def test_terminal_record_requires_finished_timestamp(terminal_status: str) -> No
     values["status"] = terminal_status
     values["finished_at_utc"] = None
 
-    with pytest.raises(ValidationError, match="terminal run requires finished_at_utc"):
+    with pytest.raises(
+        ValidationError,
+        match=r"Value error, terminal run requires finished_at_utc \[type=value_error,",
+    ):
         run_record.RunRecordV1.model_validate(values)
 
 
@@ -146,7 +152,10 @@ def test_run_record_rejects_finish_before_start() -> None:
     values = valid_run_values()
     values["finished_at_utc"] = "2026-08-31T00:59:59Z"
 
-    with pytest.raises(ValidationError, match="finished_at_utc must not precede"):
+    with pytest.raises(
+        ValidationError,
+        match=r"Value error, finished_at_utc must not precede started_at_utc \[type=value_error,",
+    ):
         run_record.RunRecordV1.model_validate(values)
 
 

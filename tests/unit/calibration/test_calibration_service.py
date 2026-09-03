@@ -178,7 +178,9 @@ def test_a_checkpoint_from_another_protocol_is_refused(tmp_path: Path) -> None:
 
     workspace = build_workspace(tmp_path)
 
-    with pytest.raises(ValueError, match="protocol"):
+    with pytest.raises(
+        ValueError, match=r"^checkpoint protocol hash does not match the calibration"
+    ):
         run(workspace, tmp_path / "calibration", protocol_sha256="f" * 64)
 
 
@@ -187,7 +189,7 @@ def test_a_cohort_that_is_not_the_calibration_split_is_refused(tmp_path: Path) -
 
     workspace = build_workspace(tmp_path, split_name="locked_validation")
 
-    with pytest.raises(ValueError, match="calibration"):
+    with pytest.raises(ValueError, match=r"^temperature fitting requires the calibration split,"):
         run(workspace, tmp_path / "calibration")
 
 

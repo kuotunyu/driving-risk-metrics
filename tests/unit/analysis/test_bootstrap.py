@@ -73,7 +73,7 @@ def test_seed_axis_length_mismatch_fails_closed() -> None:
     bootstrap = load_bootstrap_module()
     values = np.zeros((2, 3), dtype=np.float64)
 
-    with pytest.raises(ValueError, match="model_seed_ids"):
+    with pytest.raises(ValueError, match=r"^model_seed_ids must label exactly one model per run"):
         bootstrap.two_stage_paired_bootstrap(values, (0,), resamples=8, seed=1)
 
 
@@ -83,7 +83,7 @@ def test_runs_without_a_common_image_axis_fail_closed() -> None:
     bootstrap = load_bootstrap_module()
     values = np.array([0.1, 0.2], dtype=np.float64)
 
-    with pytest.raises(ValueError, match="two-dimensional"):
+    with pytest.raises(ValueError, match=r"^values must be a two-dimensional run-by-image array"):
         bootstrap.two_stage_paired_bootstrap(values, (0, 0), resamples=8, seed=1)
 
 
@@ -143,7 +143,7 @@ def test_bootstrap_rejects_a_non_float64_value_array() -> None:
 
     bootstrap = load_bootstrap_module()
 
-    with pytest.raises(ValueError, match="float64"):
+    with pytest.raises(ValueError, match=r"^values must be a"):
         bootstrap.two_stage_paired_bootstrap(
             np.zeros((2, 2), dtype=np.float32),
             (0, 0),
@@ -159,7 +159,7 @@ def test_bootstrap_rejects_non_finite_values(bad_value: float) -> None:
     bootstrap = load_bootstrap_module()
     values = np.array([[0.1, bad_value]], dtype=np.float64)
 
-    with pytest.raises(ValueError, match="finite"):
+    with pytest.raises(ValueError, match=r"^values must be finite"):
         bootstrap.two_stage_paired_bootstrap(values, (0,), resamples=8, seed=1)
 
 
@@ -170,7 +170,7 @@ def test_bootstrap_rejects_an_empty_run_or_image_axis(shape: tuple[int, int]) ->
     bootstrap = load_bootstrap_module()
     values = np.zeros(shape, dtype=np.float64)
 
-    with pytest.raises(ValueError, match="at least one run and one image"):
+    with pytest.raises(ValueError, match=r"^values must contain at least one run and one image"):
         bootstrap.two_stage_paired_bootstrap(
             values,
             (0,) * shape[0],
@@ -186,7 +186,7 @@ def test_bootstrap_rejects_a_non_positive_resample_count(resamples: object) -> N
     bootstrap = load_bootstrap_module()
     values = np.zeros((1, 2), dtype=np.float64)
 
-    with pytest.raises(ValueError, match="positive integer"):
+    with pytest.raises(ValueError, match=r"^resamples must be a positive integer"):
         bootstrap.two_stage_paired_bootstrap(
             values,
             (0,),
@@ -202,7 +202,7 @@ def test_bootstrap_rejects_an_unreproducible_seed(seed: object) -> None:
     bootstrap = load_bootstrap_module()
     values = np.zeros((1, 2), dtype=np.float64)
 
-    with pytest.raises(ValueError, match="nonnegative integer"):
+    with pytest.raises(ValueError, match=r"^seed must be a nonnegative integer"):
         bootstrap.two_stage_paired_bootstrap(
             values,
             (0,),
@@ -218,7 +218,7 @@ def test_bootstrap_rejects_non_integer_model_labels(model_seed_ids: tuple[object
     bootstrap = load_bootstrap_module()
     values = np.zeros((2, 2), dtype=np.float64)
 
-    with pytest.raises(TypeError, match="integers"):
+    with pytest.raises(TypeError, match=r"^model_seed_ids must contain integers"):
         bootstrap.two_stage_paired_bootstrap(
             values,
             model_seed_ids,  # type: ignore[arg-type]

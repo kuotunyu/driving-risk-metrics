@@ -167,5 +167,5 @@ def test_cohort_membership_hash_rejects_a_duplicated_sample() -> None:
 
     splits = load_splits_module()
 
-    with pytest.raises(ValueError, match="duplicate"):
+    with pytest.raises(ValueError, match=r"^train membership contains duplicate IDs"):
         splits.cohort_membership_sha256("train", ("a", "a"))

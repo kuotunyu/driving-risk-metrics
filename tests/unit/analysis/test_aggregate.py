@@ -263,7 +263,7 @@ def test_two_aggregations_are_byte_identical(tmp_path: Path) -> None:
 def test_an_index_that_fails_the_formal_gate_is_refused(tmp_path: Path) -> None:
     """Analysing an incomplete matrix would publish a narrowed interval."""
 
-    with pytest.raises(ValueError, match="formal run index"):
+    with pytest.raises(ValueError, match=r"^formal run index is not valid: run"):
         run(tmp_path / "runs", tmp_path / "out", expected_steps=15000)
 
 
@@ -286,7 +286,7 @@ def test_it_refuses_to_overwrite_an_existing_analysis(tmp_path: Path) -> None:
 
     run(tmp_path / "runs", tmp_path / "out")
 
-    with pytest.raises(FileExistsError, match="metrics"):
+    with pytest.raises(FileExistsError, match=r"^an analysis already exists:"):
         run(tmp_path / "runs", tmp_path / "out")
 
 
@@ -303,7 +303,7 @@ def test_a_cohort_with_no_artifacts_is_refused(tmp_path: Path) -> None:
 
     aggregate = load_aggregate()
 
-    with pytest.raises(ValueError, match="no artifacts found"):
+    with pytest.raises(ValueError, match=r"^no artifacts found for the cohort under"):
         aggregate.summed_confusion(tmp_path, ())
 
 
@@ -316,7 +316,7 @@ def test_critical_recall_is_refused_when_the_classes_have_no_support(
     confusion = np.zeros((NUM_CLASSES, NUM_CLASSES), dtype=np.int64)
     confusion[0, 0] = 10
 
-    with pytest.raises(ValueError, match="undefined"):
+    with pytest.raises(ValueError, match=r"^the critical classes have no ground-truth support"):
         aggregate._metric_from_confusion(confusion, "critical_recall", CRITICAL_CLASSES)
 
 

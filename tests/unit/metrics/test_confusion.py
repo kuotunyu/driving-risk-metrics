@@ -134,7 +134,7 @@ def test_summarize_confusion_rejects_invalid_matrices(matrix: np.ndarray, expect
 def test_summarize_confusion_rejects_zero_valid_pixel_denominator() -> None:
     confusion = load_confusion_module()
 
-    with pytest.raises(ValueError, match="valid pixel"):
+    with pytest.raises(ValueError, match=r"^confusion matrix contains no valid pixel"):
         confusion.summarize_confusion(np.zeros((3, 3), dtype=np.int64))
 
 
@@ -154,7 +154,7 @@ def test_critical_false_negative_rate_rejects_invalid_class_ids(
     risk = load_risk_module()
     matrix = np.eye(3, dtype=np.int64)
 
-    with pytest.raises((TypeError, ValueError), match="critical class"):
+    with pytest.raises((TypeError, ValueError), match=r"^critical class ID"):
         risk.critical_false_negative_rate(matrix, class_ids)
 
 

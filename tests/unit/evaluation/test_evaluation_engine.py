@@ -252,7 +252,9 @@ def test_a_checkpoint_from_another_protocol_fails_closed(
     metadata["protocol_sha256"] = "0" * 64
     backend = FakeBackend(metadata)
 
-    with pytest.raises(ValueError, match="protocol"):
+    with pytest.raises(
+        ValueError, match=r"^checkpoint protocol hash does not match the evaluation"
+    ):
         engine.evaluate_checkpoint(
             config_path,
             manifest_path,
@@ -278,7 +280,7 @@ def test_a_dataset_file_that_drifted_from_the_manifest_fails_closed(
     Image.fromarray(replacement).save(data_root / VALIDATION_IMAGES / "v00001.jpg")
     backend = FakeBackend(checkpoint_metadata(config_path))
 
-    with pytest.raises(ValueError, match="SHA-256"):
+    with pytest.raises(ValueError, match=r"^dataset file"):
         engine.evaluate_checkpoint(
             config_path,
             manifest_path,

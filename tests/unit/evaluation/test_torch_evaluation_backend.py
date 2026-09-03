@@ -65,7 +65,9 @@ def test_a_checkpoint_that_does_not_name_its_architecture_fails_closed(
     path = tmp_path / "final_checkpoint.pt"
     torch.save({"model": {}, "metadata": {"run_id": "anonymous", "seed": 17}}, path)
 
-    with pytest.raises(ValueError, match="model"):
+    with pytest.raises(
+        ValueError, match=r"^checkpoint metadata must name the model it was trained"
+    ):
         backends.TorchEvaluationBackend(device="cpu").load_model(path)
 
 
@@ -78,7 +80,7 @@ def test_a_checkpoint_naming_an_unapproved_architecture_fails_closed(
     path = tmp_path / "final_checkpoint.pt"
     torch.save({"model": {}, "metadata": {"model": "setr", "run_id": "x", "seed": 17}}, path)
 
-    with pytest.raises(ValueError, match="approved"):
+    with pytest.raises(ValueError, match=r"^model must be one of the approved"):
         backends.TorchEvaluationBackend(device="cpu").load_model(path)
 
 

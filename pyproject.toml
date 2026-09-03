@@ -113,3 +113,26 @@ check_untyped_defs = true
 ignore_missing_imports = true
 no_implicit_optional = true
 warn_unused_configs = true
+
+[tool.mutmut]
+# Release-gate mutation testing of the pure core only. Adapters, CLI, report and
+# training glue are covered by the 100% branch gate but are not scored here.
+source_paths = ["src"]
+only_mutate = [
+    "src/drivemetrics/metrics/*",
+    "src/drivemetrics/calibration/*",
+    "src/drivemetrics/analysis/*",
+    "src/drivemetrics/protocol/*",
+]
+also_copy = ["configs", "schemas", "docs"]
+# Two test files are excluded because they read source that mutmut rewrites or
+# does not copy, so their verdicts inside the sandbox describe the sandbox
+# rather than the project: the skill contracts read .agents/, and the
+# artifact-bytes contract scans src/ for writers, which the mutant tree
+# deliberately alters.
+pytest_add_cli_args = [
+    "-p", "no:cacheprovider", "-x", "-q",
+    "--ignore=tests/contract/skills",
+    "--ignore=tests/contract/test_artifact_bytes.py",
+]
+pytest_add_cli_args_test_selection = ["tests/unit", "tests/integration", "tests/contract"]

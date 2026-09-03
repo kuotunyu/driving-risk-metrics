@@ -182,7 +182,7 @@ def test_loader_rejects_filename_name_mismatch(tmp_path: Path) -> None:
     profiles = load_profiles_module()
     path = write_profile(tmp_path, profile_yaml(name="different"))
 
-    with pytest.raises(ValueError, match="filename"):
+    with pytest.raises(ValueError, match=r"^risk profile filename must match its declared name"):
         profiles.load_risk_profile(path)
 
 

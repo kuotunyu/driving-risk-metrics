@@ -167,7 +167,7 @@ def test_an_unknown_baseline_metric_fails_closed() -> None:
     rankings = load_rankings_module()
     metric_table = {"miou": {"upernet_convnextv2_tiny": 0.70, "upernet_dinov2_small": 0.60}}
 
-    with pytest.raises(ValueError, match="baseline_metric"):
+    with pytest.raises(ValueError, match=r"^baseline_metric must be present in metric_table"):
         rankings.compare_rankings(metric_table, "critical_recall")
 
 
@@ -176,7 +176,7 @@ def test_an_empty_metric_table_fails_closed() -> None:
 
     rankings = load_rankings_module()
 
-    with pytest.raises(ValueError, match="at least one metric"):
+    with pytest.raises(ValueError, match=r"^metric_table must contain at least one metric"):
         rankings.compare_rankings({}, "miou")
 
 
@@ -189,7 +189,7 @@ def test_metrics_scoring_different_model_sets_fail_closed() -> None:
         "critical_recall": {"upernet_convnextv2_tiny": 0.40, "segformer_b2": 0.90},
     }
 
-    with pytest.raises(ValueError, match="exactly the same models"):
+    with pytest.raises(ValueError, match=r"^every metric must score exactly the same models"):
         rankings.compare_rankings(metric_table, "miou")
 
 
@@ -202,7 +202,7 @@ def test_a_single_model_cannot_be_ranked() -> None:
         "critical_recall": {"upernet_convnextv2_tiny": 0.40},
     }
 
-    with pytest.raises(ValueError, match="at least two models"):
+    with pytest.raises(ValueError, match=r"^ranking comparison requires at least two models"):
         rankings.compare_rankings(metric_table, "miou")
 
 
@@ -216,7 +216,7 @@ def test_non_finite_or_non_numeric_scores_fail_closed(bad_value: object) -> None
         "critical_recall": {"upernet_convnextv2_tiny": bad_value, "upernet_dinov2_small": 0.90},
     }
 
-    with pytest.raises(ValueError, match="finite numbers"):
+    with pytest.raises(ValueError, match=r"^metric values must be finite numbers"):
         rankings.compare_rankings(metric_table, "miou")  # type: ignore[arg-type]
 
 

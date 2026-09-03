@@ -381,7 +381,7 @@ def test_a_backend_failure_records_a_failed_run_and_reraises(
     manifest_path = write_manifest(tmp_path / "data")
     output_dir = tmp_path / "out"
 
-    with pytest.raises(RuntimeError, match="backend exploded"):
+    with pytest.raises(RuntimeError, match=r"^backend exploded"):
         engine.train(config_path, manifest_path, output_dir, 17, backend=backend)
 
     record = json.loads((output_dir / "run_record.json").read_text(encoding="utf-8"))
@@ -402,7 +402,7 @@ def test_an_unapproved_seed_fails_closed(
     config_path = write_configs(tmp_path)
     manifest_path = write_manifest(tmp_path / "data")
 
-    with pytest.raises(ValueError, match="seed"):
+    with pytest.raises(ValueError, match=r"^seed must be one of the approved seeds"):
         engine.train(
             config_path,
             manifest_path,
@@ -424,7 +424,7 @@ def test_a_micro_batch_that_cannot_form_the_effective_batch_fails_closed(
     config_path = write_configs(tmp_path, micro_batch_size=micro_batch_size)
     manifest_path = write_manifest(tmp_path / "data")
 
-    with pytest.raises(ValueError, match="micro_batch_size"):
+    with pytest.raises(ValueError, match=r"^micro_batch_size must be a positive divisor of the"):
         engine.train(
             config_path,
             manifest_path,
@@ -558,7 +558,7 @@ def test_a_run_configuration_that_is_not_a_mapping_fails_closed(
     config_path.write_text("- not\n- a mapping\n", encoding="utf-8")
     manifest_path = write_manifest(tmp_path / "data")
 
-    with pytest.raises(TypeError, match="mapping"):
+    with pytest.raises(TypeError, match=r"^training run configuration must be a mapping"):
         engine.train(
             config_path,
             manifest_path,
@@ -591,7 +591,9 @@ def test_an_unsafe_protocol_path_fails_closed(
     )
     manifest_path = write_manifest(tmp_path / "data")
 
-    with pytest.raises(ValueError, match="relative"):
+    with pytest.raises(
+        ValueError, match=r"Value error, protocol_path must be a safe relative POSIX path"
+    ):
         engine.train(
             config_path,
             manifest_path,
@@ -882,7 +884,7 @@ def test_a_resume_state_from_another_run_is_refused(
             resume_every=RESUME_EVERY,
         )
 
-    with pytest.raises(ValueError, match="resume state"):
+    with pytest.raises(ValueError, match=r"^resume state does not belong to this run"):
         train_run(
             engine,
             tmp_path,
@@ -930,7 +932,7 @@ def test_a_backend_that_cannot_resume_refuses_a_resume_directory(
 
     engine = load_engine_module()
 
-    with pytest.raises(TypeError, match="cannot save or restore"):
+    with pytest.raises(TypeError, match=r"^this backend cannot save or restore a resume point"):
         train_run(
             engine,
             tmp_path,

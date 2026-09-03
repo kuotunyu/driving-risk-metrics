@@ -97,7 +97,7 @@ def test_dequantization_requires_uint16_storage() -> None:
 
     module = load_calibration()
 
-    with pytest.raises(ValueError, match="uint16"):
+    with pytest.raises(ValueError, match=r"^value must be a"):
         module.dequantize_confidence(np.array([0, 65535], dtype=np.int64))
 
 
@@ -142,7 +142,7 @@ def test_pack_correctness_requires_boolean_array() -> None:
 
     module = load_calibration()
 
-    with pytest.raises(ValueError, match="boolean"):
+    with pytest.raises(ValueError, match=r"^correct must be a boolean array"):
         module.pack_correctness(np.array([0, 2], dtype=np.uint8))
 
 
@@ -273,7 +273,7 @@ def test_classwise_ece_requires_positive_integer_bin_count(bin_count: object) ->
 
     module = load_calibration()
 
-    with pytest.raises(ValueError, match="positive integer"):
+    with pytest.raises(ValueError, match=r"^bin_count must be a positive integer"):
         module.classwise_ece_sufficient_statistics(
             np.array([[0.5, 0.5]], dtype=np.float64),
             np.array([0], dtype=np.int64),
@@ -290,7 +290,7 @@ def test_probability_metrics_require_positive_integer_num_classes(
 
     module = load_calibration()
 
-    with pytest.raises(ValueError, match="positive integer"):
+    with pytest.raises(ValueError, match=r"^num_classes must be a positive integer"):
         module.multiclass_brier_sums(
             np.array([[0.5, 0.5]], dtype=np.float64),
             np.array([0], dtype=np.int64),
@@ -303,7 +303,7 @@ def test_probability_metrics_reject_empty_batches() -> None:
 
     module = load_calibration()
 
-    with pytest.raises(ValueError, match="at least one"):
+    with pytest.raises(ValueError, match=r"^probabilities must contain at least one sample"):
         module.multiclass_brier_sums(
             np.empty((0, 2), dtype=np.float64),
             np.empty(0, dtype=np.int64),

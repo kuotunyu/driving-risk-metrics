@@ -210,7 +210,7 @@ def test_a_backend_without_logits_fails_closed(monkeypatch: pytest.MonkeyPatch) 
     payload = {"probabilities": FakeTensor(np.zeros((1, 2, 4, 4), dtype=np.float32))}
     adapter = adapters.SegmentationAdapter(module=FakeModule(torch, payload))
 
-    with pytest.raises(ValueError, match="logits"):
+    with pytest.raises(ValueError, match=r"^backend output does not expose logits; every approved"):
         adapter.logits(np.zeros((1, 3, 4, 4), dtype=np.float32))
 
 
@@ -224,7 +224,7 @@ def test_logits_rejects_a_non_float32_image(monkeypatch: pytest.MonkeyPatch) -> 
     )
     adapter = adapters.SegmentationAdapter(module=module)
 
-    with pytest.raises(ValueError, match="float32"):
+    with pytest.raises(ValueError, match=r"^image_nchw must be a"):
         adapter.logits(np.zeros((1, 3, 4, 4), dtype=np.float64))
 
 
@@ -242,7 +242,7 @@ def test_logits_rejects_an_image_that_is_not_batched_nchw(
     )
     adapter = adapters.SegmentationAdapter(module=module)
 
-    with pytest.raises(ValueError, match="four-dimensional"):
+    with pytest.raises(ValueError, match=r"^image_nchw must be four-dimensional NCHW"):
         adapter.logits(np.zeros(shape, dtype=np.float32))
 
 

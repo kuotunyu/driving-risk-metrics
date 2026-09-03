@@ -76,9 +76,9 @@ def test_sensitivity_changes_only_critical_false_negative_cost() -> None:
 def test_cost_risk_rejects_zero_denominator_and_profile_dimension_mismatch() -> None:
     risk = load_risk_module()
 
-    with pytest.raises(ValueError, match="valid pixel"):
+    with pytest.raises(ValueError, match=r"^confusion matrix contains no valid pixel"):
         risk.compute_cost_risk(np.zeros((3, 3), dtype=np.int64), make_profile())
-    with pytest.raises(ValueError, match="exactly one cost"):
+    with pytest.raises(ValueError, match=r"^risk profile must declare exactly one cost for every"):
         risk.compute_cost_risk(np.eye(2, dtype=np.int64), make_profile())
 
 

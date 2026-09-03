@@ -121,7 +121,9 @@ def test_a_component_array_that_is_not_three_dimensional_is_refused() -> None:
 
     bootstrap = load_bootstrap()
 
-    with pytest.raises(ValueError, match="three-dimensional"):
+    with pytest.raises(
+        ValueError, match=r"^components must be a three-dimensional run-by-image-by-component"
+    ):
         bootstrap.two_stage_paired_bootstrap_statistic(
             np.ones((3, 4), dtype=np.float64), (0, 0, 0), iou_statistic, resamples=10, seed=1
         )
@@ -133,7 +135,7 @@ def test_a_statistic_returning_the_wrong_shape_is_refused() -> None:
     bootstrap = load_bootstrap()
     components = np.ones((3, 5, 2), dtype=np.float64)
 
-    with pytest.raises(ValueError, match="one value per run"):
+    with pytest.raises(ValueError, match=r"^statistic must return one value per run, expected"):
         bootstrap.two_stage_paired_bootstrap_statistic(
             components,
             (0, 0, 0),
@@ -154,7 +156,7 @@ def test_a_statistic_returning_a_non_finite_value_is_refused() -> None:
     bootstrap = load_bootstrap()
     components = np.ones((3, 5, 2), dtype=np.float64)
 
-    with pytest.raises(ValueError, match="finite"):
+    with pytest.raises(ValueError, match=r"^statistic must return finite values"):
         bootstrap.two_stage_paired_bootstrap_statistic(
             components,
             (0, 0, 0),
@@ -171,7 +173,7 @@ def test_non_finite_components_are_refused() -> None:
     components = np.ones((3, 5, 2), dtype=np.float64)
     components[0, 0, 0] = np.nan
 
-    with pytest.raises(ValueError, match="finite"):
+    with pytest.raises(ValueError, match=r"^components must be finite"):
         bootstrap.two_stage_paired_bootstrap_statistic(
             components, (0, 0, 0), iou_statistic, resamples=10, seed=1
         )
@@ -184,7 +186,7 @@ def test_model_labels_must_name_one_model_per_run() -> None:
     components = np.ones((3, 5, 2), dtype=np.float64)
     components[:, :, 1] = 2.0
 
-    with pytest.raises(ValueError, match="model_seed_ids"):
+    with pytest.raises(ValueError, match=r"^model_seed_ids must label exactly one model per run"):
         bootstrap.two_stage_paired_bootstrap_statistic(
             components, (0, 0), iou_statistic, resamples=10, seed=1
         )
@@ -195,7 +197,7 @@ def test_a_non_float64_component_array_is_refused() -> None:
 
     bootstrap = load_bootstrap()
 
-    with pytest.raises(ValueError, match="float64"):
+    with pytest.raises(ValueError, match=r"^components must be a"):
         bootstrap.two_stage_paired_bootstrap_statistic(
             np.ones((3, 5, 2), dtype=np.int64), (0, 0, 0), iou_statistic, resamples=10, seed=1
         )
@@ -206,7 +208,7 @@ def test_an_empty_component_axis_is_refused() -> None:
 
     bootstrap = load_bootstrap()
 
-    with pytest.raises(ValueError, match="at least one run, image, and component"):
+    with pytest.raises(ValueError, match=r"^components must contain at least one run, image,"):
         bootstrap.two_stage_paired_bootstrap_statistic(
             np.ones((3, 5, 0), dtype=np.float64), (0, 0, 0), iou_statistic, resamples=10, seed=1
         )

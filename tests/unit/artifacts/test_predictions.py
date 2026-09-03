@@ -287,7 +287,7 @@ def test_writer_rejects_ece_shape_mismatch(tmp_path: Path) -> None:
         positive_counts=np.zeros((2, 2), dtype=np.int64),
     )
 
-    with pytest.raises(ValueError, match="ECE shape"):
+    with pytest.raises(ValueError, match=r"^ECE shape must be num_classes by at least one bin"):
         prediction.write_prediction_artifact(
             tmp_path / "bad.json",
             valid_record(),
@@ -380,7 +380,7 @@ def test_payload_write_failure_does_not_damage_existing_artifact(
 
     monkeypatch.setattr(prediction.np, "savez", write_then_fail)
 
-    with pytest.raises(OSError, match="simulated payload failure"):
+    with pytest.raises(OSError, match=r"^simulated payload failure"):
         prediction.write_prediction_artifact(
             manifest_path,
             changed_record(),
@@ -421,7 +421,7 @@ def test_manifest_publish_failure_does_not_damage_existing_artifact(
 
     monkeypatch.setattr(os, "replace", fail_manifest_replace)
 
-    with pytest.raises(OSError, match="simulated manifest publication failure"):
+    with pytest.raises(OSError, match=r"^simulated manifest publication failure"):
         prediction.write_prediction_artifact(
             manifest_path,
             changed_record(),
@@ -461,7 +461,7 @@ def test_writer_rejects_corrupt_existing_content_addressed_payload(tmp_path: Pat
     payload_path = tmp_path / first.payload_file
     payload_path.write_bytes(b"corrupt")
 
-    with pytest.raises(ValueError, match="content-addressed payload hash mismatch"):
+    with pytest.raises(ValueError, match=r"^existing content-addressed payload hash mismatch"):
         write_valid_artifact(manifest_path)
 
 
@@ -526,7 +526,7 @@ def test_writer_rejects_more_than_uint8_class_capacity(tmp_path: Path) -> None:
         positive_counts=np.zeros((257, 1), dtype=np.int64),
     )
 
-    with pytest.raises(ValueError, match="256 classes"):
+    with pytest.raises(ValueError, match=r"^confusion shape must define between"):
         prediction.write_prediction_artifact(
             tmp_path / "bad.json",
             record,
@@ -589,7 +589,7 @@ def test_writer_rejects_predicted_histogram_that_disagrees_with_confusion(
         predicted_class=np.array([[0, 0, 0], [2, 1, 0]], dtype=np.uint8),
     )
 
-    with pytest.raises(ValueError, match="predicted-class histogram"):
+    with pytest.raises(ValueError, match=r"^predicted-class histogram must equal confusion column"):
         prediction.write_prediction_artifact(
             tmp_path / "bad.json",
             corrupt,
@@ -611,7 +611,9 @@ def test_writer_rejects_correctness_popcount_that_disagrees_with_confusion(
         correctness_bitset=metrics.pack_correctness(np.ones(6, dtype=np.bool_)),
     )
 
-    with pytest.raises(ValueError, match="correctness popcount"):
+    with pytest.raises(
+        ValueError, match=r"^correctness popcount must equal the confusion diagonal"
+    ):
         prediction.write_prediction_artifact(
             tmp_path / "bad.json",
             corrupt,
@@ -630,7 +632,7 @@ def test_writer_rejects_ece_targets_that_disagree_with_confusion(tmp_path: Path)
         positive_counts=np.array([[1, 1], [1, 0], [2, 0]], dtype=np.int64),
     )
 
-    with pytest.raises(ValueError, match="ECE positive totals"):
+    with pytest.raises(ValueError, match=r"^ECE positive totals must equal confusion row totals"):
         prediction.write_prediction_artifact(
             tmp_path / "bad.json",
             valid_record(),
@@ -684,7 +686,9 @@ def test_writer_rejects_ece_confidence_totals_that_cannot_sum_to_probabilities(
         confidence_sums=np.array([[0.6, 2.1], [0.8, 1.2], [1.0, 0.5]]),
     )
 
-    with pytest.raises(ValueError, match="global confidence sum"):
+    with pytest.raises(
+        ValueError, match=r"^ECE global confidence sum must equal valid_pixel_count"
+    ):
         prediction.write_prediction_artifact(
             tmp_path / "bad.json",
             valid_record(),
@@ -703,7 +707,9 @@ def test_writer_rejects_ece_confidence_sums_outside_declared_bins(tmp_path: Path
         confidence_sums=np.array([[1.6, 1.1], [0.8, 1.2], [0.8, 0.5]]),
     )
 
-    with pytest.raises(ValueError, match="bin intervals"):
+    with pytest.raises(
+        ValueError, match=r"^ECE confidence_sums must be achievable within declared"
+    ):
         prediction.write_prediction_artifact(
             tmp_path / "bad.json",
             valid_record(),
@@ -722,7 +728,9 @@ def test_writer_rejects_impossible_total_multiclass_brier_sum(tmp_path: Path) ->
         brier_sum_by_class=np.array([5.0, 5.0, 5.0], dtype=np.float64),
     )
 
-    with pytest.raises(ValueError, match="total Brier"):
+    with pytest.raises(
+        ValueError, match=r"^total Brier sum must not exceed twice valid_pixel_count"
+    ):
         prediction.write_prediction_artifact(
             tmp_path / "bad.json",
             corrupt,
@@ -800,7 +808,9 @@ def test_reader_rejects_missing_npz_member_with_matching_tampered_hash(tmp_path:
     del arrays["ece_counts"]
     rewrite_manifest(manifest_path, payload_sha256=rewrite_payload(payload_path, arrays))
 
-    with pytest.raises(ValueError, match="NPZ members"):
+    with pytest.raises(
+        ValueError, match=r"^NPZ members do not match the manifest payload contract"
+    ):
         prediction.read_prediction_artifact(manifest_path)
 
 
@@ -814,7 +824,7 @@ def test_reader_rejects_array_descriptor_mismatch(tmp_path: Path) -> None:
     values["arrays"]["predicted_class"]["shape"] = [6]
     manifest_path.write_text(json.dumps(values), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="array descriptor"):
+    with pytest.raises(ValueError, match=r"^NPZ member 'predicted_class' does not match its array"):
         prediction.read_prediction_artifact(manifest_path)
 
 
@@ -826,7 +836,7 @@ def test_reader_rejects_manifest_dimension_mismatch(tmp_path: Path) -> None:
     write_valid_artifact(manifest_path)
     rewrite_manifest(manifest_path, num_classes=2)
 
-    with pytest.raises(ValueError, match="manifest dimensions"):
+    with pytest.raises(ValueError, match=r"^manifest dimensions do not match the verified NPZ"):
         prediction.read_prediction_artifact(manifest_path)
 
 

@@ -148,7 +148,7 @@ def test_intersection_requires_explicit_boolean_opt_in(tmp_path: Path, allow: ob
     semantic = touch_labels(tmp_path, ("semantic/a_train_id.png",))
     instance = touch_labels(tmp_path, ("instance/a.png",))
 
-    with pytest.raises(TypeError, match="boolean"):
+    with pytest.raises(TypeError, match=r"^allow_audited_intersection must be a boolean"):
         bdd100k.semantic_instance_intersection(
             semantic,
             instance,

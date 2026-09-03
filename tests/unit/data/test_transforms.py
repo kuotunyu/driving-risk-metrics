@@ -204,7 +204,7 @@ def test_restore_prediction_rejects_wrong_dtype_or_shape(prediction: np.ndarray)
         pad_right=171,
     )
 
-    with pytest.raises(ValueError, match="prediction"):
+    with pytest.raises(ValueError, match=r"^prediction must be a"):
         transforms.restore_prediction(prediction, prepared)
 
 

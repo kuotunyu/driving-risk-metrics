@@ -162,7 +162,7 @@ def test_an_existing_frozen_manifest_stops_the_preflight_before_any_scan(
     output_dir.mkdir(parents=True)
     (output_dir / "train.json").write_text("{}", encoding="utf-8")
 
-    with pytest.raises(FileExistsError, match="already exists"):
+    with pytest.raises(FileExistsError, match=r"^frozen manifest already exists:"):
         preflight.run_preflight(config_path, data_root, output_dir)
 
 
@@ -181,7 +181,7 @@ def test_a_missing_dataset_directory_fails_closed(tmp_path: Path, removed: str) 
     )
     shutil.rmtree(data_root / removed)
 
-    with pytest.raises(ValueError, match="is not a directory"):
+    with pytest.raises(ValueError, match=r"^dataset path is not a directory:"):
         preflight.run_preflight(config_path, data_root, output_dir)
 
 
@@ -195,7 +195,7 @@ def test_a_locked_validation_count_mismatch_fails_closed(tmp_path: Path) -> None
         validation_count=3,
     )
 
-    with pytest.raises(ValueError, match="locked_validation"):
+    with pytest.raises(ValueError, match=r"^locked_validation split must contain exactly"):
         preflight.run_preflight(config_path, data_root, output_dir)
 
 
@@ -209,7 +209,7 @@ def test_a_source_train_count_mismatch_fails_closed(tmp_path: Path) -> None:
         validation_count=1000,
     )
 
-    with pytest.raises(ValueError, match="source_train"):
+    with pytest.raises(ValueError, match=r"^source_train split must contain exactly"):
         preflight.run_preflight(config_path, data_root, output_dir)
 
 
