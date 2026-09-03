@@ -309,3 +309,23 @@ def test_probability_metrics_reject_empty_batches() -> None:
             np.empty(0, dtype=np.int64),
             num_classes=2,
         )
+
+
+def test_the_correctness_bitset_has_a_pinned_wire_format() -> None:
+    """The packed bytes are a published contract, not an internal detail.
+
+    A round-trip through this module's own pack and unpack proves only that
+    the two agree with each other; both could change together and every such
+    test would still pass while every artifact already on disk became
+    unreadable. The bytes are therefore asserted directly.
+
+    Hand computed: with little bit order, element i is bit i of the byte, so
+    [T, F, T, T, F, F, T, F] is 1 + 4 + 8 + 64 = 77 = 0x4D. Big bit order
+    would put element 0 in the high bit and give 0xB2 instead.
+    """
+
+    module = load_calibration()
+    correct = np.array([True, False, True, True, False, False, True, False], dtype=np.bool_)
+
+    assert module.pack_correctness(correct) == b"\x4d"
+    np.testing.assert_array_equal(module.unpack_correctness(b"\x4d", 8), correct)

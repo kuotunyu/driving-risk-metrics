@@ -401,3 +401,59 @@ def test_checked_in_claim_registry_has_exact_vocabulary_and_no_claims() -> None:
 
     assert raw_value == valid_registry_values([])
     assert claims.verified_claims(claims_path) == ()
+
+
+def test_the_audit_examines_every_claim_after_the_first_violation(tmp_path: Path) -> None:
+    """One bad claim must not stop the audit, and this is the reason it matters.
+
+    The auditor exists to stop a published number that does not match its
+    artifact. If the loop broke on the first problem instead of continuing,
+    a registry whose first claim had a path error and whose second claim
+    carried a WRONG NUMBER would report only the path error, and the wrong
+    number would ship. Every violation the audit can see, it must report.
+
+    Five claims below trigger the five different skip paths in turn, so any one
+    of them turning into an early exit loses at least one violation.
+    """
+
+    claims = load_claims_module()
+    claims_path = tmp_path / "claims.yaml"
+
+    (tmp_path / "evidence").mkdir()
+    (tmp_path / "evidence" / "notjson.json").write_text("{not json", encoding="utf-8")
+    (tmp_path / "evidence" / "notobject.json").write_text("[1, 2]", encoding="utf-8")
+    (tmp_path / "evidence" / "metrics.json").write_text(
+        json.dumps({"metrics": {"miou": 0.8125}}), encoding="utf-8"
+    )
+
+    write_claims(
+        claims_path,
+        [
+            valid_claim_values(claim_id="c1-escapes", artifact_path="../private.json"),
+            valid_claim_values(claim_id="c2-absent", artifact_path="evidence/gone.json"),
+            valid_claim_values(claim_id="c3-notjson", artifact_path="evidence/notjson.json"),
+            valid_claim_values(claim_id="c4-notobject", artifact_path="evidence/notobject.json"),
+            valid_claim_values(claim_id="c5-nopointer", metric_path="/metrics/absent"),
+            # Last on purpose, and the most important one: a claim whose stated
+            # number is not the number in its artifact. If any earlier skip
+            # became an early exit, THIS is the violation that would be lost,
+            # and a wrong published figure is exactly what the audit exists to
+            # stop.
+            valid_claim_values(
+                claim_id="c6-wrongnumber",
+                text="Measured mIoU is 0.9500.",
+            ),
+        ],
+    )
+
+    violations = claims.audit_claims(claims_path, tmp_path)
+    reported = {violation.split(":")[0] for violation in violations}
+
+    assert reported == {
+        "c1-escapes",
+        "c2-absent",
+        "c3-notjson",
+        "c4-notobject",
+        "c5-nopointer",
+        "c6-wrongnumber",
+    }
