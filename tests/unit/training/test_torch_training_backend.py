@@ -171,7 +171,7 @@ def test_ignored_pixels_never_contribute_to_the_loss(tmp_path: Path) -> None:
     Image.fromarray(ignored).save(labels / "t1_train_id.png")
     state = make_state(backends)
 
-    with pytest.raises(ValueError, match="no valid"):
+    with pytest.raises(ValueError, match=r"^micro batch has no valid pixel to learn from"):
         backend.run_step(state, (("t1", 1.0),), 0.5, apply_update=True)
 
 
@@ -222,7 +222,7 @@ def test_a_checkpoint_from_another_run_fails_closed(tmp_path: Path) -> None:
     path = tmp_path / "final_checkpoint.pt"
     backend.save_checkpoint(state, path, {"run_id": "tiny-seed-17", "seed": 17})
 
-    with pytest.raises(ValueError, match="metadata"):
+    with pytest.raises(ValueError, match=r"^checkpoint metadata does not match the expected run"):
         backend.load_checkpoint(path, {"run_id": "tiny-seed-42", "seed": 42})
 
 
@@ -421,11 +421,11 @@ def test_no_device_is_ever_implied(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    with pytest.raises(TypeError, match="device"):
+    with pytest.raises(TypeError, match=r"^TorchTrainingBackend\.__init__\(\) missing"):
         backends.TorchTrainingBackend(  # type: ignore[call-arg]
             data_root, manifest, protocol, pretrained=False
         )
-    with pytest.raises(TypeError, match="device"):
+    with pytest.raises(TypeError, match=r"^build_training_backend\(\) missing"):
         backends.build_training_backend(  # type: ignore[call-arg]
             config_path, manifest_path, data_root, pretrained=False
         )
@@ -503,7 +503,7 @@ def test_the_loader_thread_count_must_be_positive(tmp_path: Path) -> None:
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
 
-    with pytest.raises(ValueError, match="loader_threads"):
+    with pytest.raises(ValueError, match=r"^loader_threads must be at least"):
         backends.TorchTrainingBackend(
             data_root, manifest, protocol, device="cpu", pretrained=False, loader_threads=0
         )
@@ -515,7 +515,7 @@ def test_a_boolean_thread_count_is_refused(tmp_path: Path) -> None:
     backends = load_backends_module()
     data_root, manifest, protocol = build_cohort(tmp_path, ("t1",))
 
-    with pytest.raises(ValueError, match="must be an integer"):
+    with pytest.raises(ValueError, match=r"^loader_threads must be an integer"):
         backends.TorchTrainingBackend(
             data_root,
             manifest,
@@ -535,7 +535,7 @@ def test_an_optimizer_outside_the_protocol_fails_closed(tmp_path: Path) -> None:
         data_root, manifest, protocol, device="cpu", pretrained=False
     )
 
-    with pytest.raises(ValueError, match="adamw"):
+    with pytest.raises(ValueError, match=r"^optimizer must be adamw for every approved model,"):
         backend.create_training_state(
             "segformer_b2",  # type: ignore[arg-type]
             {"optimizer": "sgd", "learning_rate": 0.01, "weight_decay": 0.0001},
@@ -626,7 +626,7 @@ def test_resume_state_from_another_run_fails_closed(tmp_path: Path) -> None:
     path = tmp_path / "resume_state.pt"
     backend.save_resume_state(state, path, {"run_id": "tiny-seed-17", "completed_step": 5})
 
-    with pytest.raises(ValueError, match="resume state"):
+    with pytest.raises(ValueError, match=r"^resume state does not belong to this run"):
         backend.load_resume_state(state, path, {"run_id": "tiny-seed-42"})
 
 
@@ -642,7 +642,7 @@ def test_a_resume_state_without_a_completed_step_is_refused(tmp_path: Path) -> N
     path = tmp_path / "resume_state.pt"
     torch.save({"model": {}, "optimizer": {}, "metadata": {"run_id": "tiny-seed-17"}}, path)
 
-    with pytest.raises(ValueError, match="completed_step"):
+    with pytest.raises(ValueError, match=r"^resume state does not record a completed_step"):
         backend.load_resume_state(state, path, {"run_id": "tiny-seed-17"})
 
 

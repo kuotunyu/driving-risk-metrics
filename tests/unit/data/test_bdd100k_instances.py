@@ -77,7 +77,7 @@ def test_one_annotation_id_may_not_carry_two_categories() -> None:
     place(mask, slice(0, 1), slice(0, 1), category=2, annotation_id=9)
     place(mask, slice(1, 2), slice(0, 1), category=6, annotation_id=9)
 
-    with pytest.raises(ValueError, match="category"):
+    with pytest.raises(ValueError, match=r"^annotation id"):
         bdd100k.instance_areas(mask)
 
 
@@ -86,7 +86,7 @@ def test_a_non_rgba_image_is_rejected() -> None:
 
     bdd100k = load_bdd100k()
 
-    with pytest.raises(ValueError, match="RGBA"):
+    with pytest.raises(ValueError, match=r"^instance bitmask must be RGBA, got shape"):
         bdd100k.instance_areas(np.zeros((4, 4, 3), dtype=np.uint8))
 
 
@@ -95,7 +95,7 @@ def test_a_non_uint8_image_is_rejected() -> None:
 
     bdd100k = load_bdd100k()
 
-    with pytest.raises(ValueError, match="uint8"):
+    with pytest.raises(ValueError, match=r"^instance bitmask must be"):
         bdd100k.instance_areas(np.zeros((4, 4, 4), dtype=np.uint16))
 
 

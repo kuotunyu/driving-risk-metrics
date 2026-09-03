@@ -178,7 +178,9 @@ def test_a_temperature_from_another_protocol_is_refused(workspace: dict[str, Any
     foreign = tmp_path / "foreign-temperature.json"
     foreign.write_text(json.dumps(document), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="protocol"):
+    with pytest.raises(
+        ValueError, match=r"^temperature protocol hash does not match the evaluation"
+    ):
         evaluate(workspace, tmp_path / "out", foreign)
 
 
@@ -191,7 +193,7 @@ def test_a_temperature_from_another_checkpoint_is_refused(workspace: dict[str, A
     foreign = tmp_path / "foreign-temperature.json"
     foreign.write_text(json.dumps(document), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="checkpoint"):
+    with pytest.raises(ValueError, match=r"^temperature was fitted for a different checkpoint"):
         evaluate(workspace, tmp_path / "out", foreign)
 
 
@@ -215,7 +217,7 @@ def test_a_non_positive_temperature_is_refused(workspace: dict[str, Any]) -> Non
     broken = tmp_path / "zero-temperature.json"
     broken.write_text(json.dumps(document), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="temperature"):
+    with pytest.raises(ValueError, match=r"^temperature must be finite and positive, got"):
         evaluate(workspace, tmp_path / "out", broken)
 
 
@@ -228,5 +230,5 @@ def test_a_temperature_artifact_that_is_not_an_object_fails_closed(
     listed = tmp_path / "list-temperature.json"
     listed.write_text(json.dumps([1.5]), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="JSON object"):
+    with pytest.raises(ValueError, match=r"^temperature artifact must be a JSON object"):
         evaluate(workspace, tmp_path / "out", listed)

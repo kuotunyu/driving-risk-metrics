@@ -129,7 +129,7 @@ def test_an_unapproved_model_name_fails_closed() -> None:
 
     registry = load_registry_module()
 
-    with pytest.raises(ValueError, match="approved"):
+    with pytest.raises(ValueError, match=r"^model must be one of the approved"):
         registry.create_model("setr", 19, False)
 
 
@@ -233,7 +233,7 @@ def test_num_classes_below_two_fails_closed(num_classes: object) -> None:
 
     registry = load_registry_module()
 
-    with pytest.raises(ValueError, match="at least two"):
+    with pytest.raises(ValueError, match=r"^num_classes must be an integer of at least two"):
         registry.create_model("upernet_convnextv2_tiny", num_classes, False)  # type: ignore[arg-type]
 
 
@@ -243,7 +243,7 @@ def test_a_non_boolean_pretrained_flag_fails_closed(pretrained: object) -> None:
 
     registry = load_registry_module()
 
-    with pytest.raises(TypeError, match="boolean"):
+    with pytest.raises(TypeError, match=r"^pretrained must be a boolean"):
         registry.create_model("upernet_convnextv2_tiny", 19, pretrained)  # type: ignore[arg-type]
 
 
@@ -292,5 +292,5 @@ def test_a_backbone_that_matches_no_pretrained_parameter_fails_closed(
 
     monkeypatch.setattr(transformers, "ConvNextV2Model", Foreign)
 
-    with pytest.raises(ValueError, match="no pretrained parameter matched"):
+    with pytest.raises(ValueError, match=r"^no pretrained parameter matched the backbone from"):
         registry.create_model("upernet_convnextv2_tiny", 19, True)

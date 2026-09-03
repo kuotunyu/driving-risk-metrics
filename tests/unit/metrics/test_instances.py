@@ -148,7 +148,7 @@ def test_instance_coverages_requires_matching_shapes(array_name: str) -> None:
     }
     arrays[array_name] = np.full((2, 1), 2, dtype=np.int64)
 
-    with pytest.raises(ValueError, match="same shape"):
+    with pytest.raises(ValueError, match=r"^y_true, y_pred, and instance_ids must have the same"):
         instances.instance_coverages(
             arrays["y_true"],
             arrays["y_pred"],

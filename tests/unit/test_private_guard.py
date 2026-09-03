@@ -211,7 +211,7 @@ def test_check_repository_fails_closed_for_non_utf8_git_path(
 
     monkeypatch.setattr(guard_module, "_run_git", invalid_path_output)
 
-    with pytest.raises(guard_module.GitIndexError, match="not valid UTF-8"):
+    with pytest.raises(guard_module.GitIndexError, match=r"^tracked path is not valid"):
         guard_module.check_repository(tmp_path)
 
 

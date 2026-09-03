@@ -44,7 +44,7 @@ def test_normalized_image_bands_rejects_nonpositive_or_noninteger_height(
 ) -> None:
     spatial = load_spatial_module()
 
-    with pytest.raises((TypeError, ValueError), match="positive integer"):
+    with pytest.raises((TypeError, ValueError), match=r"^height must be a positive integer"):
         spatial.normalized_image_bands(height)  # type: ignore[arg-type]
 
 

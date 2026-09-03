@@ -36,7 +36,7 @@ def test_apply_temperature_rejects_nonpositive_or_nonfinite_temperature(
     module = load_temperature()
     logits = np.array([[2.0, -1.0]], dtype=np.float64)
 
-    with pytest.raises(ValueError, match="temperature must be finite and positive"):
+    with pytest.raises(ValueError, match=r"^temperature must be finite and positive"):
         module.apply_temperature(logits, temperature)
 
 
@@ -148,7 +148,7 @@ def test_formal_calibration_requires_nonempty_calibration_split_provenance() -> 
         dataset_manifest_sha256="a" * 64,
     )
 
-    with pytest.raises(ValueError, match="sample_ids must not be empty"):
+    with pytest.raises(ValueError, match=r"^calibration provenance sample_ids must not be empty"):
         module.fit_provenance_checked_temperature(
             logits,
             targets,
@@ -171,7 +171,7 @@ def test_formal_calibration_refuses_noncalibration_or_locked_validation_provenan
         dataset_manifest_sha256="a" * 64,
     )
 
-    with pytest.raises(ValueError, match="calibration split"):
+    with pytest.raises(ValueError, match=r"^temperature fitting requires the calibration split"):
         module.fit_provenance_checked_temperature(
             np.array([[2.0, 0.0]], dtype=np.float64),
             np.array([0], dtype=np.int64),
@@ -329,7 +329,9 @@ def test_formal_calibration_binds_sample_ids_to_logits_batch_dimension() -> None
         dataset_manifest_sha256="a" * 64,
     )
 
-    with pytest.raises(ValueError, match="batch dimension"):
+    with pytest.raises(
+        ValueError, match=r"^logits batch dimension must match calibration sample_ids"
+    ):
         module.fit_provenance_checked_temperature(
             np.ones((1, 2), dtype=np.float64),
             np.zeros(1, dtype=np.int64),
@@ -345,7 +347,7 @@ def test_temperature_scaling_rejects_finite_values_that_overflow_after_division(
     module = load_temperature()
     logits = np.array([[np.finfo(np.float64).max, 0.0]], dtype=np.float64)
 
-    with pytest.raises(ValueError, match="overflow"):
+    with pytest.raises(ValueError, match=r"^temperature scaling overflowed"):
         module.apply_temperature(logits, 0.01)
 
 
@@ -355,7 +357,7 @@ def test_temperature_fit_rejects_logits_unsafe_for_bounded_scaling() -> None:
     module = load_temperature()
     logits = np.array([[np.finfo(np.float64).max, 0.0]], dtype=np.float64)
 
-    with pytest.raises(ValueError, match="bounded temperature"):
+    with pytest.raises(ValueError, match=r"^logit range is unsafe for bounded temperature scaling"):
         module.fit_scalar_temperature(logits, np.array([0], dtype=np.int64))
 
 
@@ -366,7 +368,7 @@ def test_temperature_fit_rejects_row_range_that_can_overflow_cross_entropy() -> 
     magnitude = np.finfo(np.float64).max * math.exp(-5.0) * 0.75
     logits = np.array([[magnitude, -magnitude]], dtype=np.float64)
 
-    with pytest.raises(ValueError, match="logit range"):
+    with pytest.raises(ValueError, match=r"^logit range is unsafe for bounded temperature scaling"):
         module.fit_scalar_temperature(logits, np.array([1], dtype=np.int64))
 
 
@@ -411,7 +413,7 @@ def test_temperature_fit_rejects_failed_or_nonfinite_optimizer_result(
         ),
     )
 
-    with pytest.raises(RuntimeError, match="temperature optimization failed"):
+    with pytest.raises(RuntimeError, match=r"^temperature optimization failed: synthetic failure"):
         module.fit_scalar_temperature(
             np.array([[2.0, 0.0]], dtype=np.float64),
             np.array([0], dtype=np.int64),
@@ -450,9 +452,9 @@ def test_softmax_rejects_inputs_that_are_not_finite_float64_logits() -> None:
 
     module = load_temperature()
 
-    with pytest.raises(ValueError, match="float64"):
+    with pytest.raises(ValueError, match=r"^logits must be a"):
         module.softmax_probabilities(np.zeros((1, 2), dtype=np.float32))
-    with pytest.raises(ValueError, match="finite"):
+    with pytest.raises(ValueError, match=r"^logits must be finite"):
         module.softmax_probabilities(np.array([[0.0, np.nan]], dtype=np.float64))
-    with pytest.raises(ValueError, match="two classes"):
+    with pytest.raises(ValueError, match=r"^logits must have at least two classes on the final"):
         module.softmax_probabilities(np.zeros((1, 1), dtype=np.float64))

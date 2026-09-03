@@ -83,7 +83,7 @@ def test_a_step_outside_the_locked_range_fails_closed(step: object) -> None:
 
     schedule = load_schedule_module()
 
-    with pytest.raises(ValueError, match="step"):
+    with pytest.raises(ValueError, match=r"^step must be"):
         schedule.polynomial_learning_rate(step, base_lr=0.01)  # type: ignore[arg-type]
 
 
@@ -118,7 +118,7 @@ def test_a_non_positive_or_non_finite_base_rate_fails_closed(base_lr: float) -> 
 
     schedule = load_schedule_module()
 
-    with pytest.raises(ValueError, match="base_lr"):
+    with pytest.raises(ValueError, match=r"^base_lr must be a finite positive number"):
         schedule.polynomial_learning_rate(1, base_lr=base_lr)
 
 
@@ -127,7 +127,7 @@ def test_warmup_may_not_consume_the_whole_schedule() -> None:
 
     schedule = load_schedule_module()
 
-    with pytest.raises(ValueError, match="warmup_steps"):
+    with pytest.raises(ValueError, match=r"^warmup_steps must be smaller than total_steps"):
         schedule.polynomial_learning_rate(1, base_lr=0.01, warmup_steps=10, total_steps=10)
 
 
@@ -172,7 +172,9 @@ def test_an_unapproved_model_has_no_optimizer_specification() -> None:
 
     schedule = load_schedule_module()
 
-    with pytest.raises(ValueError, match="approved"):
+    with pytest.raises(
+        ValueError, match=r"^'setr' is not an approved model with a pinned optimizer"
+    ):
         schedule.optimizer_spec("setr")
 
 
@@ -203,7 +205,7 @@ def test_a_non_positive_or_non_integer_horizon_fails_closed(total_steps: object)
 
     schedule = load_schedule_module()
 
-    with pytest.raises(ValueError, match="total_steps must be an integer"):
+    with pytest.raises(ValueError, match=r"^total_steps must be an integer of at least"):
         schedule.polynomial_learning_rate(
             1,
             base_lr=0.01,
@@ -217,7 +219,7 @@ def test_a_negative_or_non_integer_warmup_fails_closed(warmup_steps: object) -> 
 
     schedule = load_schedule_module()
 
-    with pytest.raises(ValueError, match="warmup_steps"):
+    with pytest.raises(ValueError, match=r"^warmup_steps must be an integer of at least"):
         schedule.polynomial_learning_rate(
             1,
             base_lr=0.01,
@@ -231,7 +233,7 @@ def test_a_non_numeric_base_rate_fails_closed(base_lr: object) -> None:
 
     schedule = load_schedule_module()
 
-    with pytest.raises(ValueError, match="base_lr"):
+    with pytest.raises(ValueError, match=r"^base_lr must be a finite positive number"):
         schedule.polynomial_learning_rate(1, base_lr=base_lr)  # type: ignore[arg-type]
 
 
@@ -241,5 +243,5 @@ def test_a_non_positive_or_non_finite_power_fails_closed(power: float) -> None:
 
     schedule = load_schedule_module()
 
-    with pytest.raises(ValueError, match="power"):
+    with pytest.raises(ValueError, match=r"^power must be a finite positive number"):
         schedule.polynomial_learning_rate(1, base_lr=0.01, power=power)

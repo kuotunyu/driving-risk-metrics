@@ -45,7 +45,7 @@ def test_sha256_file_rejects_nonpositive_chunk_size(tmp_path: Path) -> None:
     path = tmp_path / "empty.bin"
     path.write_bytes(b"")
 
-    with pytest.raises(ValueError, match="chunk_size"):
+    with pytest.raises(ValueError, match=r"^chunk_size must be positive"):
         hashing.sha256_file(path, chunk_size=0)
 
 

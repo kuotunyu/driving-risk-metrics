@@ -107,7 +107,7 @@ def test_camvid_adapter_rejects_non_camvid_manifest() -> None:
     camvid = load_camvid_module()
     config = camvid.load_camvid_config(CONFIG_PATH)
 
-    with pytest.raises(ValueError, match="CamVid manifest"):
+    with pytest.raises(ValueError, match=r"^CamVid manifest must be explicitly marked as a smoke"):
         camvid.CamVidAdapter(
             tiny_manifest(dataset_name="bdd100k"),
             FIXTURE_ROOT,
@@ -120,7 +120,7 @@ def test_camvid_adapter_rejects_non_smoke_split() -> None:
     camvid = load_camvid_module()
     config = camvid.load_camvid_config(CONFIG_PATH)
 
-    with pytest.raises(ValueError, match="smoke split"):
+    with pytest.raises(ValueError, match=r"^CamVid manifest must be explicitly marked as a smoke"):
         camvid.CamVidAdapter(
             tiny_manifest(split_name="formal"),
             FIXTURE_ROOT,
@@ -132,7 +132,7 @@ def test_camvid_adapter_rejects_non_smoke_split() -> None:
 def test_camvid_file_resolution_rejects_root_escape() -> None:
     camvid = load_camvid_module()
 
-    with pytest.raises(ValueError, match="escapes"):
+    with pytest.raises(ValueError, match=r"^CamVid path escapes its root:"):
         camvid._resolve_file(FIXTURE_ROOT / "nested", "../image.ppm")
 
 
@@ -141,5 +141,5 @@ def test_camvid_config_loader_rejects_non_mapping(tmp_path: Path) -> None:
     path = tmp_path / "camvid.yaml"
     path.write_text("- invalid\n", encoding="utf-8")
 
-    with pytest.raises(TypeError, match="mapping"):
+    with pytest.raises(TypeError, match=r"^CamVid config document must be a mapping"):
         camvid.load_camvid_config(path)

@@ -96,7 +96,7 @@ def test_build_manifest_rejects_duplicate_sample_id(tmp_path: Path, kind: str) -
     duplicate.parent.mkdir()
     duplicate.write_bytes(source.read_bytes())
 
-    with pytest.raises(ValueError, match="duplicate sample ID"):
+    with pytest.raises(ValueError, match=r"^duplicate sample ID 'sample-b' under"):
         manifest.build_paired_manifest(image_root, label_root, "train")
 
 
@@ -130,7 +130,7 @@ def test_build_manifest_rejects_empty_split(tmp_path: Path) -> None:
     image_root.mkdir()
     label_root.mkdir()
 
-    with pytest.raises(ValueError, match="no paired samples"):
+    with pytest.raises(ValueError, match=r"^no paired samples found"):
         manifest.build_paired_manifest(image_root, label_root, "train")
 
 
@@ -149,7 +149,7 @@ def test_build_manifest_rejects_empty_split(tmp_path: Path) -> None:
 def test_manifest_rejects_nonportable_or_traversing_relative_path(path: str) -> None:
     manifest = load_manifest_module()
 
-    with pytest.raises(ValueError, match="relative POSIX path"):
+    with pytest.raises(ValueError, match=r"^expected a safe relative POSIX path, got '"):
         manifest.DatasetManifest(
             dataset_name="bdd100k",
             dataset_version="10k-semantic-v1",
@@ -165,7 +165,7 @@ def test_manifest_rejects_nonportable_or_traversing_relative_path(path: str) -> 
 def test_manifest_rejects_misaligned_fields_or_invalid_hash() -> None:
     manifest = load_manifest_module()
 
-    with pytest.raises(ValueError, match="aligned"):
+    with pytest.raises(ValueError, match=r"^manifest sample, path, and file-hash fields must"):
         manifest.DatasetManifest(
             dataset_name="bdd100k",
             dataset_version="10k-semantic-v1",
@@ -195,7 +195,7 @@ def test_manifest_rejects_duplicate_ids_and_manifest_hash_drift(tmp_path: Path) 
     image_root, label_root = materialize_fixture(tmp_path)
     built = manifest.build_paired_manifest(image_root, label_root, "train")
 
-    with pytest.raises(ValueError, match="duplicate sample IDs"):
+    with pytest.raises(ValueError, match=r"^manifest contains duplicate sample IDs"):
         replace(built, sample_ids=("sample-a", "sample-a"))
     with pytest.raises(ValueError, match="manifest SHA-256 must"):
         replace(built, manifest_sha256="X" * 64)
@@ -279,7 +279,7 @@ def test_a_manifest_document_that_is_not_a_mapping_fails_closed(tmp_path: Path) 
     path = tmp_path / "manifest.json"
     path.write_text(json.dumps(["not", "a", "manifest"]), encoding="utf-8")
 
-    with pytest.raises(TypeError, match="mapping"):
+    with pytest.raises(TypeError, match=r"^manifest document must be a mapping"):
         module.load_manifest(path)
 
 
@@ -294,7 +294,7 @@ def test_a_manifest_document_with_wrong_fields_fails_closed(tmp_path: Path) -> N
     document["unexpected_field"] = "value"
     path.write_text(json.dumps(document, sort_keys=True), encoding="utf-8")
 
-    with pytest.raises(ValueError, match="exactly the manifest fields"):
+    with pytest.raises(ValueError, match=r"^manifest document must contain exactly the manifest"):
         module.load_manifest(path)
 
 
@@ -336,7 +336,7 @@ def test_saving_over_an_existing_manifest_fails_closed(tmp_path: Path) -> None:
     path = tmp_path / "saved.json"
     module.save_manifest(original, path)
 
-    with pytest.raises(FileExistsError, match="already exists"):
+    with pytest.raises(FileExistsError, match=r"^frozen manifest already exists:"):
         module.save_manifest(original, path)
 
 
@@ -368,7 +368,7 @@ def test_a_subset_of_an_unknown_sample_fails_closed(tmp_path: Path) -> None:
     image_root, label_root = materialize_fixture(tmp_path)
     original = module.build_paired_manifest(image_root, label_root, "train")
 
-    with pytest.raises(ValueError, match="not present"):
+    with pytest.raises(ValueError, match=r"^sample IDs are not present in the source manifest:"):
         module.subset_manifest(original, ("missing-sample",), "calibration")
 
 
@@ -380,5 +380,5 @@ def test_a_subset_with_duplicate_samples_fails_closed(tmp_path: Path) -> None:
     original = module.build_paired_manifest(image_root, label_root, "train")
     duplicated = (original.sample_ids[0], original.sample_ids[0])
 
-    with pytest.raises(ValueError, match="duplicate"):
+    with pytest.raises(ValueError, match=r"^manifest subset contains duplicate sample IDs"):
         module.subset_manifest(original, duplicated, "calibration")

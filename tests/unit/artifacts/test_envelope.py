@@ -192,7 +192,7 @@ def test_verify_envelope_rejects_unexpected_artifact_type(tmp_path: Path) -> Non
     path = tmp_path / "artifact.json"
     write_envelope(path, valid_envelope_values())
 
-    with pytest.raises(ValueError, match="unexpected artifact type"):
+    with pytest.raises(ValueError, match=r"^unexpected artifact type: expected"):
         envelope.verify_envelope(path, "calibration-summary/v1")
 
 

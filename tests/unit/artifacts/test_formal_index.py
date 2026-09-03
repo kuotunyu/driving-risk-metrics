@@ -212,7 +212,7 @@ def test_a_run_that_did_not_succeed_is_refused(tmp_path: Path, hashes: dict[str,
         if (model, seed) == ("segformer_b2", 17):
             documents["train"]["status"] = "failed"
 
-    with pytest.raises(ValueError, match="succeeded"):
+    with pytest.raises(ValueError, match=r"^training run"):
         build(tmp_path, hashes, mutate=mutate)
 
 
@@ -225,7 +225,7 @@ def test_a_temperature_fitted_for_other_weights_is_refused(
         if (model, seed) == ("upernet_convnextv2_tiny", 42):
             documents["temperature"]["checkpoint_sha256"] = "f" * 64
 
-    with pytest.raises(ValueError, match="checkpoint"):
+    with pytest.raises(ValueError, match=r"^temperature for"):
         build(tmp_path, hashes, mutate=mutate)
 
 
@@ -236,7 +236,7 @@ def test_an_evaluation_on_another_cohort_is_refused(tmp_path: Path, hashes: dict
         if (model, seed) == ("upernet_dinov2_small", 17):
             documents["eval_raw"]["dataset_manifest_sha256"] = "e" * 64
 
-    with pytest.raises(ValueError, match="manifest"):
+    with pytest.raises(ValueError, match=r"^uncalibrated evaluation of"):
         build(tmp_path, hashes, mutate=mutate)
 
 
@@ -249,7 +249,7 @@ def test_calibrated_and_uncalibrated_evaluations_must_cover_the_same_images(
         if (model, seed) == ("segformer_b2", 73):
             documents["eval_cal"]["artifacts"] = {"v0001": "d" * 64}
 
-    with pytest.raises(ValueError, match="same images"):
+    with pytest.raises(ValueError, match=r"^calibrated and uncalibrated evaluations of"):
         build(tmp_path, hashes, mutate=mutate)
 
 
@@ -258,7 +258,7 @@ def test_the_index_is_immutable_once_written(tmp_path: Path, hashes: dict[str, A
 
     build(tmp_path, hashes)
 
-    with pytest.raises(FileExistsError, match="formal_run_index"):
+    with pytest.raises(FileExistsError, match=r"^formal_run_index\.json already exists:"):
         build(tmp_path, hashes)
 
 
@@ -273,7 +273,7 @@ def test_a_manifest_that_is_not_the_locked_cohort_is_refused(
     )
     wrong = tmp_path / "calibration.json"
 
-    with pytest.raises(ValueError, match="locked_validation"):
+    with pytest.raises(ValueError, match=r"^the index must be built against the locked_validation"):
         index.build_formal_run_index(
             runs, PROTOCOL, wrong, runs / "formal_run_index.json", critical_class_ids=CRITICAL
         )
@@ -384,7 +384,7 @@ def test_runs_that_do_not_share_one_cohort_are_refused_by_the_gate(
             documents["eval_raw"]["artifacts"] = dict(other)
             documents["eval_cal"]["artifacts"] = dict(other)
 
-    with pytest.raises(ValueError, match="failed its own gate"):
+    with pytest.raises(ValueError, match=r"^assembled index failed its own gate: runs do not"):
         build(tmp_path, hashes, mutate=mutate)
 
 

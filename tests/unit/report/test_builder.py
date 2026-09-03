@@ -191,7 +191,7 @@ def test_a_failing_claim_audit_refuses_to_publish(tmp_path: Path) -> None:
     broken = default_claims()
     broken[0]["text"] = "FCN reaches 0.99 mIoU on the locked cohort."
 
-    with pytest.raises(ValueError, match="claim"):
+    with pytest.raises(ValueError, match=r"^claim audit failed: miou-fcn: claim number is absent"):
         build(tmp_path, claims=broken)
 
 
@@ -284,5 +284,5 @@ def test_a_report_input_that_is_not_an_object_fails_closed(tmp_path: Path) -> No
     claims_path, artifacts, output_dir = write_workspace(tmp_path)
     (artifacts / "rankings.json").write_text(json.dumps([1, 2, 3]), encoding="utf-8")
 
-    with pytest.raises(TypeError, match="JSON object"):
+    with pytest.raises(TypeError, match=r"^report input must be a JSON object:"):
         builder.build_report(claims_path, artifacts, output_dir, repository_root=tmp_path)

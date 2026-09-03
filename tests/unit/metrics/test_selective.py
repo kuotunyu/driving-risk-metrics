@@ -137,7 +137,7 @@ def test_selective_risk_curve_rejects_a_non_float64_confidence_array() -> None:
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match="float64"):
+    with pytest.raises(ValueError, match=r"^confidence must be a"):
         selective.selective_risk_curve(
             np.array([0.5, 0.4], dtype=np.float32),
             np.ones(2, dtype=np.bool_),
@@ -149,7 +149,7 @@ def test_selective_risk_curve_rejects_a_non_boolean_correctness_array() -> None:
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match="boolean"):
+    with pytest.raises(ValueError, match=r"^correctness must be a boolean array"):
         selective.selective_risk_curve(
             np.array([0.5, 0.4], dtype=np.float64),
             np.array([1, 0], dtype=np.int64),
@@ -161,7 +161,7 @@ def test_selective_risk_curve_rejects_multidimensional_input() -> None:
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match="one-dimensional"):
+    with pytest.raises(ValueError, match=r"^confidence and correctness must be one-dimensional"):
         selective.selective_risk_curve(
             np.zeros((2, 2), dtype=np.float64),
             np.ones((2, 2), dtype=np.bool_),
@@ -173,7 +173,7 @@ def test_selective_risk_curve_rejects_mismatched_lengths() -> None:
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match="same length"):
+    with pytest.raises(ValueError, match=r"^confidence and correctness must have the same length"):
         selective.selective_risk_curve(
             np.array([0.5, 0.4], dtype=np.float64),
             np.ones(1, dtype=np.bool_),
@@ -185,7 +185,7 @@ def test_selective_risk_curve_rejects_an_empty_cohort() -> None:
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match="at least one sample"):
+    with pytest.raises(ValueError, match=r"^confidence must contain at least one sample"):
         selective.selective_risk_curve(
             np.array([], dtype=np.float64),
             np.array([], dtype=np.bool_),
@@ -198,7 +198,7 @@ def test_selective_risk_curve_rejects_non_finite_confidence(bad_value: float) ->
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match="finite"):
+    with pytest.raises(ValueError, match=r"^confidence values must be finite"):
         selective.selective_risk_curve(
             np.array([0.5, bad_value], dtype=np.float64),
             np.ones(2, dtype=np.bool_),
@@ -210,7 +210,7 @@ def test_risk_coverage_area_rejects_a_single_point() -> None:
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match="at least two points"):
+    with pytest.raises(ValueError, match=r"^coverage must contain at least two points"):
         selective.area_under_risk_coverage(
             np.array([1.0], dtype=np.float64),
             np.array([0.5], dtype=np.float64),
@@ -222,7 +222,7 @@ def test_risk_coverage_area_rejects_a_non_increasing_coverage_grid() -> None:
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match="strictly increasing"):
+    with pytest.raises(ValueError, match=r"^coverage must be strictly increasing"):
         selective.area_under_risk_coverage(
             np.array([0.5, 0.5, 1.0], dtype=np.float64),
             np.array([0.1, 0.2, 0.3], dtype=np.float64),
@@ -264,7 +264,7 @@ def test_risk_coverage_area_rejects_mismatched_lengths() -> None:
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match="same length"):
+    with pytest.raises(ValueError, match=r"^coverage and risk must have the same length"):
         selective.area_under_risk_coverage(
             np.array([0.5, 1.0], dtype=np.float64),
             np.array([0.1], dtype=np.float64),
@@ -277,12 +277,12 @@ def test_risk_coverage_area_rejects_non_float64_arrays(array: object) -> None:
 
     selective = load_selective_module()
 
-    with pytest.raises(ValueError, match="float64"):
+    with pytest.raises(ValueError, match=r"^coverage must be a"):
         selective.area_under_risk_coverage(
             array,  # type: ignore[arg-type]
             np.array([0.1, 0.2], dtype=np.float64),
         )
-    with pytest.raises(ValueError, match="float64"):
+    with pytest.raises(ValueError, match=r"^risk must be a"):
         selective.area_under_risk_coverage(
             np.array([0.5, 1.0], dtype=np.float64),
             array,  # type: ignore[arg-type]
@@ -324,9 +324,9 @@ def test_risk_coverage_area_rejects_multidimensional_arrays() -> None:
     valid = np.array([0.5, 1.0], dtype=np.float64)
     matrix = np.zeros((2, 2), dtype=np.float64)
 
-    with pytest.raises(ValueError, match="coverage must be one-dimensional"):
+    with pytest.raises(ValueError, match=r"^coverage must be one-dimensional"):
         selective.area_under_risk_coverage(matrix, valid)
-    with pytest.raises(ValueError, match="risk must be one-dimensional"):
+    with pytest.raises(ValueError, match=r"^risk must be one-dimensional"):
         selective.area_under_risk_coverage(valid, matrix)
 
 

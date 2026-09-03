@@ -225,5 +225,5 @@ def test_the_checkpoint_reloads_only_against_its_own_metadata(
     state = backend.load_checkpoint(result.checkpoint_path, metadata)
 
     assert state["model"] == "upernet_convnextv2_tiny"
-    with pytest.raises(ValueError, match="metadata"):
+    with pytest.raises(ValueError, match=r"^checkpoint metadata does not match the expected run"):
         backend.load_checkpoint(result.checkpoint_path, {**metadata, "seed": 42})
