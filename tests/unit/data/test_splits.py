@@ -56,7 +56,9 @@ def test_freeze_split_is_permutation_invariant(seed: int) -> None:
 def test_freeze_split_rejects_wrong_formal_count(size: int) -> None:
     splits = load_splits_module()
 
-    with pytest.raises(ValueError, match="exactly 7000"):
+    with pytest.raises(
+        ValueError, match=r"^formal BDD100K source train split must contain exactly"
+    ):
         splits.freeze_bdd100k_split(formal_source_ids()[:size] + (["extra"] if size > 7000 else []))
 
 
@@ -65,7 +67,7 @@ def test_freeze_split_rejects_duplicate_id() -> None:
     ids = formal_source_ids()
     ids[-1] = ids[0]
 
-    with pytest.raises(ValueError, match="duplicate"):
+    with pytest.raises(ValueError, match=r"^formal BDD100K source train split contains duplicate"):
         splits.freeze_bdd100k_split(ids)
 
 

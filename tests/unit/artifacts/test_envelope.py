@@ -181,7 +181,7 @@ def test_verify_envelope_rejects_payload_hash_mismatch(tmp_path: Path) -> None:
     path = tmp_path / "artifact.json"
     write_envelope(path, values)
 
-    with pytest.raises(ValueError, match="payload SHA-256 mismatch"):
+    with pytest.raises(ValueError, match=r"^payload SHA-256 mismatch"):
         envelope.verify_envelope(path, "risk-summary/v1")
 
 

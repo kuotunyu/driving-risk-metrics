@@ -191,7 +191,7 @@ def test_formal_calibration_rejects_invalid_manifest_hash() -> None:
         dataset_manifest_sha256="not-a-hash",
     )
 
-    with pytest.raises(ValueError, match="dataset_manifest_sha256"):
+    with pytest.raises(ValueError, match=r"^dataset_manifest_sha256 must be"):
         module.fit_provenance_checked_temperature(
             np.array([[2.0, 0.0]], dtype=np.float64),
             np.array([0], dtype=np.int64),
@@ -211,7 +211,7 @@ def test_formal_calibration_rejects_invalid_expected_manifest_hash() -> None:
         dataset_manifest_sha256="a" * 64,
     )
 
-    with pytest.raises(ValueError, match="expected_dataset_manifest_sha256"):
+    with pytest.raises(ValueError, match=r"^expected_dataset_manifest_sha256 must be"):
         module.fit_provenance_checked_temperature(
             np.array([[2.0, 0.0]], dtype=np.float64),
             np.array([0], dtype=np.int64),
