@@ -265,3 +265,28 @@ def test_the_tertile_edges_are_the_hand_computed_ranks() -> None:
 
     # Sorted areas are [10, 20, 30, 40, 50, 60]; the edges are ranks 1 and 3.
     assert edges == {0: (20, 40)}
+
+
+def test_class_zero_is_a_valid_instance_class() -> None:
+    """Zero is a class ID here too, and here it reaches the coverage records.
+
+    `road` is class 0 in BDD100K. A guard written `class_id <= 0` would refuse
+    every instance of the largest class in the dataset, and the failure would
+    look like a malformed instance map rather than a validator bug.
+    """
+
+    instances = load_instances_module()
+    y_true = np.full((1, 4), 0, dtype=np.int64)
+    y_pred = np.array([[0, 0, 0, 1]], dtype=np.int64)
+    instance_ids = np.array([[7, 7, 7, 7]], dtype=np.int64)
+
+    (record,) = instances.instance_coverages(
+        y_true,
+        y_pred,
+        instance_ids,
+        valid_instance_classes={7: 0},
+        tertile_edges={0: (2, 6)},
+    )
+
+    assert record.class_id == 0
+    assert record.correct_fraction == 0.75
