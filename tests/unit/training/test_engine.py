@@ -456,26 +456,46 @@ def test_missing_run_provenance_fails_closed(
 
 
 @pytest.mark.parametrize(
-    "overrides",
+    ("overrides", "expected"),
     [
-        {"training": {"early_stopping": True}},
-        {"training": {"checkpoint_selection": "best_validation_miou"}},
-        {"training": {"lr_scheduler_metric": "validation_miou"}},
-        {"training": {"random_scale_range": [0.5, 2.0]}},
+        (
+            {"training": {"early_stopping": True}},
+            r"^1 validation error for BDD100KSemanticProtocolV1\ntraining\.early_stopping\n  Extra inputs are not permitted",
+        ),
+        (
+            {"training": {"checkpoint_selection": "best_validation_miou"}},
+            r"^1 validation error for BDD100KSemanticProtocolV1\ntraining\.checkpoint_selection\n  Input should be 'final_step_only'",
+        ),
+        (
+            {"training": {"lr_scheduler_metric": "validation_miou"}},
+            r"^1 validation error for BDD100KSemanticProtocolV1\ntraining\.lr_scheduler_metric\n  Extra inputs are not permitted",
+        ),
+        (
+            {"training": {"random_scale_range": [0.5, 2.0]}},
+            r"^1 validation error for BDD100KSemanticProtocolV1\ntraining\.random_scale_range\n  Extra inputs are not permitted",
+        ),
     ],
 )
 def test_a_protocol_with_unapproved_training_keys_fails_closed(
     overrides: dict[str, Any],
+    expected: str,
     tmp_path: Path,
     provenance: None,
 ) -> None:
-    """Early stopping, best-checkpoint selection, or extra augmentation would break the lock."""
+    """Early stopping, best-checkpoint selection, or extra augmentation would break the lock.
+
+    Each row names the refusal it expects, because they are not the same refusal.
+    Three of these keys are not in the schema at all; `checkpoint_selection` IS,
+    and the protocol allows exactly one value for it. A single assertion covering
+    both would pass if an unapproved key were quietly accepted and some unrelated
+    field happened to fail instead.
+    """
 
     engine = load_engine_module()
     config_path = write_configs(tmp_path, protocol_overrides=overrides)
     manifest_path = write_manifest(tmp_path / "data")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=expected):
         engine.train(
             config_path,
             manifest_path,
@@ -495,7 +515,9 @@ def test_an_unapproved_model_in_the_run_config_fails_closed(
     config_path = write_configs(tmp_path, model="setr")
     manifest_path = write_manifest(tmp_path / "data")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match=r"^1 validation error for TrainingRunConfigV1\nmodel\n  Input should be "
+    ):
         engine.train(
             config_path,
             manifest_path,
@@ -524,20 +546,36 @@ def test_training_package_exports_the_engine_entry_points() -> None:
     assert training.TrainingResult is engine.TrainingResult
 
 
-@pytest.mark.parametrize("raw", ["not json at all", "[1, 2, 3]", '{"commit": "zz"}'])
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("not json at all", r"^DRIVEMETRICS_RUN_PROVENANCE must contain a JSON object$"),
+        ("[1, 2, 3]", r"^DRIVEMETRICS_RUN_PROVENANCE must contain a JSON object$"),
+        (
+            '{"commit": "zz"}',
+            r"^3 validation errors for RunProvenance\ncommit\n  String should match pattern ",
+        ),
+    ],
+)
 def test_malformed_run_provenance_fails_closed(
     raw: str,
+    expected: str,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A half-filled provenance block would produce a run record nobody can verify."""
+    """A half-filled provenance block would produce a run record nobody can verify.
+
+    The last row is a different refusal from the first two: it IS a JSON object,
+    and it is the schema that turns it down. Asserting one message for all three
+    would let a malformed block through as long as something else complained.
+    """
 
     engine = load_engine_module()
     monkeypatch.setenv(PROVENANCE_ENV_VAR, raw)
     config_path = write_configs(tmp_path)
     manifest_path = write_manifest(tmp_path / "data")
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=expected):
         engine.train(
             config_path,
             manifest_path,

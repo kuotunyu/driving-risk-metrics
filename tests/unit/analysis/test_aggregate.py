@@ -737,7 +737,10 @@ def test_an_invalid_index_reports_every_violation_in_one_message(tmp_path: Path)
     assert len(violations) >= 2, "this index must fail more than once for the join to matter"
 
     aggregate = load_aggregate()
-    with pytest.raises(ValueError) as failure:
+    with pytest.raises(
+        ValueError,
+        match=r"^formal run index is not valid: run 0 \(upernet_convnextv2_tiny, seed 17\): checkpoint is at step ",
+    ) as failure:
         aggregate.aggregate_runs(index_path, tmp_path / "out", resamples=20)
 
     assert str(failure.value) == "formal run index is not valid: " + "; ".join(violations)

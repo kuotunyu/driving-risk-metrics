@@ -136,7 +136,9 @@ def test_risk_profile_is_frozen_and_copies_cost_mapping() -> None:
     assert tuple(profile.class_cost) == (0, 1, 2)
     assert profile.critical_class_ids == (2,)
     assert profile.class_cost[2] == 1.5
-    with pytest.raises(TypeError):
+    with pytest.raises(
+        TypeError, match=r"^'mappingproxy' object does not support item assignment$"
+    ):
         profile.class_cost[2] = 99.0
     with pytest.raises(FrozenInstanceError):
         profile.sensitivity = 2.0  # type: ignore[misc]
