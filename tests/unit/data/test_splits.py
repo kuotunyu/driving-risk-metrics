@@ -92,13 +92,20 @@ def test_validate_locked_split_rejects_wrong_sha256_partition_or_order(mutation:
     else:
         train = tuple(reversed(train))
 
-    with pytest.raises(ValueError, match="deterministic SHA-256 split"):
+    with pytest.raises(
+        ValueError,
+        match=r"^train/calibration cohorts do not match the deterministic SHA-256 split$",
+    ):
         splits.validate_locked_split(train, calibration, validation)
 
 
 @pytest.mark.parametrize(
     ("cohort", "expected"),
-    [("train", "duplicate"), ("calibration", "duplicate"), ("validation", "duplicate")],
+    [
+        ("train", r"^train contains duplicate IDs$"),
+        ("calibration", r"^calibration contains duplicate IDs$"),
+        ("validation", r"^locked validation contains duplicate IDs$"),
+    ],
 )
 def test_validate_locked_split_rejects_duplicates(cohort: str, expected: str) -> None:
     splits = load_splits_module()
@@ -113,10 +120,14 @@ def test_validate_locked_split_rejects_duplicates(cohort: str, expected: str) ->
 
 
 @pytest.mark.parametrize(
-    ("left", "right"),
-    [("train", "calibration"), ("train", "validation"), ("calibration", "validation")],
+    ("left", "right", "expected"),
+    [
+        ("train", "calibration", r"^train and calibration cohorts overlap$"),
+        ("train", "validation", r"^train and locked validation cohorts overlap$"),
+        ("calibration", "validation", r"^calibration and locked validation cohorts overlap$"),
+    ],
 )
-def test_validate_locked_split_rejects_overlap(left: str, right: str) -> None:
+def test_validate_locked_split_rejects_overlap(left: str, right: str, expected: str) -> None:
     splits = load_splits_module()
     train, calibration = splits.freeze_bdd100k_split(formal_source_ids())
     validation = tuple(f"locked-{index:04d}" for index in range(1000))
@@ -125,22 +136,28 @@ def test_validate_locked_split_rejects_overlap(left: str, right: str) -> None:
     target = values[right]
     values[right] = (*target[:-1], replacement)
 
-    with pytest.raises(ValueError, match="overlap"):
+    with pytest.raises(ValueError, match=expected):
         splits.validate_locked_split(values["train"], values["calibration"], values["validation"])
 
 
 @pytest.mark.parametrize(
-    ("cohort", "replacement"),
-    [("train", "new-train"), ("calibration", "new-calibration"), ("validation", "new-validation")],
+    ("cohort", "replacement", "expected"),
+    [
+        ("train", "new-train", r"^train count must be exactly 6300$"),
+        ("calibration", "new-calibration", r"^calibration count must be exactly 700$"),
+        ("validation", "new-validation", r"^locked validation count must be exactly 1000$"),
+    ],
 )
-def test_validate_locked_split_rejects_wrong_cohort_count(cohort: str, replacement: str) -> None:
+def test_validate_locked_split_rejects_wrong_cohort_count(
+    cohort: str, replacement: str, expected: str
+) -> None:
     splits = load_splits_module()
     train, calibration = splits.freeze_bdd100k_split(formal_source_ids())
     validation = tuple(f"locked-{index:04d}" for index in range(1000))
     values = {"train": train, "calibration": calibration, "validation": validation}
     values[cohort] = (*values[cohort], replacement)
 
-    with pytest.raises(ValueError, match="count"):
+    with pytest.raises(ValueError, match=expected):
         splits.validate_locked_split(values["train"], values["calibration"], values["validation"])
 
 

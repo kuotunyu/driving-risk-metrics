@@ -160,7 +160,10 @@ def test_protocol_loader_rejects_unknown_keys(tmp_path: Path) -> None:
     path = tmp_path / "unknown.yaml"
     path.write_text(protocol_yaml(extra="unexpected: true\n"), encoding="utf-8")
 
-    with pytest.raises(ValidationError, match="unexpected"):
+    with pytest.raises(
+        ValidationError,
+        match=r"^1 validation error for BDD100KSemanticProtocolV1\nunexpected\n  Extra inputs are not permitted",
+    ):
         config.load_protocol(path)
 
 

@@ -330,7 +330,10 @@ def test_a_run_record_that_fails_its_schema_is_refused(
 ) -> None:
     """A record the run-record schema rejects cannot anchor an index entry."""
 
-    with pytest.raises(ValueError, match="not a valid run record"):
+    with pytest.raises(
+        ValueError,
+        match=r"run_record\.json is not a valid run record: 1 validation error for RunRecordV1",
+    ):
         build(tmp_path, hashes, mutate=_mutating(("segformer_b2", 17), "train", "commit", "x"))
 
 
@@ -346,15 +349,23 @@ def test_a_run_file_that_is_not_an_object_is_refused(
         "[1.3]", encoding="utf-8"
     )
 
-    with pytest.raises(TypeError, match="JSON object"):
+    with pytest.raises(TypeError, match=r"temperature\.json must contain a JSON object$"):
         load_index_module().build_formal_run_index(
             runs, PROTOCOL, hashes["locked_path"], runs / "x.json", critical_class_ids=CRITICAL
         )
 
 
-@pytest.mark.parametrize("critical", [(), (11, 11), (True,), (99,)])
+@pytest.mark.parametrize(
+    ("critical", "expected"),
+    [
+        ((), r"^critical_class_ids must be non-empty and unique$"),
+        ((11, 11), r"^critical_class_ids must be non-empty and unique$"),
+        ((True,), r"^critical_class_ids must be integers$"),
+        ((99,), r"^critical class 99 is outside 0\.\.18$"),
+    ],
+)
 def test_invalid_critical_class_ids_are_refused(
-    critical: tuple[Any, ...], tmp_path: Path, hashes: dict[str, Any]
+    critical: tuple[Any, ...], expected: str, tmp_path: Path, hashes: dict[str, Any]
 ) -> None:
     """Critical recall is defined over exact class ids; a wrong set is a wrong metric."""
 
@@ -362,7 +373,7 @@ def test_invalid_critical_class_ids_are_refused(
         tmp_path / "runs", hashes["protocol"], hashes["locked"], hashes["calibration"]
     )
 
-    with pytest.raises(ValueError, match="critical"):
+    with pytest.raises(ValueError, match=expected):
         load_index_module().build_formal_run_index(
             runs, PROTOCOL, hashes["locked_path"], runs / "x.json", critical_class_ids=critical
         )
