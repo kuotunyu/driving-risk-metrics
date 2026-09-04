@@ -112,6 +112,14 @@ and which seed a model happened to draw. The common image axis is resampled once
 and shared across every run, so paired differences stay paired; seeds are then
 resampled within each model.
 
+The paired estimand is the DIFFERENCE of model means, oriented left minus right
+as the interval key names it. The bootstrap signs the right model's runs
+negative and sums the two group means; averaging them would report half the
+difference, which is what this project published until P1-17 and is recorded in
+`verification/mutation-audit.md`. The image axis is sorted and the runs are
+ordered by the approved model and seed lists, so a published interval cannot
+depend on the order an index happened to list them in.
+
 ## Rules that outlive the constants
 
 1. **The locked cohort is spent the moment it influences a decision.** Not only

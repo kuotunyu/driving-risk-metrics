@@ -134,8 +134,15 @@ equivalence argument is more informative than an accepted one.
   `aggregate_runs` takes the order from `runs[0]` and imposes it on every run,
   so adopting a different run's ordering permutes the image axis, which changes
   which images a fixed bootstrap seed draws, and therefore the published
-  interval. Recorded for P1-17: the cohort order should be canonical, or the
-  validator should compare ordered tuples.
+  interval. Fixed at `e3ad6fa`: the image axis is sorted and the runs are
+  ordered by the approved model and seed lists, so no published number depends
+  on how an index was assembled. Writing the test for it caught a third member
+  of the same family that nobody had proposed: the order the models first
+  appeared was deciding every pair's ORIENTATION, so one index would publish
+  `A minus B` and another `B minus A`; and the order of the seeds inside a model
+  is the axis the seed resample draws positions on, so the bounds moved with it
+  too. The rule the fix states is that the index's assembly order is not data
+  and must not reach a published number.
 - **scipy's `options={"xatol": 1e-12}` nulled, dropped, or its key renamed, and
   the tolerance widened.** Measured on the planted-temperature objective: the
   real optimiser recovers `T = 2.0` to within `1.587e-08`; nulling, dropping or
@@ -152,8 +159,8 @@ equivalence argument is more informative than an accepted one.
 ## What reading the survivors found in the product
 
 Two defects were found not by a mutant dying but by asking why one lived. Both
-are open at the time of writing, because the formal runs are in flight and the
-source they touch is frozen until they finish; both are listed for P1-17.
+were fixed at `e3ad6fa`, once the nine formal runs had finished and the source
+freeze was lifted; each kept its test, and each test failed first.
 
 - **The paired interval is half the difference its key names.** `aggregate_runs`
   builds the "A minus B" interval by handing the bootstrap a signed statistic —
@@ -161,9 +168,13 @@ source they touch is frozen until they finish; both are listed for P1-17.
   two groups of their group means, which is `(mean_A - mean_B) / 2`. The sign
   and the zero-crossing are unaffected, so the ranking comparison is right, but
   the reported effect size and both interval ends are half the difference the
-  key names. A test pinning the correct estimand is committed as a strict
-  `xfail`, so the day the estimator is fixed the marker fails and the test
-  becomes the guard.
+  key names. Fixed at `e3ad6fa`: the bootstrap gained a `combine` argument —
+  `mean` for a level, where the unweighted average over models is the estimand,
+  and `sum` for a CONTRAST, where the caller has already signed one group
+  negative — and the pairing passes `sum`, so `+A` and `-B` become `A - B`. The
+  strict `xfail` that carried the correct estimand became the guard the day the
+  fix landed, exactly as it was written to; the test it marked now asserts every
+  pair and every metric rather than one of each.
 - **A test named after a property could not detect its own subject.**
   `test_the_tertile_edges_are_the_hand_computed_ranks` used six observations and
   its docstring claimed both rank indices were sensitive there. They are not:
@@ -231,35 +242,43 @@ row turned out to be checking nothing.
 Every number below comes from one run of `sync_and_mutate.sh`, and the commit
 is stated so a reader can reproduce it.
 
-### At `cad5600`, run `2026-09-03T20:56Z` to `21:10Z`
+### At `e3ad6fa`, run `2026-09-04T10:04Z` to `10:18Z`
 
 | | Count | Share |
 | --- | ---: | ---: |
-| Mutants generated | 2,422 | |
-| **Killed by a test** | **2,301** | **95.00%** |
+| Mutants generated | 2,463 | |
+| **Killed by a test** | **2,341** | **95.05%** |
 | Timed out | 0 | |
-| Survived | 121 | 5.00% |
+| Survived | 122 | 4.95% |
 | — of those, proven equivalent above | 72 | |
-| — of those, still unexplained | 49 | 2.02% |
+| — of those, still unexplained | 50 | 2.03% |
 
-**The gate is cleared on kills alone, by 121 mutants.** 90% of 2,422 is 2,180
-and the suite kills 2,301, so no equivalence argument is needed to reach the
-threshold. Counting the 72 proven equivalents as well would give 97.98%; that
+**The gate is cleared on kills alone, by 124 mutants.** 90% of 2,463 is 2,217
+and the suite kills 2,341, so no equivalence argument is needed to reach the
+threshold. Counting the 72 proven equivalents as well would give 97.97%; that
 number is reported for completeness and is not what the gate rests on.
 
-The previous run, at `0481652`, killed 2,108 of the same 2,422 and left 302
-survivors. The 193 additional kills came from tests written for their own sake,
-each verified against the specific mutant before and after: `survived` with the
-test absent, `killed` with it present.
+This run exists because the estimator was corrected. Fixing the paired estimand
+added the `combine` argument and its validation, so the mutant population grew
+from 2,422 to 2,463: **a score measured before that change no longer describes
+this source.** The 41 new mutants were killed as they were created, which is
+what a fix arriving with its own tests should look like, and the score moved
+from 95.00% to 95.05% rather than falling.
 
-### Where the 49 unexplained survivors are
+The run before that, at `cad5600`, killed 2,301 of 2,422 and left 121
+survivors; the one before it, at `0481652`, killed 2,108 and left 302. Every
+additional kill came from a test written for its own sake and verified against
+the specific mutant before and after: `survived` with the test absent, `killed`
+with it present.
+
+### Where the 50 unexplained survivors are
 
 | Module | Survivors |
 | --- | ---: |
-| `calibration.service` | 12 |
-| `analysis.aggregate` | 8 |
+| `calibration.service` | 14 |
+| `analysis.aggregate` | 9 |
 | `analysis.claims` | 6 |
-| `analysis.bootstrap` | 4 |
+| `analysis.bootstrap` | 6 |
 | `protocol.risk_profiles` | 4 |
 | `metrics.calibration` | 3 |
 | `protocol.config` | 3 |
