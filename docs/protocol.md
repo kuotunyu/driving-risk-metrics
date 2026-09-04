@@ -146,18 +146,28 @@ Cityscapes train IDs. The correspondence is written as names and the IDs are
 derived from the semantic class list, so a change to that list breaks the
 translation loudly instead of silently remapping every published instance.
 
-**An instance is scored only where the semantic mask corroborates it.** It must
-have at least one non-ignored semantic pixel, and those pixels must all carry its
-own class. The instance bitmasks and the semantic masks are separate
-rasterizations of the same image and need not agree everywhere; an instance they
-disagree about is not evidence about the model. Exclusions are counted and
-published in the same block, because a silent drop would shrink the denominator
-of every rate beside it and leave no trace that it had.
+**An instance is scored over its corroborated footprint**: the pixels where the
+instance bitmask and the semantic mask both say it is that class. The two are
+separate rasterizations of the same image and do not agree at the boundary.
+Measured over sixty locked-validation images and 664 instances, they agree on a
+median 98.65% of an instance's pixels — and on ALL of an instance's pixels for
+only 8.9% of instances. A rule demanding total agreement therefore discards nine
+instances in ten and keeps a sample selected by which objects the two rasterizers
+happened to round the same way, which is a property of the annotations and not of
+any model. Boundary disagreement narrows the footprint instead; only an instance
+with no corroborated pixel at all is excluded, and those are counted.
 
-These five rules were written after the first implementation of these blocks met
-real data. Its test fixture had no ignored pixels, a four-wide class space and
-single-byte annotation IDs, and so agreed with a wrong implementation on every
-one of them.
+The footprint is smaller than the whole instance — a measured median of 98.7% and
+mean of 94.8% of its non-ignored pixels — while the frozen tertile edges were
+learned over whole instances. That gap is far below the spacing of the edges, but
+it is a real systematic difference, so `mean_corroborated_fraction` is published
+beside the counts rather than left for a reader to discover.
+
+These rules were written after the first implementation of these blocks met real
+data. Its test fixture had no ignored pixels, a four-wide class space and
+single-byte annotation IDs, so it agreed with a wrong implementation on every one
+of them; and the corroboration rule that replaced the first round of fixes was
+itself replaced once measurement showed what it was really counting.
 
 ## Rules that outlive the constants
 

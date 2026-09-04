@@ -168,12 +168,15 @@ def write_instance_bitmasks(root: Path) -> Path:
     """RGBA bitmasks in the official packing: category in red, annotation ID in blue and alpha.
 
     Five instances, chosen so that every outcome of the corroboration rule occurs.
-    Instance 1 is a person on four pixels the semantic mask agrees with. Instance
-    300 is a car on four pixels of which two are semantically ignored, and its ID
-    does not fit in one byte, so a reader that drops the high byte fails here.
-    Instance 3 is a rider lying entirely on ignored pixels. Instance 4 is a car
-    where the semantic mask says building. Instance 5 carries category 9, which
-    is not an instance category at all.
+    Instance 1 is a person on five pixels of which the semantic mask agrees with
+    four and calls the fifth building — the ordinary boundary disagreement that
+    measurement showed affects about ninety per cent of real instances, and that
+    must narrow the footprint rather than delete the instance. Instance 300 is a
+    car on four pixels of which two are semantically ignored, and its ID does not
+    fit in one byte, so a reader that drops the high byte fails here. Instance 3
+    is a rider lying entirely on ignored pixels, instance 4 a car where the
+    semantic mask says building, and instance 5 carries category 9, which is not
+    an instance category at all; none of the three has a corroborated pixel.
     """
 
     directory = root / "labels" / "ins_seg" / "bitmasks" / "val"
@@ -184,6 +187,7 @@ def write_instance_bitmasks(root: Path) -> Path:
     for sample_id in SAMPLES:
         bitmask = np.zeros((HEIGHT, WIDTH, 4), dtype=np.uint8)
         place(bitmask, slice(2, 4), slice(2, 4), category=1, annotation_id=1)
+        place(bitmask, 3, 1, category=1, annotation_id=1)
         place(bitmask, slice(4, 6), slice(2, 4), category=3, annotation_id=300)
         place(bitmask, 0, 3, category=2, annotation_id=3)
         place(bitmask, 2, 0, category=3, annotation_id=4)
@@ -403,16 +407,22 @@ def test_instance_coverage_uses_the_frozen_tertile_edges(tmp_path: Path) -> None
     )
 
 
-def test_instances_the_semantic_mask_does_not_corroborate_are_excluded_and_counted(
+def test_boundary_disagreement_narrows_the_footprint_instead_of_deleting_the_instance(
     tmp_path: Path,
 ) -> None:
-    """Two independent rasterizations need not agree, and a silent drop hides that.
+    """The rule that demanded total agreement measured the annotations, not the model.
 
-    Three of the fixture's five instances are not corroborated: one lies entirely
-    on ignored pixels, one sits where the semantic mask says building, and one
-    carries a category that is not an instance category. None of them is evidence
-    about the model. Dropping them without saying so would shrink the denominator
-    of every rate above and leave no trace that it happened.
+    Over sixty real validation images the two annotations agree on a median 98.65%
+    of an instance's pixels but agree on ALL of them for only 8.9% of instances.
+    A rule requiring total agreement therefore threw away nine instances in ten and
+    kept a sample biased towards whatever the rasterizers happened to round the
+    same way. Here the person's fifth pixel is called building by the semantic
+    mask: the instance must still be scored, over its four corroborated pixels.
+
+    Only an instance with no corroborated pixel at all is excluded, and the mean
+    corroborated fraction is published so that the gap between these footprints
+    and the whole instances the frozen tertile edges were learned over is visible
+    rather than buried.
     """
 
     document = compute(
@@ -423,8 +433,50 @@ def test_instances_the_semantic_mask_does_not_corroborate_are_excluded_and_count
     )
 
     block = document["instances"][MODELS[0]]
-    assert block["excluded_without_semantic_pixels"] == 2  # the rider, in each image
-    assert block["excluded_semantic_class_disagreement"] == 4  # two per image
+    assert block["instance_count"] == 4  # the person and the car, in each image
+    # The rider on ignored pixels, the car the mask calls building, and category 9.
+    assert block["excluded_without_semantic_pixels"] == 6
+    assert "excluded_semantic_class_disagreement" not in block
+    # The person is corroborated on four of five pixels, the car on both of its two.
+    assert block["mean_corroborated_fraction"] == pytest.approx(0.9, rel=0.0, abs=1e-12)
+
+
+def write_uncorroborated_bitmasks(root: Path) -> Path:
+    """Bitmasks whose every instance the semantic mask contradicts."""
+
+    directory = root / "labels" / "ins_seg" / "bitmasks" / "val"
+    directory.mkdir(parents=True, exist_ok=True)
+    for sample_id in SAMPLES:
+        bitmask = np.zeros((HEIGHT, WIDTH, 4), dtype=np.uint8)
+        place(bitmask, 0, 3, category=2, annotation_id=3)
+        place(bitmask, 2, 0, category=3, annotation_id=4)
+        Image.fromarray(bitmask, mode="RGBA").save(directory / f"{sample_id}.png")
+    return root
+
+
+def test_an_image_whose_instances_are_all_uncorroborated_reports_no_mean(
+    tmp_path: Path,
+) -> None:
+    """No corroborated instance is a real answer, and it is not a mean of nothing.
+
+    Reporting zero here would say the annotations agreed on none of each instance,
+    which is a measurement. Nothing was measured, so the field is null and the
+    exclusion count carries the whole story.
+    """
+
+    document = compute(
+        tmp_path,
+        ground_truth=True,
+        instance_root=write_uncorroborated_bitmasks(tmp_path / "ins"),
+        tertiles_path=write_tertiles(tmp_path),
+    )
+
+    block = document["instances"][MODELS[0]]
+    assert block["instance_count"] == 0
+    assert block["excluded_without_semantic_pixels"] == 4
+    assert block["mean_corroborated_fraction"] is None
+    for name in ("small", "medium", "large"):
+        assert block["by_tertile"][name]["mean_correct_fraction"] is None
 
 
 def test_a_missing_input_is_recorded_as_not_computed_with_its_reason(tmp_path: Path) -> None:
