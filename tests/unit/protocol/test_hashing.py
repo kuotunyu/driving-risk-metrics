@@ -170,9 +170,21 @@ def test_protocol_loader_rejects_unknown_keys(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("old", "new", "expected"),
     [
-        ("train_images: images/10k/train", "train_images: ../train", "train_images"),
-        ("train_images: images/10k/train", "train_images: .", "train_images"),
-        ("learning_rate: 0.0001", "learning_rate: 0.0002", "learning_rate"),
+        (
+            "train_images: images/10k/train",
+            "train_images: ../train",
+            r"^1 validation error for BDD100KSemanticProtocolV1\npaths\.train_images\n  Value error, dataset paths must be safe relative POSIX paths",
+        ),
+        (
+            "train_images: images/10k/train",
+            "train_images: .",
+            r"^1 validation error for BDD100KSemanticProtocolV1\npaths\.train_images\n  Value error, dataset paths must be safe relative POSIX paths",
+        ),
+        (
+            "learning_rate: 0.0001",
+            "learning_rate: 0.0002",
+            r"^1 validation error for BDD100KSemanticProtocolV1\nmodels\.upernet_convnextv2_tiny\.learning_rate\n  Input should be less than or equal to 0\.0001",
+        ),
     ],
 )
 def test_protocol_loader_rejects_unsafe_path_or_changed_fixed_model(

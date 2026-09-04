@@ -247,12 +247,16 @@ def test_exported_schema_requires_fixed_arrays_and_nonnegative_nonempty_shapes()
         (
             "top1_confidence_q16",
             np.array([1, 2], dtype=np.uint16),
-            "predicted_class and top1_confidence_q16 shapes",
+            r"^predicted_class and top1_confidence_q16 shapes must match$",
         ),
-        ("valid_pixel_count", 5, "valid_pixel_count"),
-        ("correctness_bitset", b"", "byte length"),
-        ("confusion", np.zeros((2, 3), dtype=np.int64), "confusion shape"),
-        ("brier_sum_by_class", np.zeros(2, dtype=np.float64), "brier_sum_by_class shape"),
+        ("valid_pixel_count", 5, r"^valid_pixel_count must equal the stored prediction count$"),
+        ("correctness_bitset", b"", r"^correctness bitset byte length does not match pixel_count$"),
+        ("confusion", np.zeros((2, 3), dtype=np.int64), r"^confusion shape must be square$"),
+        (
+            "brier_sum_by_class",
+            np.zeros(2, dtype=np.float64),
+            r"^brier_sum_by_class shape must match num_classes$",
+        ),
     ],
 )
 def test_writer_rejects_shape_count_or_truncated_bitset_corruption(
@@ -302,7 +306,9 @@ def test_writer_rejects_manifest_payload_path_collision(tmp_path: Path) -> None:
 
     prediction = load_predictions()
 
-    with pytest.raises(ValueError, match=r"\.json"):
+    with pytest.raises(
+        ValueError, match=r"^manifest_path must have a safe filename ending in \.json$"
+    ):
         prediction.write_prediction_artifact(
             tmp_path / "artifact.npz",
             valid_record(),
@@ -468,21 +474,27 @@ def test_writer_rejects_corrupt_existing_content_addressed_payload(tmp_path: Pat
 @pytest.mark.parametrize(
     ("record_update", "message"),
     [
-        ({"sample_id": ""}, "sample_id"),
-        ({"predicted_class": np.zeros(6, dtype=np.int64)}, "predicted_class must have dtype"),
+        ({"sample_id": ""}, r"^sample_id must not be empty$"),
+        (
+            {"predicted_class": np.zeros(6, dtype=np.int64)},
+            r"^predicted_class must have dtype uint8$",
+        ),
         (
             {"top1_confidence_q16": np.zeros(6, dtype=np.int64)},
-            "top1_confidence_q16 must have dtype",
+            r"^top1_confidence_q16 must have dtype uint16$",
         ),
         (
             {"confusion": np.array([[2, -1, 0], [0, 2, 1], [0, 1, 1]], dtype=np.int64)},
-            "confusion counts",
+            r"^confusion counts must be nonnegative and sum to valid_pixel_count$",
         ),
         (
             {"predicted_class": np.array([[3, 1, 2], [2, 1, 0]], dtype=np.uint8)},
-            "outside confusion shape",
+            r"^predicted_class contains a class outside confusion shape$",
         ),
-        ({"brier_sum_by_class": np.array([0.1, np.nan, 0.2])}, "finite nonnegative"),
+        (
+            {"brier_sum_by_class": np.array([0.1, np.nan, 0.2])},
+            r"^brier_sum_by_class must contain finite nonnegative values$",
+        ),
     ],
 )
 def test_writer_rejects_invalid_record_values(
@@ -539,23 +551,29 @@ def test_writer_rejects_more_than_uint8_class_capacity(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     ("ece_update", "message"),
     [
-        ({"confidence_sums": np.zeros((3, 3), dtype=np.float64)}, "ECE shape"),
-        ({"counts": np.array([[-1, 7], [4, 2], [5, 1]], dtype=np.int64)}, "nonnegative"),
+        (
+            {"confidence_sums": np.zeros((3, 3), dtype=np.float64)},
+            r"^ECE shape must match for every sufficient-statistic array$",
+        ),
+        (
+            {"counts": np.array([[-1, 7], [4, 2], [5, 1]], dtype=np.int64)},
+            r"^ECE counts must be nonnegative$",
+        ),
         (
             {"positive_counts": np.array([[4, 1], [1, 1], [2, 0]], dtype=np.int64)},
-            "must not exceed",
+            r"^ECE positive_counts must not exceed counts$",
         ),
         (
             {"confidence_sums": np.array([[np.nan, 2.1], [0.8, 1.2], [0.8, 0.5]])},
-            "finite and nonnegative",
+            r"^ECE confidence_sums must be finite and nonnegative$",
         ),
         (
             {"confidence_sums": np.array([[3.1, 2.1], [0.8, 1.2], [0.8, 0.5]])},
-            "must not exceed counts",
+            r"^ECE confidence_sums must not exceed counts$",
         ),
         (
             {"counts": np.array([[2, 3], [4, 2], [5, 1]], dtype=np.int64)},
-            "sum to valid_pixel_count",
+            r"^ECE class counts must each sum to valid_pixel_count$",
         ),
     ],
 )

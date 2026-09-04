@@ -204,9 +204,13 @@ def test_instance_coverages_rejects_invalid_mappings_and_edges(
         (
             np.full((1, 2), 255, dtype=np.int64),
             np.full((1, 2), 5, dtype=np.int64),
-            r"non-ignored",
+            r"^instance ID 5 has no non-ignored semantic pixels$",
         ),
-        (np.full((1, 2), 3, dtype=np.int64), np.full((1, 2), 5, dtype=np.int64), r"semantic"),
+        (
+            np.full((1, 2), 3, dtype=np.int64),
+            np.full((1, 2), 5, dtype=np.int64),
+            r"^instance ID 5 does not match its semantic class$",
+        ),
     ],
 )
 def test_instance_coverages_rejects_missing_ignored_or_misclassified_instances(

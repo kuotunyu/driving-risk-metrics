@@ -592,7 +592,8 @@ def test_an_unsafe_protocol_path_fails_closed(
     manifest_path = write_manifest(tmp_path / "data")
 
     with pytest.raises(
-        ValueError, match=r"Value error, protocol_path must be a safe relative POSIX path"
+        ValueError,
+        match=r"^1 validation error for TrainingRunConfigV1\nprotocol_path\n  Value error, protocol_path must be a safe relative POSIX path",
     ):
         engine.train(
             config_path,

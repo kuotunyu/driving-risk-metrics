@@ -85,19 +85,28 @@ def test_cost_risk_rejects_zero_denominator_and_profile_dimension_mismatch() -> 
 @pytest.mark.parametrize(
     ("changes", "expected"),
     [
-        ({"name": ""}, "name"),
-        ({"class_cost": {0: 0.0, 1: 0.0, 2: 0.0}}, "positive"),
-        ({"class_cost": {0: 1.0, 1: -1.0, 2: 3.0}}, "nonnegative"),
-        ({"class_cost": {0: 1.0, 1: float("inf"), 2: 1.0}}, "finite"),
-        ({"class_cost": {0: 0.5, 1: 0.5, 2: 0.5}}, "mean non-zero"),
-        ({"class_cost": {0: 1.0, 2: 1.0, 19: 1.0}}, "taxonomy"),
-        ({"class_cost": {False: 1.0, 1: 1.0, 2: 1.0}}, "integer"),
-        ({"critical_class_ids": (2, 2)}, "unique"),
-        ({"critical_class_ids": (3,)}, "declared"),
-        ({"critical_class_ids": (19,)}, "taxonomy"),
-        ({"critical_class_ids": (True,)}, "integer"),
-        ({"sensitivity": 1.5}, "sensitivity"),
-        ({"sensitivity": Decimal("1.0")}, "built-in float"),
+        ({"name": ""}, r"^risk profile name must not be empty$"),
+        (
+            {"class_cost": {0: 0.0, 1: 0.0, 2: 0.0}},
+            r"^risk profile must contain at least one positive cost$",
+        ),
+        ({"class_cost": {0: 1.0, 1: -1.0, 2: 3.0}}, r"^class costs must be nonnegative$"),
+        ({"class_cost": {0: 1.0, 1: float("inf"), 2: 1.0}}, r"^class costs must be finite$"),
+        (
+            {"class_cost": {0: 0.5, 1: 0.5, 2: 0.5}},
+            r"^mean non-zero class cost must equal 1 within 1e-12$",
+        ),
+        (
+            {"class_cost": {0: 1.0, 2: 1.0, 19: 1.0}},
+            r"^class cost ID is outside the BDD100K taxonomy$",
+        ),
+        ({"class_cost": {False: 1.0, 1: 1.0, 2: 1.0}}, r"^class cost IDs must be integers$"),
+        ({"critical_class_ids": (2, 2)}, r"^critical class IDs must be unique$"),
+        ({"critical_class_ids": (3,)}, r"^critical class ID must have a declared class cost$"),
+        ({"critical_class_ids": (19,)}, r"^critical class ID is outside the BDD100K taxonomy$"),
+        ({"critical_class_ids": (True,)}, r"^critical class IDs must be integers$"),
+        ({"sensitivity": 1.5}, r"^sensitivity must be one of 0\.5, 1\.0, or 2\.0$"),
+        ({"sensitivity": Decimal("1.0")}, r"^sensitivity must be a built-in float$"),
     ],
 )
 def test_risk_profile_rejects_invalid_programmatic_values(

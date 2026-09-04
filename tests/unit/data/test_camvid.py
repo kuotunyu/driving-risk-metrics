@@ -70,9 +70,21 @@ def test_committed_camvid_config_is_explicitly_smoke_only() -> None:
 @pytest.mark.parametrize(
     ("old", "new", "expected"),
     [
-        ("purpose: smoke", "purpose: formal", "purpose"),
-        ("smoke_only: true", "smoke_only: false", "smoke_only"),
-        ("smoke_only: true", "smoke_only: true\n  unexpected: value", "unexpected"),
+        (
+            "purpose: smoke",
+            "purpose: formal",
+            r"^1 validation error for CamVidSmokeConfig\ndataset\.purpose\n  Input should be 'smoke'",
+        ),
+        (
+            "smoke_only: true",
+            "smoke_only: false",
+            r"^1 validation error for CamVidSmokeConfig\ndataset\.smoke_only\n  Input should be True",
+        ),
+        (
+            "smoke_only: true",
+            "smoke_only: true\n  unexpected: value",
+            r"^1 validation error for CamVidSmokeConfig\ndataset\.unexpected\n  Extra inputs are not permitted",
+        ),
     ],
 )
 def test_camvid_config_rejects_formal_label_or_unknown_key(
