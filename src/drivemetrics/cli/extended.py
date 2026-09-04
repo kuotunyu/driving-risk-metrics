@@ -19,13 +19,23 @@ def extended_metrics_command(
         typer.Option("--index", exists=True, dir_okay=False, readable=True),
     ],
     output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+    manifest: Annotated[
+        Path | None,
+        typer.Option(
+            "--manifest",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="The FROZEN cohort manifest. It names and hashes every mask.",
+        ),
+    ] = None,
     labels_root: Annotated[
         Path | None,
         typer.Option(
             "--labels-root",
             exists=True,
             file_okay=False,
-            help="Dataset root holding labels/sem_seg/masks/val. Bands need it.",
+            help="Root the manifest's relative label paths resolve against.",
         ),
     ] = None,
     instance_root: Annotated[
@@ -53,6 +63,7 @@ def extended_metrics_command(
         result = EXTENDED_SERVICE(
             index,
             output,
+            manifest_path=manifest,
             labels_root=labels_root,
             instance_root=instance_root,
             tertiles_path=tertiles,
