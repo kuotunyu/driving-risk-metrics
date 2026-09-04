@@ -201,6 +201,31 @@ were killed by tests written for their own sake:
   inside `"XXprobability...XX"`, and lower-casing leaves an all-lowercase
   substring alone.
 
+## An assertion the score cannot see
+
+A `pytest.raises(..., match="critical")` looked like a source of easy kills.
+mutmut pads a plain string literal to `"XXcriticalXX"`, which that pattern still
+matches, so anchoring on the whole message should turn those survivors into
+kills. The sibling project tested the prediction directly, re-measuring its core
+on a clone of the commit that anchored every one of its loose patterns: the
+score did not move at all. mutmut 3.7 does not mutate f-strings, and nearly
+every message in these projects is an f-string that names the offending value.
+
+The pass was worth making for a different reason, and this repository is where
+the reason showed. `match="critical"` in `test_formal_index.py` matched three
+separate refusals - `critical_class_ids must be non-empty and unique`,
+`critical_class_ids must be integers`, and `critical class 99 is outside 0..18` -
+so a parametrized test with four rows passed whichever one fired, and one of
+those rows was exercising a contract nobody had checked. `match="duplicate"` in
+`test_splits.py` covered three more. Across this repository 45 assertions could
+not tell two contracts apart; the portfolio total was 51.
+
+Every row now names its own message, anchored from the start, and a scan of all
+three repositories reports 655 patterns with none ambiguous. The scan is not a
+gate here, because a gate on assertion shape would be a gate on style rather
+than on behaviour, and the tests that matter are the ones that were added when a
+row turned out to be checking nothing.
+
 ## The score, and what is still outstanding
 
 Every number below comes from one run of `sync_and_mutate.sh`, and the commit
