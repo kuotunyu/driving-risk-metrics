@@ -122,7 +122,9 @@ def test_audited_intersection_rejects_zero_retained_samples(tmp_path: Path) -> N
     semantic = touch_labels(tmp_path, ("semantic/a_train_id.png",))
     instance = touch_labels(tmp_path, ("instance/b.png",))
 
-    with pytest.raises(ValueError, match="at least one"):
+    with pytest.raises(
+        ValueError, match=r"^semantic/instance intersection must retain at least one sample$"
+    ):
         bdd100k.semantic_instance_intersection(
             semantic,
             instance,

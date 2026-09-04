@@ -285,7 +285,7 @@ def test_an_unknown_sample_fails_closed(tmp_path: Path) -> None:
         data_root, manifest, protocol, device="cpu", pretrained=False
     )
 
-    with pytest.raises(KeyError, match="not in the frozen manifest"):
+    with pytest.raises(KeyError, match=r'^"sample \'\w+\' is not in the frozen manifest"$'):
         backend.load_batch((("unknown", 1.0),))
 
 
@@ -493,7 +493,7 @@ def test_a_sample_outside_the_manifest_is_still_refused_when_loading_in_parallel
         data_root, manifest, protocol, device="cpu", pretrained=False, loader_threads=4
     )
 
-    with pytest.raises(KeyError, match="not in the frozen manifest"):
+    with pytest.raises(KeyError, match=r'^"sample \'\w+\' is not in the frozen manifest"$'):
         backend.load_batch((("t1", 0.0), ("intruder", 0.0)))
 
 
