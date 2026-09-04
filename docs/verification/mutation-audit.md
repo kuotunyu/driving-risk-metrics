@@ -61,18 +61,25 @@ explains why the remainder survive; none of it is load-bearing.
 **Every family is checked against the kill data.** An equivalent mutant cannot
 be killed, so if any mutant a family claims has a non-zero exit code, the family
 is wrong and is narrowed until the check is clean. That check scans every
-mutant in the tree, not only the survivors, and it currently reports 76 claimed
+mutant in the tree, not only the survivors, and it currently reports 72 claimed
 and zero contradictions.
 
-That check earned its place. Three earlier families claimed mutants that had in
-fact been killed, and each was a genuinely different mutation that a textual
-pattern had swept up:
+That check earned its place. Four earlier claims were withdrawn because of it,
+and each was a genuinely different mutation that a textual pattern had swept up:
 
 - **A `dtype=` argument is not always redundant.** `np.zeros(n, dtype=np.int64)`
   with the dtype nulled yields **float64**, not int64, and the same is true of
   `np.frombuffer(data, dtype=np.uint8)`. Both were correctly killed. The family
   now lists the specific call-and-dtype pairs that were measured, rather than
   matching `dtype=` and hoping.
+- **A `dtype=` on `np.asarray` is a conversion, not a default.** This one was
+  found by running the same check against the sibling project, where
+  `np.asarray(existing_weight, dtype=np.float64)` in a learned corrector was
+  killed: a float32 stem weight is exactly what that line exists to promote.
+  The four `np.asarray` survivors in THIS project are equivalent because their
+  inputs already carry the target dtype, but that is a property of each call
+  site rather than of the text, so they are no longer claimed by the family and
+  are counted among the unexplained.
 - **A padded string is not a nulled argument.** mutmut also rewrites `"utf-8"`
   to `"XXutf-8XX"`, which is an invalid encoding name that raises.
 - **A dropped argument shifts the following line.** When mutmut removes an
@@ -89,7 +96,7 @@ part of the claim. "Read" means it follows from code quoted in the reason.
 | Mutation | Why it cannot change a result | Basis |
 | --- | --- | --- |
 | `encoding="utf-8"` / `newline="\n"` nulled | The scoring run is Linux, where the preferred encoding is UTF-8 and `os.linesep` is `"\n"`. **Not equivalent on Windows**, where `newline=None` writes `\r\n` and the artifact hash changes. That defect actually occurred here and was fixed at `a051943`; it is guarded on every platform by `tests/contract/test_artifact_bytes.py`, which is excluded from the mutation run for the structural reason given above. Recorded as equivalent *for the score* and guarded *for the project* by a different mechanism. | Read |
-| `dtype=np.X` nulled on `np.empty`, `np.zeros`, `np.array`, `np.asarray`, `np.full`, `np.arange`, `np.cumsum`, for the specific call-and-dtype pairs measured | Each restates what numpy infers for that call with those inputs: float64 for the allocators and for Python floats, int64 for a tuple of Python ints and for `arange`, uint8 for a PIL image, and float64 after the true division that always follows `arange` and `cumsum` here. | Measured |
+| `dtype=np.X` nulled on `np.empty`, `np.zeros`, `np.array`, `np.full`, `np.arange`, `np.cumsum`, for the specific call-and-dtype pairs measured | Each restates the dtype the CALL ITSELF would produce: float64 for the allocators and for Python floats, int64 for `arange` and for `full` with an integer fill, and float64 after the true division that always follows `arange` and `cumsum` here. **`np.asarray` is deliberately excluded** — its inferred dtype comes from the caller's array, so the argument is a real conversion whenever that array is not already the target type. | Measured |
 | `astype(np.float64)` nulled | `np.dtype(None)` **is** float64. | Measured |
 | `astype(dtype, copy=False)` with the copy flag changed or dropped | All four forms return an array of the same dtype holding the same values; only the allocation differs, and nothing here mutates such an array in place. | Measured |
 | `reshape(-1)` to `reshape(-2)` | numpy treats **any** negative dimension as "infer this one". Verified equal in array and shape for `(6,)`, `(2,3)`, `(2,3,4)`, `(1,5)`, `(0,)`, `(0,3)` and for the two-argument form. Undocumented numpy behaviour, so the version is part of the claim. | Measured |
@@ -207,12 +214,12 @@ is stated so a reader can reproduce it.
 | **Killed by a test** | **2,301** | **95.00%** |
 | Timed out | 0 | |
 | Survived | 121 | 5.00% |
-| — of those, proven equivalent above | 76 | |
-| — of those, still unexplained | 45 | 1.86% |
+| — of those, proven equivalent above | 72 | |
+| — of those, still unexplained | 49 | 2.02% |
 
 **The gate is cleared on kills alone, by 121 mutants.** 90% of 2,422 is 2,180
 and the suite kills 2,301, so no equivalence argument is needed to reach the
-threshold. Counting the 76 proven equivalents as well would give 98.14%; that
+threshold. Counting the 72 proven equivalents as well would give 97.98%; that
 number is reported for completeness and is not what the gate rests on.
 
 The previous run, at `0481652`, killed 2,108 of the same 2,422 and left 302
@@ -220,7 +227,7 @@ survivors. The 193 additional kills came from tests written for their own sake,
 each verified against the specific mutant before and after: `survived` with the
 test absent, `killed` with it present.
 
-### Where the 45 unexplained survivors are
+### Where the 49 unexplained survivors are
 
 | Module | Survivors |
 | --- | ---: |
