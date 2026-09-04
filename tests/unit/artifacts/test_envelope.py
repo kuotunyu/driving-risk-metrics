@@ -120,7 +120,7 @@ def test_envelope_rejects_invalid_release_commit_or_hash(
     values = valid_envelope_values()
     values[field] = invalid_value
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match=rf"\n{field}\n"):
         envelope.PortfolioArtifactEnvelopeV1.model_validate(values)
 
 
@@ -154,7 +154,7 @@ def test_envelope_requires_parseable_utc_timestamp_ending_in_z(
     values = valid_envelope_values()
     values["created_at_utc"] = invalid_created_at
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match=r"\ncreated_at_utc\n"):
         envelope.PortfolioArtifactEnvelopeV1.model_validate(values)
 
 

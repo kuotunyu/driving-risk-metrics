@@ -102,7 +102,7 @@ def test_claim_rejects_unsupported_vocabulary_or_hash(
     values = valid_claim_values()
     values[field] = invalid_value
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match=rf"\n{field}\n"):
         claims.ClaimV1.model_validate(values)
 
 
