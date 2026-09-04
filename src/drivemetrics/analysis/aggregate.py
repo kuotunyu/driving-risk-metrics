@@ -23,7 +23,11 @@ from drivemetrics.analysis.bootstrap import (
     two_stage_paired_bootstrap_statistic,
 )
 from drivemetrics.analysis.rankings import compare_rankings
-from drivemetrics.artifacts.formal_set import validate_formal_run_index
+from drivemetrics.artifacts.formal_set import (
+    APPROVED_MODELS,
+    APPROVED_SEEDS,
+    validate_formal_run_index,
+)
 from drivemetrics.artifacts.predictions import read_prediction_artifact
 from drivemetrics.metrics.confusion import summarize_confusion
 from drivemetrics.metrics.risk import critical_false_negative_rate
@@ -158,8 +162,27 @@ def aggregate_runs(
         if candidate.exists():
             raise FileExistsError(f"an analysis already exists: {candidate}")
 
-    runs = list(document["runs"])
-    sample_ids = tuple(runs[0]["uncalibrated_sample_ids"])
+    # SORTED into the declared order, not the order the index happens to list.
+    # The run order reaches two published things if it is left alone. The order
+    # the models first appear becomes the orientation of every pair, so the same
+    # study would publish `A minus B` from one index and `B minus A` from
+    # another; and the order of the seeds inside a model is the axis the seed
+    # resample draws POSITIONS on, so the bounds move with it. The validator
+    # requires all nine combinations, so this ordering is always total.
+    runs = sorted(
+        document["runs"],
+        key=lambda entry: (
+            APPROVED_MODELS.index(str(entry["model"])),
+            APPROVED_SEEDS.index(int(entry["seed"])),
+        ),
+    )
+    # SORTED, not the order the first run happens to list. Every replicate draws
+    # POSITIONS on the image axis, so the axis order decides which images a given
+    # seed selects; taking it from `runs[0]` would make the published bound depend
+    # on how the index was assembled, while the index validator proves only that
+    # the runs share the same SET of samples. Two indexes describing the identical
+    # study would then publish different intervals.
+    sample_ids = tuple(sorted(runs[0]["uncalibrated_sample_ids"]))
     num_classes = int(document["num_classes"])
     critical_class_ids = tuple(int(value) for value in document["critical_class_ids"])
     protocol_sha256 = str(document["protocol_sha256"])
@@ -197,7 +220,7 @@ def aggregate_runs(
                 labels = tuple(0 if model_ids[p] == left else 1 for p in selected)
                 signed = _signed_difference_statistic(statistic, labels)
                 interval = two_stage_paired_bootstrap_statistic(
-                    paired, labels, signed, resamples=resamples, seed=seed
+                    paired, labels, signed, combine="sum", resamples=resamples, seed=seed
                 )
                 key = f"{models[left]} minus {models[right]} ({name})"
                 intervals[key] = {
@@ -262,7 +285,14 @@ def aggregate_runs(
 
 
 def _signed_difference_statistic(statistic, labels: tuple[int, ...]):
-    """Orient the paired statistic so the interval is left-minus-right."""
+    """Orient the paired statistic so the interval is left-minus-right.
+
+    The sign lives here and the combination lives in the bootstrap, and both
+    halves are needed. This function makes the right model's runs negative; the
+    bootstrap is then asked to SUM the two group means rather than average them,
+    which is what turns `+A` and `-B` into `A - B`. Averaging them reports half
+    the difference, which is the estimand this pairing published until P1-17.
+    """
 
     signs = np.array([1.0 if label == 0 else -1.0 for label in labels], dtype=np.float64)
 

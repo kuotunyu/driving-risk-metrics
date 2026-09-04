@@ -322,3 +322,64 @@ def test_a_single_resample_is_a_usable_draw_count() -> None:
     assert interval.resamples == 1
     assert math.isfinite(interval.estimate)
     assert interval.low <= interval.estimate <= interval.high
+
+
+def test_summing_the_groups_gives_the_contrast_and_averaging_gives_the_level() -> None:
+    """The two combinations answer two different questions and must not be confused.
+
+    Two models, one seed each, one image each: model 0 scores 8.0 and model 1
+    scores 2.0. The level a reader wants from an unweighted average over models
+    is 5.0. The contrast a reader wants from a difference is 6.0, and it is only
+    reached by SUMMING the two group means after the caller has signed one of
+    them negative — averaging signed groups reports 3.0, half the difference,
+    which is the estimand `aggregate_runs` published until P1-17.
+    """
+
+    bootstrap = load_bootstrap_module()
+    values = np.array([[8.0], [2.0]], dtype=np.float64)
+
+    level = bootstrap.two_stage_paired_bootstrap(values, (0, 1), resamples=8, seed=1)
+    contrast = bootstrap.two_stage_paired_bootstrap(
+        values * np.array([[1.0], [-1.0]]), (0, 1), combine="sum", resamples=8, seed=1
+    )
+    halved = bootstrap.two_stage_paired_bootstrap(
+        values * np.array([[1.0], [-1.0]]), (0, 1), resamples=8, seed=1
+    )
+
+    assert level.estimate == pytest.approx(5.0)
+    assert contrast.estimate == pytest.approx(6.0)
+    assert halved.estimate == pytest.approx(3.0)
+
+
+def test_the_interval_is_combined_the_same_way_the_estimate_is() -> None:
+    """A bound combined differently from the estimate could exclude its own estimate.
+
+    The replicates and the estimate go through the same reduction, so switching
+    to a contrast scales the whole distribution rather than moving the point
+    inside a bound that was computed for a different quantity.
+    """
+
+    bootstrap = load_bootstrap_module()
+    values = np.array([[8.0, 9.0], [2.0, 1.0]], dtype=np.float64)
+    signed = values * np.array([[1.0], [-1.0]])
+
+    averaged = bootstrap.two_stage_paired_bootstrap(signed, (0, 1), resamples=64, seed=7)
+    summed = bootstrap.two_stage_paired_bootstrap(
+        signed, (0, 1), combine="sum", resamples=64, seed=7
+    )
+
+    assert summed.estimate == pytest.approx(2.0 * averaged.estimate)
+    assert summed.low == pytest.approx(2.0 * averaged.low)
+    assert summed.high == pytest.approx(2.0 * averaged.high)
+    assert summed.low <= summed.estimate <= summed.high
+
+
+@pytest.mark.parametrize("combine", ["", "average", "total", "SUM", None])
+def test_an_unknown_group_combination_is_refused(combine: object) -> None:
+    """Silently falling back to the mean would publish a contrast as half of itself."""
+
+    bootstrap = load_bootstrap_module()
+    values = np.array([[8.0], [2.0]], dtype=np.float64)
+
+    with pytest.raises(ValueError, match=r"^combine must be one of \('mean', 'sum'\), got "):
+        bootstrap.two_stage_paired_bootstrap(values, (0, 1), combine=combine, resamples=8, seed=1)
