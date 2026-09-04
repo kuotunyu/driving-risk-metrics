@@ -64,8 +64,24 @@ def _model_run_groups(model_seed_ids: tuple[int, ...]) -> tuple[IndexArray, ...]
     return tuple(np.flatnonzero(labels == model_id) for model_id in np.unique(labels))
 
 
-def _nested_mean(run_means: Float64Array, groups: tuple[IndexArray, ...]) -> float:
-    return float(np.mean([float(run_means[group].mean()) for group in groups]))
+#: How the per-model means are reduced to one number. `"mean"` is the estimand
+#: for a level: the unweighted average over models, so a model with more seeds
+#: cannot dominate. `"sum"` is the estimand for a CONTRAST, where the caller has
+#: already signed one group negative: summing gives `A - B`, while averaging
+#: gives half of it and reports an effect size that is not the one the key names.
+GROUP_COMBINATIONS = ("mean", "sum")
+
+
+def _combine_groups(run_means: Float64Array, groups: tuple[IndexArray, ...], combine: str) -> float:
+    per_group = [float(run_means[group].mean()) for group in groups]
+    if combine == "sum":
+        return float(np.sum(per_group))
+    return float(np.mean(per_group))
+
+
+def _validate_combine(combine: str) -> None:
+    if combine not in GROUP_COMBINATIONS:
+        raise ValueError(f"combine must be one of {GROUP_COMBINATIONS}, got {combine!r}")
 
 
 def two_stage_paired_bootstrap_statistic(
@@ -73,6 +89,7 @@ def two_stage_paired_bootstrap_statistic(
     model_seed_ids: tuple[int, ...],
     statistic: Callable[[Float64Array], Float64Array],
     *,
+    combine: str = "mean",
     resamples: int = 5000,
     seed: int = 20260831,
 ) -> BootstrapInterval:
@@ -101,6 +118,7 @@ def two_stage_paired_bootstrap_statistic(
         raise ValueError("components must be finite")
     _validate_labels(model_seed_ids, components.shape[0])
     _validate_draw_settings(resamples, seed)
+    _validate_combine(combine)
 
     groups = _model_run_groups(model_seed_ids)
     image_count = components.shape[1]
@@ -114,13 +132,13 @@ def two_stage_paired_bootstrap_statistic(
         seed_draws = tuple(
             group[generator.integers(0, group.size, size=group.size)] for group in groups
         )
-        replicates[index] = _nested_mean(run_values, seed_draws)
+        replicates[index] = _combine_groups(run_values, seed_draws, combine)
 
     tail_percent = (1.0 - BOOTSTRAP_CONFIDENCE) * 50.0
     low, high = np.percentile(replicates, [tail_percent, 100.0 - tail_percent])
     estimate = _applied_statistic(statistic, np.sum(components, axis=1), components.shape[0])
     return BootstrapInterval(
-        estimate=_nested_mean(estimate, groups),
+        estimate=_combine_groups(estimate, groups, combine),
         low=float(low),
         high=float(high),
         confidence=BOOTSTRAP_CONFIDENCE,
@@ -151,6 +169,7 @@ def two_stage_paired_bootstrap(
     values: Float64Array,
     model_seed_ids: tuple[int, ...],
     *,
+    combine: str = "mean",
     resamples: int = 5000,
     seed: int = 20260831,
 ) -> BootstrapInterval:
@@ -171,6 +190,7 @@ def two_stage_paired_bootstrap(
     """
 
     _validate_inputs(values, model_seed_ids, resamples, seed)
+    _validate_combine(combine)
     groups = _model_run_groups(model_seed_ids)
     image_count = values.shape[1]
     generator = np.random.default_rng(seed)
@@ -182,12 +202,12 @@ def two_stage_paired_bootstrap(
         seed_draws = tuple(
             group[generator.integers(0, group.size, size=group.size)] for group in groups
         )
-        replicates[index] = _nested_mean(run_means, seed_draws)
+        replicates[index] = _combine_groups(run_means, seed_draws, combine)
 
     tail_percent = (1.0 - BOOTSTRAP_CONFIDENCE) * 50.0
     low, high = np.percentile(replicates, [tail_percent, 100.0 - tail_percent])
     return BootstrapInterval(
-        estimate=_nested_mean(values.mean(axis=1), groups),
+        estimate=_combine_groups(values.mean(axis=1), groups, combine),
         low=float(low),
         high=float(high),
         confidence=BOOTSTRAP_CONFIDENCE,

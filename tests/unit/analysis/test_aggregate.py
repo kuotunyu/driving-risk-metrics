@@ -25,6 +25,11 @@ from drivemetrics.metrics.calibration import (
 )
 
 MODELS = ("upernet_convnextv2_tiny", "upernet_dinov2_small", "segformer_b2")
+# The order the analysis publishes pairs in. It is the APPROVED model order,
+# deliberately NOT the order this file lists them in, because the published
+# orientation must not depend on how an index was assembled. Written out here
+# rather than imported, so that changing the approved order fails this file.
+PUBLISHED_MODELS = ("segformer_b2", "upernet_convnextv2_tiny", "upernet_dinov2_small")
 SEEDS = (17, 42, 73)
 PROTOCOL = "a" * 64
 MANIFEST = "b" * 64
@@ -228,7 +233,7 @@ def test_intervals_cover_every_model_pair_for_every_metric(tmp_path: Path) -> No
 
     for metric in ("miou", "critical_recall"):
         for left, right in ((0, 1), (0, 2), (1, 2)):
-            key = f"{MODELS[left]} minus {MODELS[right]} ({metric})"
+            key = f"{PUBLISHED_MODELS[left]} minus {PUBLISHED_MODELS[right]} ({metric})"
             assert key in intervals
 
 
@@ -480,32 +485,33 @@ def test_the_intervals_cover_exactly_the_unordered_model_pairs(tmp_path: Path) -
     intervals = documents(tmp_path / "out")["intervals"]["intervals"]
 
     expected = {
-        f"{MODELS[left]} minus {MODELS[right]} ({metric})"
+        f"{PUBLISHED_MODELS[left]} minus {PUBLISHED_MODELS[right]} ({metric})"
         for metric in ("miou", "pixel_accuracy", "critical_recall")
         for left, right in ((0, 1), (0, 2), (1, 2))
     }
     assert set(intervals) == expected
 
 
-def test_the_paired_estimate_is_the_two_group_mean_of_the_signed_metric(
+def test_the_paired_estimate_is_the_difference_of_the_two_model_means(
     tmp_path: Path,
 ) -> None:
-    """The estimate is a deterministic function of the metric table, and this pins it.
+    """The key names a difference, so the number must be that difference.
 
-    The bootstrap orients the pair by giving the left model's runs `+metric`
-    and the right model's `-metric`, then takes the mean over the two label
-    groups of their group means. That is `(metric_left - metric_right) / 2`.
+    The bootstrap orients the pair by giving the left model's runs `+metric` and
+    the right model's `-metric`, then combines the two group means. Combining
+    them by a SUM is what makes the estimate `metric_left - metric_right`.
 
-    **The factor of one half is a defect, not a design.** The key says "A minus
-    B" and a reader will take the number as that difference; it is half of it.
-    Sign and zero-crossing are unaffected, so the ranking comparison is sound,
-    but the reported effect size is not. It is recorded for P1-17, and the
-    neighbouring `xfail` test states the estimand that should replace it.
+    Until P1-17 they were combined by a mean, which published half the
+    difference under a key that named the whole of it. Sign and zero-crossing
+    were unaffected, so the ranking comparison was sound throughout and no
+    published ordering changes; the reported effect size was wrong by a factor
+    of two. A strict `xfail` carrying this estimand stood here until the fix
+    landed, so the correction could not be made silently.
 
-    Until then this test pins what the code actually does, which is what makes
-    it able to detect a selection that grabs the wrong runs, a label that
-    collapses both models into one group, and an orientation that silently
-    swaps the two models.
+    Checking every pair and every metric rather than one of each is what makes
+    this able to detect a selection that grabs the wrong runs, a label that
+    collapses both models into one group, and an orientation that silently swaps
+    the two models.
     """
 
     run(tmp_path / "runs", tmp_path / "out")
@@ -515,37 +521,11 @@ def test_the_paired_estimate_is_the_two_group_mean_of_the_signed_metric(
 
     for metric in ("miou", "pixel_accuracy", "critical_recall"):
         for left, right in ((0, 1), (0, 2), (1, 2)):
-            key = f"{MODELS[left]} minus {MODELS[right]} ({metric})"
-            half_difference = (table[MODELS[left]][metric] - table[MODELS[right]][metric]) / 2.0
-            assert intervals[key]["estimate"] == pytest.approx(half_difference, rel=0.0, abs=1e-12)
-
-
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "P1-17: the paired estimate is the mean over two groups of +A and -B, "
-        "which is half of A minus B; see docs/verification/mutation-audit.md"
-    ),
-)
-def test_the_paired_estimate_is_the_difference_of_the_two_model_means(tmp_path: Path) -> None:
-    """The key names a difference, so the number must be that difference.
-
-    This is the estimand a reader of the report will assume. It is marked
-    `strict` deliberately: on the day `aggregate_runs` is corrected this test
-    starts passing, the marker turns that into a failure, and the fix cannot
-    land without someone removing the marker and reading this reason.
-    """
-
-    run(tmp_path / "runs", tmp_path / "out")
-    published = documents(tmp_path / "out")
-    table = published["metrics"]["metrics"]
-    key = f"{MODELS[0]} minus {MODELS[1]} (miou)"
-
-    assert published["intervals"]["intervals"][key]["estimate"] == pytest.approx(
-        table[MODELS[0]]["miou"] - table[MODELS[1]]["miou"],
-        rel=0.0,
-        abs=1e-12,
-    )
+            key = f"{PUBLISHED_MODELS[left]} minus {PUBLISHED_MODELS[right]} ({metric})"
+            difference = (
+                table[PUBLISHED_MODELS[left]][metric] - table[PUBLISHED_MODELS[right]][metric]
+            )
+            assert intervals[key]["estimate"] == pytest.approx(difference, rel=0.0, abs=1e-12)
 
 
 def test_each_metric_is_computed_by_its_own_statistic(tmp_path: Path) -> None:
@@ -744,3 +724,71 @@ def test_an_invalid_index_reports_every_violation_in_one_message(tmp_path: Path)
         aggregate.aggregate_runs(index_path, tmp_path / "out", resamples=20)
 
     assert str(failure.value) == "formal run index is not valid: " + "; ".join(violations)
+
+
+def test_the_published_interval_does_not_depend_on_the_order_the_samples_are_listed_in(
+    tmp_path: Path,
+) -> None:
+    """The image axis is the cohort, and a cohort is a set; its listing order is not data.
+
+    Every replicate draws POSITIONS on the image axis, so the axis order decides
+    which images a given seed selects. Taking that order from whichever run
+    happens to be first in the index makes the published bound depend on how the
+    index was assembled, while the index validator proves only that the runs
+    share the same SET of samples. Two indexes describing the identical study
+    would then publish different intervals, which is the one thing a
+    reproducibility claim cannot survive.
+    """
+
+    aggregate = load_aggregate()
+
+    forward = build_index(tmp_path / "forward")
+    aggregate.aggregate_runs(forward, tmp_path / "out-forward", resamples=60)
+
+    reversed_index = build_index(tmp_path / "reversed")
+    document = json.loads(reversed_index.read_text(encoding="utf-8"))
+    for entry in document["runs"]:
+        entry["uncalibrated_sample_ids"] = list(reversed(entry["uncalibrated_sample_ids"]))
+        entry["calibrated_sample_ids"] = list(reversed(entry["calibrated_sample_ids"]))
+    reversed_index.write_text(json.dumps(document, indent=2, sort_keys=True), encoding="utf-8")
+    aggregate.aggregate_runs(reversed_index, tmp_path / "out-reversed", resamples=60)
+
+    assert (
+        documents(tmp_path / "out-forward")["intervals"]
+        == documents(tmp_path / "out-reversed")["intervals"]
+    )
+
+
+def test_the_analysis_does_not_depend_on_the_order_the_runs_are_listed_in(
+    tmp_path: Path,
+) -> None:
+    """The run order is how the index was assembled, and it must not reach a published number.
+
+    It reaches two things if it is not canonicalised. The order the models first
+    appear becomes the orientation of every pair, so the same study publishes
+    `A minus B` from one index and `B minus A` from another. And the order of
+    the seeds inside a model becomes the axis the seed resample draws positions
+    on, exactly as the image order does, so the bounds move as well.
+
+    The index validator requires all nine model-and-seed combinations to be
+    present, so a canonical order always exists: the approved models in their
+    declared order, each with the approved seeds in theirs.
+    """
+
+    aggregate = load_aggregate()
+
+    forward = build_index(tmp_path / "forward")
+    aggregate.aggregate_runs(forward, tmp_path / "out-forward", resamples=60)
+
+    shuffled_index = build_index(tmp_path / "shuffled")
+    document = json.loads(shuffled_index.read_text(encoding="utf-8"))
+    document["runs"] = list(reversed(document["runs"]))
+    shuffled_index.write_text(json.dumps(document, indent=2, sort_keys=True), encoding="utf-8")
+    aggregate.aggregate_runs(shuffled_index, tmp_path / "out-shuffled", resamples=60)
+
+    forward_docs = documents(tmp_path / "out-forward")
+    shuffled_docs = documents(tmp_path / "out-shuffled")
+
+    assert forward_docs["intervals"] == shuffled_docs["intervals"]
+    assert forward_docs["metrics"] == shuffled_docs["metrics"]
+    assert forward_docs["rankings"] == shuffled_docs["rankings"]
