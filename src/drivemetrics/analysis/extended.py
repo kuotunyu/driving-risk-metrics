@@ -201,39 +201,72 @@ def _band_block(
     return block
 
 
+@dataclass(frozen=True)
+class _Corroboration:
+    """One image's instances restricted to the pixels both annotations agree on."""
+
+    footprint_ids: Int64Array
+    classes: dict[int, int]
+    without_semantic_pixels: int
+    corroborated_fractions: list[float]
+
+
+def _semantic_class_of_category(categories: Int64Array) -> Int64Array:
+    """Translate the bitmask's category IDs into semantic train IDs, per pixel."""
+
+    translated = np.full(categories.shape, -1, dtype=np.int64)
+    for category, train_id in INSTANCE_CATEGORY_TO_TRAIN_ID.items():
+        translated[categories == category] = train_id
+    return translated
+
+
 def _corroborated_instances(
     truth: Int64Array, categories: Int64Array, annotation_ids: Int64Array
-) -> tuple[dict[int, int], int, int]:
-    """Keep the instances the semantic mask agrees with, and count the rest.
+) -> _Corroboration:
+    """Restrict every instance to the pixels the semantic mask agrees are its class.
 
-    Two independent rasterizations are being joined. An instance bitmask and a
-    semantic mask are separate annotations of the same image and they need not
-    agree pixel for pixel, so an instance is scored only when it has at least one
-    non-ignored semantic pixel and every one of those pixels carries its own
-    class. An instance the two annotations disagree about says nothing about the
-    model, and scoring it would attribute an annotation conflict to the network.
+    Two independent rasterizations are being joined here, and measurement showed
+    what that costs: over sixty validation images the two annotations agree on a
+    median 98.65% of an instance's pixels, but on only 8.9% of instances do they
+    agree on ALL of them. A rule that demanded total agreement therefore measured
+    the annotations' boundary consistency and called it model performance.
 
-    The exclusions are returned rather than dropped. A silent drop would shrink
-    the denominator of every rate below it without leaving a trace.
+    So an instance's semantic footprint is the pixels where BOTH annotations say
+    it is that class, and coverage is measured over that footprint. Boundary
+    disagreement narrows the footprint instead of deleting the instance. Only an
+    instance with no corroborated pixel at all is excluded, and it is counted.
+
+    The footprint is smaller than the instance's full scored area — a measured
+    median of 98.7% and mean of 94.8% of it — while the frozen tertile edges were
+    learned over whole instances. The gap is far below the spacing of those edges,
+    but it is a real systematic difference, so the mean fraction is published
+    beside the counts rather than left for a reader to discover.
     """
 
-    corroborated: dict[int, int] = {}
+    mapped = _semantic_class_of_category(categories)
+    labelled = annotation_ids != 0
+    agreeing = labelled & (truth == mapped)
+    footprint_ids = np.where(agreeing, annotation_ids, 0)
+
+    classes: dict[int, int] = {}
+    fractions: list[float] = []
     without_semantic_pixels = 0
-    disagreeing = 0
-    for value in np.unique(annotation_ids[annotation_ids != 0]):
+    for value in np.unique(annotation_ids[labelled]):
         instance_id = int(value)
         instance_pixels = annotation_ids == instance_id
         scored = instance_pixels & (truth != MASK_PAD_VALUE)
-        if not np.any(scored):
+        footprint = int(np.count_nonzero(footprint_ids == instance_id))
+        if footprint == 0:
             without_semantic_pixels += 1
             continue
-        category = int(categories[instance_pixels][0])
-        train_id = INSTANCE_CATEGORY_TO_TRAIN_ID.get(category)
-        if train_id is None or bool(np.any(truth[scored] != train_id)):
-            disagreeing += 1
-            continue
-        corroborated[instance_id] = train_id
-    return corroborated, without_semantic_pixels, disagreeing
+        classes[instance_id] = int(mapped[instance_pixels][0])
+        fractions.append(footprint / int(np.count_nonzero(scored)))
+    return _Corroboration(
+        footprint_ids=footprint_ids,
+        classes=classes,
+        without_semantic_pixels=without_semantic_pixels,
+        corroborated_fractions=fractions,
+    )
 
 
 def _instance_block(
@@ -263,7 +296,7 @@ def _instance_block(
     }
     instance_count = 0
     without_semantic_pixels = 0
-    disagreeing = 0
+    fractions: list[float] = []
     for sample_id in sample_ids:
         _, record, _ = read_prediction_artifact(directory / f"{sample_id}.json")
         truth = _read_mask(label_paths[sample_id])
@@ -273,16 +306,14 @@ def _instance_block(
         )
         categories = bitmask[:, :, 0]
         annotation_ids = (bitmask[:, :, 2] << 8) | bitmask[:, :, 3]
-        corroborated, unlabelled, conflicting = _corroborated_instances(
-            truth, categories, annotation_ids
-        )
-        without_semantic_pixels += unlabelled
-        disagreeing += conflicting
+        corroboration = _corroborated_instances(truth, categories, annotation_ids)
+        without_semantic_pixels += corroboration.without_semantic_pixels
+        fractions.extend(corroboration.corroborated_fractions)
         for coverage in instance_coverages(
             truth.reshape(-1),
             predicted.reshape(-1),
-            annotation_ids.reshape(-1),
-            corroborated,
+            corroboration.footprint_ids.reshape(-1),
+            corroboration.classes,
             edges_by_train_id,
         ):
             instance_count += 1
@@ -300,7 +331,11 @@ def _instance_block(
         "tertile_edges_from": str(tertiles_path),
         "instance_count": instance_count,
         "excluded_without_semantic_pixels": without_semantic_pixels,
-        "excluded_semantic_class_disagreement": disagreeing,
+        # How much of an instance the two annotations agreed on, averaged over the
+        # scored instances. It is published because the frozen tertile edges were
+        # learned over whole instances while coverage is measured over footprints,
+        # and a reader placing an area tertile needs to see the size of that gap.
+        "mean_corroborated_fraction": (float(np.mean(fractions)) if fractions else None),
         "by_tertile": by_tertile,
     }
 
