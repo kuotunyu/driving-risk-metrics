@@ -561,3 +561,222 @@ def test_a_single_bin_is_a_valid_calibration_table() -> None:
     np.testing.assert_array_equal(stats.counts, np.array([[2], [2]], dtype=np.int64))
     np.testing.assert_allclose(stats.confidence_sums, np.array([[1.0], [1.0]]))
     np.testing.assert_array_equal(stats.positive_counts, np.array([[1], [1]], dtype=np.int64))
+
+
+def test_the_brier_score_divides_the_summed_squared_error_by_the_pixels_it_covers() -> None:
+    """The artifact stores sums so cohorts can be added; the score is the sum over its own N.
+
+    Sums from two images add exactly, and so do their pixel counts, which is the
+    only reason a cohort score can be recomputed years later from artifacts that
+    never stored a probability. Dividing by anything else — the number of
+    classes, or one image's count applied to two — silently rescales a published
+    number in a direction no reader could detect.
+    """
+
+    module = load_calibration()
+    first = np.array([[0.7, 0.2, 0.1], [0.1, 0.8, 0.1]], dtype=np.float64)
+    second = np.array([[0.2, 0.3, 0.5]], dtype=np.float64)
+    first_targets = np.array([0, 1], dtype=np.int64)
+    second_targets = np.array([2], dtype=np.int64)
+
+    cohort = module.multiclass_brier_sums(
+        first, first_targets, num_classes=3
+    ) + module.multiclass_brier_sums(second, second_targets, num_classes=3)
+    whole = module.multiclass_brier_sums(
+        np.concatenate([first, second]),
+        np.concatenate([first_targets, second_targets]),
+        num_classes=3,
+    )
+
+    np.testing.assert_allclose(cohort, whole, rtol=0.0, atol=1e-12)
+    assert module.multiclass_brier_score(cohort, 3) == pytest.approx(
+        float(whole.sum()) / 3.0, rel=0.0, abs=1e-12
+    )
+
+
+def test_a_brier_score_over_no_pixels_is_none_rather_than_zero() -> None:
+    """Zero squared error is a perfect score, so an empty cohort must not report it."""
+
+    module = load_calibration()
+
+    assert module.multiclass_brier_score(np.zeros(3, dtype=np.float64), 0) is None
+
+
+def test_the_classwise_ece_weights_each_bin_by_how_many_pixels_landed_in_it() -> None:
+    """Hand-computed on two bins so the weighting, not just the gap, is pinned.
+
+    One-vs-rest for class 0 over four pixels with confidences 0.1, 0.1, 0.9, 0.9
+    and targets 0, 1, 0, 0. With fifteen bins the first pair lands in bin 1 and
+    the second in bin 13. Bin 1 holds two pixels, mean confidence 0.1, one of
+    them positive, so its gap is |0.5 - 0.1| = 0.4. Bin 13 holds two, mean
+    confidence 0.9, both positive, so its gap is |1.0 - 0.9| = 0.1. Each bin
+    carries half the pixels, so the class ECE is 0.5*0.4 + 0.5*0.1 = 0.25.
+    Weighting the bins equally instead of by occupancy gives the same answer
+    here only because the halves are equal, which is why the second case below
+    makes them unequal.
+    """
+
+    module = load_calibration()
+    probabilities = np.array([[0.1, 0.9], [0.1, 0.9], [0.9, 0.1], [0.9, 0.1]], dtype=np.float64)
+    targets = np.array([0, 1, 0, 0], dtype=np.int64)
+
+    statistics = module.classwise_ece_sufficient_statistics(probabilities, targets, 2)
+    per_class = module.classwise_expected_calibration_error(statistics)
+
+    assert per_class[0] == pytest.approx(0.25, rel=0.0, abs=1e-12)
+
+
+def test_an_unequally_occupied_bin_pulls_the_classwise_ece_towards_it() -> None:
+    """Three pixels in one bin and one in another must not count equally."""
+
+    module = load_calibration()
+    probabilities = np.array([[0.1, 0.9], [0.1, 0.9], [0.1, 0.9], [0.9, 0.1]], dtype=np.float64)
+    targets = np.array([0, 1, 1, 0], dtype=np.int64)
+
+    statistics = module.classwise_ece_sufficient_statistics(probabilities, targets, 2)
+    per_class = module.classwise_expected_calibration_error(statistics)
+
+    # Bin 1 holds three pixels, mean confidence 0.1, one positive: |1/3 - 0.1|.
+    # Bin 13 holds one, confidence 0.9, positive: |1.0 - 0.9|.
+    expected = 0.75 * abs(1.0 / 3.0 - 0.1) + 0.25 * 0.1
+    assert per_class[0] == pytest.approx(expected, rel=0.0, abs=1e-12)
+
+
+def test_a_class_no_pixel_ever_saw_reports_none_rather_than_a_perfect_zero() -> None:
+    """An unsupported class is unmeasured, and zero calibration error is the best score."""
+
+    module = load_calibration()
+    empty = module.ECEBinSufficientStatistics(
+        counts=np.zeros((2, 15), dtype=np.int64),
+        confidence_sums=np.zeros((2, 15), dtype=np.float64),
+        positive_counts=np.zeros((2, 15), dtype=np.int64),
+    )
+
+    assert module.classwise_expected_calibration_error(empty) == (None, None)
+    assert module.mean_classwise_expected_calibration_error(empty) is None
+
+
+def test_the_mean_classwise_ece_averages_only_the_classes_that_have_support() -> None:
+    """Averaging an unmeasured class in as zero would flatter every reported number."""
+
+    module = load_calibration()
+    probabilities = np.array([[0.1, 0.9], [0.9, 0.1]], dtype=np.float64)
+    targets = np.array([1, 0], dtype=np.int64)
+
+    statistics = module.classwise_ece_sufficient_statistics(probabilities, targets, 2)
+    per_class = module.classwise_expected_calibration_error(statistics)
+    supported = [value for value in per_class if value is not None]
+
+    assert module.mean_classwise_expected_calibration_error(statistics) == pytest.approx(
+        sum(supported) / len(supported), rel=0.0, abs=1e-12
+    )
+
+
+def test_the_ece_statistics_of_two_images_add() -> None:
+    """The cohort ECE is finalised from summed statistics, never from averaged ECEs."""
+
+    module = load_calibration()
+    first = np.array([[0.1, 0.9], [0.9, 0.1]], dtype=np.float64)
+    second = np.array([[0.3, 0.7]], dtype=np.float64)
+    first_targets = np.array([1, 0], dtype=np.int64)
+    second_targets = np.array([1], dtype=np.int64)
+
+    a = module.classwise_ece_sufficient_statistics(first, first_targets, 2)
+    b = module.classwise_ece_sufficient_statistics(second, second_targets, 2)
+    summed = module.ECEBinSufficientStatistics(
+        counts=a.counts + b.counts,
+        confidence_sums=a.confidence_sums + b.confidence_sums,
+        positive_counts=a.positive_counts + b.positive_counts,
+    )
+    whole = module.classwise_ece_sufficient_statistics(
+        np.concatenate([first, second]),
+        np.concatenate([first_targets, second_targets]),
+        2,
+    )
+
+    assert module.classwise_expected_calibration_error(
+        summed
+    ) == module.classwise_expected_calibration_error(whole)
+
+
+@pytest.mark.parametrize(
+    ("sums", "pixels", "expected"),
+    [
+        (np.zeros((2, 2)), 4, r"^brier_sum_by_class must be a flat array, got shape "),
+        (np.array([np.nan]), 4, r"^brier_sum_by_class must contain finite nonnegative values$"),
+        (np.array([-1.0]), 4, r"^brier_sum_by_class must contain finite nonnegative values$"),
+        (np.array([1.0]), 4.0, r"^valid_pixel_count must be an integer$"),
+        (np.array([1.0]), True, r"^valid_pixel_count must be an integer$"),
+        (np.array([1.0]), -1, r"^valid_pixel_count must be nonnegative$"),
+    ],
+)
+def test_a_brier_score_refuses_input_it_cannot_be_computed_from(
+    sums: npt.NDArray[np.float64], pixels: object, expected: str
+) -> None:
+    """Each refusal names its own subject, because they are different mistakes.
+
+    A negative squared-error sum and a float pixel count arrive from different
+    places — a corrupted artifact and a caller that divided somewhere it should
+    not have — and a caller told only that "the input was bad" cannot act.
+    """
+
+    module = load_calibration()
+
+    with pytest.raises(ValueError, match=expected):
+        module.multiclass_brier_score(sums, pixels)
+
+
+@pytest.mark.parametrize(
+    ("counts", "sums", "positives", "expected"),
+    [
+        (
+            np.zeros((2, 3), dtype=np.int64),
+            np.zeros((2, 4)),
+            np.zeros((2, 3), dtype=np.int64),
+            r"^ECE statistics must share one class-by-bin shape$",
+        ),
+        (
+            np.zeros(3, dtype=np.int64),
+            np.zeros(3),
+            np.zeros(3, dtype=np.int64),
+            r"^ECE statistics must share one class-by-bin shape$",
+        ),
+        (
+            np.full((1, 2), -1, dtype=np.int64),
+            np.zeros((1, 2)),
+            np.zeros((1, 2), dtype=np.int64),
+            r"^ECE counts must be nonnegative$",
+        ),
+        (
+            np.ones((1, 2), dtype=np.int64),
+            np.zeros((1, 2)),
+            np.full((1, 2), 2, dtype=np.int64),
+            r"^ECE positive_counts must not exceed counts$",
+        ),
+        (
+            np.ones((1, 2), dtype=np.int64),
+            np.full((1, 2), np.nan),
+            np.ones((1, 2), dtype=np.int64),
+            r"^ECE confidence_sums must be finite$",
+        ),
+    ],
+)
+def test_the_ece_finaliser_refuses_statistics_that_cannot_be_a_histogram(
+    counts: npt.NDArray[np.int64],
+    sums: npt.NDArray[np.float64],
+    positives: npt.NDArray[np.int64],
+    expected: str,
+) -> None:
+    """These arrive from a file, so the finaliser checks them rather than trusting them.
+
+    More positives than pixels in a bin is not a small error: it makes the gap
+    negative and would report a model as better calibrated than perfect.
+    """
+
+    module = load_calibration()
+    statistics = module.ECEBinSufficientStatistics(
+        counts=counts, confidence_sums=sums, positive_counts=positives
+    )
+
+    with pytest.raises(ValueError, match=expected):
+        module.classwise_expected_calibration_error(statistics)

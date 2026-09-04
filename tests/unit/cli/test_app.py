@@ -808,3 +808,163 @@ def test_evaluate_reports_progress_while_it_scores(
 
     assert result.exit_code == 0, result.output
     assert callable(seen["on_sample"])
+
+
+def test_gallery_prints_one_machine_readable_status(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The release workflow cites the manifest by path, so the path is stdout, not prose."""
+
+    import drivemetrics.cli.gallery as gallery_cli
+
+    result_stub = SimpleNamespace(
+        manifest_path=tmp_path / "gallery-manifest.json",
+        per_model=8,
+        models=("upernet_convnextv2_tiny", "upernet_dinov2_small", "segformer_b2"),
+    )
+    monkeypatch.setattr(gallery_cli, "GALLERY_SERVICE", lambda *_, **__: result_stub)
+    index = touch(tmp_path / "formal_run_index.json")
+
+    result = runner.invoke(
+        app,
+        ["gallery", "--index", str(index), "--output", str(tmp_path / "gallery-manifest.json")],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["command"] == "gallery"
+    assert payload["manifest_path"] == str(result_stub.manifest_path)
+    assert payload["per_model"] == 8
+    assert payload["models"] == list(result_stub.models)
+
+
+def test_gallery_forwards_the_requested_size(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A size the command accepted but did not pass on would publish the default silently."""
+
+    import drivemetrics.cli.gallery as gallery_cli
+
+    seen: dict[str, object] = {}
+
+    def record(index: Path, output: Path, *, per_model: int) -> SimpleNamespace:
+        seen["per_model"] = per_model
+        return SimpleNamespace(manifest_path=output, per_model=per_model, models=())
+
+    monkeypatch.setattr(gallery_cli, "GALLERY_SERVICE", record)
+    index = touch(tmp_path / "formal_run_index.json")
+
+    result = runner.invoke(
+        app,
+        [
+            "gallery",
+            "--index",
+            str(index),
+            "--output",
+            str(tmp_path / "gallery-manifest.json"),
+            "--per-model",
+            "3",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert seen["per_model"] == 3
+
+
+def test_gallery_refuses_an_index_that_is_not_there(tmp_path: Path) -> None:
+    """A missing index is a stop, not a gallery of nothing."""
+
+    result = runner.invoke(
+        app,
+        [
+            "gallery",
+            "--index",
+            str(tmp_path / "absent.json"),
+            "--output",
+            str(tmp_path / "gallery-manifest.json"),
+        ],
+    )
+
+    assert result.exit_code != 0
+
+
+def test_extended_metrics_prints_which_blocks_it_computed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The release has to know which blocks exist without parsing the document.
+
+    Whether the instance block was computed depends on files that may not have
+    travelled with the run, so the command reports it rather than leaving the
+    caller to infer it from an absence.
+    """
+
+    import drivemetrics.cli.extended as extended_cli
+
+    result_stub = SimpleNamespace(
+        document_path=tmp_path / "extended-metrics.json",
+        models=("segformer_b2",),
+        computed=("selective_risk",),
+    )
+    monkeypatch.setattr(extended_cli, "EXTENDED_SERVICE", lambda *_, **__: result_stub)
+    index = touch(tmp_path / "formal_run_index.json")
+
+    result = runner.invoke(
+        app,
+        [
+            "extended-metrics",
+            "--index",
+            str(index),
+            "--output",
+            str(tmp_path / "extended-metrics.json"),
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["command"] == "extended-metrics"
+    assert payload["computed"] == ["selective_risk"]
+
+
+def test_extended_metrics_forwards_every_ground_truth_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A path the command accepted but did not pass on would silently skip a block."""
+
+    import drivemetrics.cli.extended as extended_cli
+
+    seen: dict[str, object] = {}
+
+    def record(index: Path, output: Path, **kwargs: object) -> SimpleNamespace:
+        seen.update(kwargs)
+        return SimpleNamespace(document_path=output, models=(), computed=())
+
+    monkeypatch.setattr(extended_cli, "EXTENDED_SERVICE", record)
+    labels = tmp_path / "labels"
+    labels.mkdir()
+    tertiles = touch(tmp_path / "area_tertiles.json")
+
+    result = runner.invoke(
+        app,
+        [
+            "extended-metrics",
+            "--index",
+            str(touch(tmp_path / "formal_run_index.json")),
+            "--output",
+            str(tmp_path / "extended-metrics.json"),
+            "--labels-root",
+            str(labels),
+            "--instance-root",
+            str(labels),
+            "--tertiles",
+            str(tertiles),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert seen["labels_root"] == labels
+    assert seen["instance_root"] == labels
+    assert seen["tertiles_path"] == tertiles

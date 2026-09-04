@@ -16,10 +16,12 @@ from typing import Any
 
 import numpy as np
 import pytest
+import yaml
 
 from drivemetrics.artifacts.predictions import PredictionRecord, write_prediction_artifact
 from drivemetrics.metrics.calibration import (
     classwise_ece_sufficient_statistics,
+    multiclass_brier_sums,
     pack_correctness,
     quantize_confidence,
 )
@@ -35,6 +37,10 @@ PROTOCOL = "a" * 64
 MANIFEST = "b" * 64
 NUM_CLASSES = 4
 SAMPLES = ("v0001", "v0002", "v0003")
+#: The profile schema pins each class ID to its BDD100K train-ID name, so a
+#: fixture profile has to use the real first four rather than invented labels.
+#: That guard is the reason a profile cannot be applied to another taxonomy.
+CLASS_NAMES = ("road", "sidewalk", "building", "wall")
 CRITICAL_CLASSES = (2, 3)
 
 
@@ -53,11 +59,19 @@ def write_run_artifacts(
     sizes: tuple[int, ...],
     protocol: str = PROTOCOL,
     manifest: str = MANIFEST,
+    off_class_mass: float = 0.1,
 ) -> None:
     """Publish one run's per-image artifacts with a controllable correctness rate.
 
     Image sizes deliberately differ, so a ratio of summed confusions and a mean
     of per-image ratios cannot coincide by accident.
+
+    `off_class_mass` moves probability off the predicted class WITHOUT changing
+    which class is predicted, which is exactly what temperature scaling does: the
+    confusions of a calibrated and an uncalibrated evaluation are identical and
+    only their confidences differ. A calibrated copy of a run is therefore
+    written with a larger mass, and any metric that separates the two has to be
+    reading confidence rather than argmax.
     """
 
     directory.mkdir(parents=True, exist_ok=True)
@@ -69,8 +83,8 @@ def write_run_artifacts(
 
         confusion = np.zeros((NUM_CLASSES, NUM_CLASSES), dtype=np.int64)
         np.add.at(confusion, (targets, predicted), 1)
-        probabilities = np.full((size, NUM_CLASSES), 0.1, dtype=np.float64)
-        probabilities[np.arange(size), predicted] = 1.0 - 0.1 * (NUM_CLASSES - 1)
+        probabilities = np.full((size, NUM_CLASSES), off_class_mass, dtype=np.float64)
+        probabilities[np.arange(size), predicted] = 1.0 - off_class_mass * (NUM_CLASSES - 1)
         confidence = probabilities[np.arange(size), predicted]
 
         record = PredictionRecord(
@@ -79,7 +93,7 @@ def write_run_artifacts(
             top1_confidence_q16=quantize_confidence(confidence),
             correctness_bitset=pack_correctness(predicted == targets),
             confusion=confusion,
-            brier_sum_by_class=np.zeros(NUM_CLASSES, dtype=np.float64),
+            brier_sum_by_class=multiclass_brier_sums(probabilities, targets, NUM_CLASSES),
             valid_pixel_count=int(size),
         )
         write_prediction_artifact(
@@ -91,6 +105,36 @@ def write_run_artifacts(
         )
 
 
+def write_profile(directory: Path, name: str, *, critical: list[int], sensitivity: float) -> Path:
+    """A four-class cost profile, so the fixture's taxonomy is the one being scored.
+
+    The production profiles declare all nineteen BDD100K classes and cannot score
+    a four-class fixture; `compute_cost_risk` refuses a profile whose costs do
+    not cover the confusion exactly, which is the check that keeps a profile from
+    being applied to a taxonomy it was not written for.
+    """
+
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{name}.yaml"
+    path.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": "bdd100k-risk-profile/v1",
+                "name": name,
+                "taxonomy": "bdd100k-semantic-train-id/v1",
+                "sensitivity": sensitivity,
+                "class_costs": [
+                    {"class_id": class_id, "class_name": CLASS_NAMES[class_id], "cost": 1.0}
+                    for class_id in range(NUM_CLASSES)
+                ],
+                "critical_class_ids": critical,
+            }
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 def build_index(root: Path, **overrides: Any) -> Path:
     """Nine runs whose accuracy separates the models but overlaps across seeds."""
 
@@ -99,10 +143,13 @@ def build_index(root: Path, **overrides: Any) -> Path:
         for seed in SEEDS:
             run_id = f"{model}-seed-{seed}"
             directory = root / run_id
+            accuracy = 0.55 + 0.08 * model_position + 0.01 * (seed % 7)
+            write_run_artifacts(directory, accuracy=accuracy, sizes=(400, 1200, 800))
             write_run_artifacts(
-                directory,
-                accuracy=0.55 + 0.08 * model_position + 0.01 * (seed % 7),
+                root / f"{run_id}-calibrated",
+                accuracy=accuracy,
                 sizes=(400, 1200, 800),
+                off_class_mass=0.2,
             )
             runs.append(
                 {
@@ -116,6 +163,7 @@ def build_index(root: Path, **overrides: Any) -> Path:
                     "status": "succeeded",
                     "temperature": 1.2,
                     "artifacts_dir": run_id,
+                    "calibrated_artifacts_dir": f"{run_id}-calibrated",
                     "uncalibrated_sample_ids": list(SAMPLES),
                     "calibrated_sample_ids": list(SAMPLES),
                 }
@@ -137,9 +185,23 @@ def build_index(root: Path, **overrides: Any) -> Path:
     return index_path
 
 
+def fixture_profiles(root: Path) -> Path:
+    """Two four-class profiles for the fixture's taxonomy, one of them uncritical."""
+
+    directory = root / "risk_profiles"
+    write_profile(directory, "balanced", critical=[], sensitivity=1.0)
+    write_profile(directory, "vru_priority", critical=[2, 3], sensitivity=2.0)
+    return directory
+
+
 def run(root: Path, output: Path, **overrides: Any) -> Any:
     aggregate = load_aggregate()
-    return aggregate.aggregate_runs(build_index(root, **overrides), output, resamples=60)
+    return aggregate.aggregate_runs(
+        build_index(root, **overrides),
+        output,
+        resamples=60,
+        risk_profiles_dir=fixture_profiles(root.parent),
+    )
 
 
 def documents(output: Path) -> dict[str, Any]:
@@ -290,7 +352,9 @@ def test_an_artifact_from_another_cohort_is_refused(tmp_path: Path) -> None:
             r"dataset manifest hash than the run index$"
         ),
     ):
-        aggregate.aggregate_runs(index_path, tmp_path / "out", resamples=20)
+        aggregate.aggregate_runs(
+            index_path, tmp_path / "out", resamples=20, risk_profiles_dir=fixture_profiles(tmp_path)
+        )
 
 
 def test_it_refuses_to_overwrite_an_existing_analysis(tmp_path: Path) -> None:
@@ -355,7 +419,9 @@ def test_an_artifact_from_another_protocol_is_refused(tmp_path: Path) -> None:
             r"protocol hash than the run index$"
         ),
     ):
-        aggregate.aggregate_runs(index_path, tmp_path / "out", resamples=20)
+        aggregate.aggregate_runs(
+            index_path, tmp_path / "out", resamples=20, risk_profiles_dir=fixture_profiles(tmp_path)
+        )
 
 
 def test_a_written_document_is_byte_exact_and_key_sorted(tmp_path: Path) -> None:
@@ -467,7 +533,9 @@ def test_an_index_without_a_cohort_falls_back_to_the_locked_validation_set(
     index.write_text(json.dumps(document, indent=2, sort_keys=True), encoding="utf-8")
 
     aggregate = load_aggregate()
-    aggregate.aggregate_runs(index, output, resamples=60)
+    aggregate.aggregate_runs(
+        index, output, resamples=60, risk_profiles_dir=fixture_profiles(tmp_path)
+    )
 
     assert documents(output)["metrics"]["cohort"] == "locked_validation"
 
@@ -642,7 +710,11 @@ def test_the_requested_resample_count_and_seed_reach_the_interval(tmp_path: Path
 
     aggregate = load_aggregate()
     aggregate.aggregate_runs(
-        build_index(tmp_path / "runs"), tmp_path / "out", resamples=37, seed=11
+        build_index(tmp_path / "runs"),
+        tmp_path / "out",
+        resamples=37,
+        seed=11,
+        risk_profiles_dir=fixture_profiles(tmp_path),
     )
 
     for entry in documents(tmp_path / "out")["intervals"]["intervals"].values():
@@ -658,7 +730,11 @@ def test_the_protocol_resample_default_reaches_the_interval(tmp_path: Path) -> N
     """
 
     aggregate = load_aggregate()
-    aggregate.aggregate_runs(build_index(tmp_path / "runs"), tmp_path / "out")
+    aggregate.aggregate_runs(
+        build_index(tmp_path / "runs"),
+        tmp_path / "out",
+        risk_profiles_dir=fixture_profiles(tmp_path),
+    )
 
     for entry in documents(tmp_path / "out")["intervals"]["intervals"].values():
         assert entry["resamples"] == 5000
@@ -683,14 +759,24 @@ def test_the_cohort_order_comes_from_the_first_run_not_from_any_other(
 
     aggregate = load_aggregate()
     reference_index = build_index(tmp_path / "reference")
-    aggregate.aggregate_runs(reference_index, tmp_path / "reference-out", resamples=60)
+    aggregate.aggregate_runs(
+        reference_index,
+        tmp_path / "reference-out",
+        resamples=60,
+        risk_profiles_dir=fixture_profiles(tmp_path),
+    )
 
     shuffled_index = build_index(tmp_path / "shuffled")
     document = json.loads(shuffled_index.read_text(encoding="utf-8"))
     document["runs"][1]["uncalibrated_sample_ids"] = list(reversed(SAMPLES))
     document["runs"][1]["calibrated_sample_ids"] = list(reversed(SAMPLES))
     shuffled_index.write_text(json.dumps(document, indent=2, sort_keys=True), encoding="utf-8")
-    aggregate.aggregate_runs(shuffled_index, tmp_path / "shuffled-out", resamples=60)
+    aggregate.aggregate_runs(
+        shuffled_index,
+        tmp_path / "shuffled-out",
+        resamples=60,
+        risk_profiles_dir=fixture_profiles(tmp_path),
+    )
 
     for name in ("metrics", "intervals", "rankings"):
         assert (tmp_path / "reference-out" / f"{name}.json").read_bytes() == (
@@ -721,7 +807,9 @@ def test_an_invalid_index_reports_every_violation_in_one_message(tmp_path: Path)
         ValueError,
         match=r"^formal run index is not valid: run 0 \(upernet_convnextv2_tiny, seed 17\): checkpoint is at step ",
     ) as failure:
-        aggregate.aggregate_runs(index_path, tmp_path / "out", resamples=20)
+        aggregate.aggregate_runs(
+            index_path, tmp_path / "out", resamples=20, risk_profiles_dir=fixture_profiles(tmp_path)
+        )
 
     assert str(failure.value) == "formal run index is not valid: " + "; ".join(violations)
 
@@ -743,7 +831,12 @@ def test_the_published_interval_does_not_depend_on_the_order_the_samples_are_lis
     aggregate = load_aggregate()
 
     forward = build_index(tmp_path / "forward")
-    aggregate.aggregate_runs(forward, tmp_path / "out-forward", resamples=60)
+    aggregate.aggregate_runs(
+        forward,
+        tmp_path / "out-forward",
+        resamples=60,
+        risk_profiles_dir=fixture_profiles(tmp_path),
+    )
 
     reversed_index = build_index(tmp_path / "reversed")
     document = json.loads(reversed_index.read_text(encoding="utf-8"))
@@ -751,7 +844,12 @@ def test_the_published_interval_does_not_depend_on_the_order_the_samples_are_lis
         entry["uncalibrated_sample_ids"] = list(reversed(entry["uncalibrated_sample_ids"]))
         entry["calibrated_sample_ids"] = list(reversed(entry["calibrated_sample_ids"]))
     reversed_index.write_text(json.dumps(document, indent=2, sort_keys=True), encoding="utf-8")
-    aggregate.aggregate_runs(reversed_index, tmp_path / "out-reversed", resamples=60)
+    aggregate.aggregate_runs(
+        reversed_index,
+        tmp_path / "out-reversed",
+        resamples=60,
+        risk_profiles_dir=fixture_profiles(tmp_path),
+    )
 
     assert (
         documents(tmp_path / "out-forward")["intervals"]
@@ -778,13 +876,23 @@ def test_the_analysis_does_not_depend_on_the_order_the_runs_are_listed_in(
     aggregate = load_aggregate()
 
     forward = build_index(tmp_path / "forward")
-    aggregate.aggregate_runs(forward, tmp_path / "out-forward", resamples=60)
+    aggregate.aggregate_runs(
+        forward,
+        tmp_path / "out-forward",
+        resamples=60,
+        risk_profiles_dir=fixture_profiles(tmp_path),
+    )
 
     shuffled_index = build_index(tmp_path / "shuffled")
     document = json.loads(shuffled_index.read_text(encoding="utf-8"))
     document["runs"] = list(reversed(document["runs"]))
     shuffled_index.write_text(json.dumps(document, indent=2, sort_keys=True), encoding="utf-8")
-    aggregate.aggregate_runs(shuffled_index, tmp_path / "out-shuffled", resamples=60)
+    aggregate.aggregate_runs(
+        shuffled_index,
+        tmp_path / "out-shuffled",
+        resamples=60,
+        risk_profiles_dir=fixture_profiles(tmp_path),
+    )
 
     forward_docs = documents(tmp_path / "out-forward")
     shuffled_docs = documents(tmp_path / "out-shuffled")
@@ -792,3 +900,191 @@ def test_the_analysis_does_not_depend_on_the_order_the_runs_are_listed_in(
     assert forward_docs["intervals"] == shuffled_docs["intervals"]
     assert forward_docs["metrics"] == shuffled_docs["metrics"]
     assert forward_docs["rankings"] == shuffled_docs["rankings"]
+
+
+def test_the_metrics_document_carries_per_class_iou_and_recall(tmp_path: Path) -> None:
+    """A mean over classes hides which class the model actually fails on.
+
+    mIoU is one number over nineteen classes, and a model can hold it up while
+    being unusable on the two or three that matter for a safety argument. The
+    per-class values are recomputed here from the summed confusions rather than
+    read back, so the document cannot agree with itself by construction.
+
+    A class with no ground-truth support in the cohort is `None`, never `0.0`:
+    an IoU of zero is the worst possible score and an absent class has no score.
+    """
+
+    from drivemetrics.metrics.confusion import summarize_confusion
+
+    aggregate = load_aggregate()
+    run(tmp_path / "runs", tmp_path / "out")
+    published = documents(tmp_path / "out")["metrics"]
+
+    for model in MODELS:
+        per_seed_iou = []
+        per_seed_recall = []
+        for seed in SEEDS:
+            summary = summarize_confusion(
+                aggregate.summed_confusion(tmp_path / "runs" / f"{model}-seed-{seed}", SAMPLES)
+            )
+            per_seed_iou.append(summary.class_iou)
+            per_seed_recall.append(summary.class_recall)
+
+        for name, per_seed in (("iou", per_seed_iou), ("recall", per_seed_recall)):
+            published_values = published["per_class"][model][name]
+            assert len(published_values) == NUM_CLASSES
+            for class_id in range(NUM_CLASSES):
+                supported: list[float] = [
+                    value for row in per_seed if (value := row[class_id]) is not None
+                ]
+                if not supported:
+                    assert published_values[class_id] is None
+                else:
+                    assert published_values[class_id] == pytest.approx(
+                        sum(supported) / len(supported), rel=0.0, abs=1e-12
+                    )
+
+
+def test_the_metrics_document_separates_calibration_before_and_after_temperature(
+    tmp_path: Path,
+) -> None:
+    """Temperature changes confidence and nothing else, so only a confidence metric can see it.
+
+    Argmax is invariant under a positive scalar temperature, so the confusions of
+    the two evaluations are identical and every metric derived from them agrees.
+    ECE and Brier are the two numbers that separate them, and they are the reason
+    the calibrated artifacts were written at all. A document that reported one
+    calibration block for both, or that read the uncalibrated directory twice,
+    would publish the temperature fit as having done nothing.
+    """
+
+    run(tmp_path / "runs", tmp_path / "out")
+    published = documents(tmp_path / "out")["metrics"]
+
+    for model in MODELS:
+        block = published["calibration"][model]
+        assert set(block) == {"uncalibrated", "calibrated"}
+        for kind in ("uncalibrated", "calibrated"):
+            assert set(block[kind]) == {"ece", "brier"}
+            assert block[kind]["ece"] is not None
+            assert block[kind]["brier"] is not None
+        assert block["uncalibrated"]["ece"] != block["calibrated"]["ece"]
+        assert block["uncalibrated"]["brier"] != block["calibrated"]["brier"]
+
+    # And the values are the ones the kernels give, not something recomputed here
+    # by a different route: sum the statistics over the cohort and finalise once.
+    from drivemetrics.artifacts.predictions import read_prediction_artifact
+    from drivemetrics.metrics.calibration import (
+        ECEBinSufficientStatistics,
+        mean_classwise_expected_calibration_error,
+        multiclass_brier_score,
+    )
+
+    seed_eces: list[float] = []
+    for seed in SEEDS:
+        directory = tmp_path / "runs" / f"{MODELS[0]}-seed-{seed}"
+        counts = np.zeros((NUM_CLASSES, 15), dtype=np.int64)
+        sums = np.zeros((NUM_CLASSES, 15), dtype=np.float64)
+        positives = np.zeros((NUM_CLASSES, 15), dtype=np.int64)
+        brier = np.zeros(NUM_CLASSES, dtype=np.float64)
+        pixels = 0
+        for sample_id in SAMPLES:
+            _, record, ece = read_prediction_artifact(directory / f"{sample_id}.json")
+            counts += ece.counts
+            sums += ece.confidence_sums
+            positives += ece.positive_counts
+            brier += record.brier_sum_by_class
+            pixels += record.valid_pixel_count
+        value = mean_classwise_expected_calibration_error(
+            ECEBinSufficientStatistics(
+                counts=counts, confidence_sums=sums, positive_counts=positives
+            )
+        )
+        assert value is not None
+        assert multiclass_brier_score(brier, pixels) is not None
+        seed_eces.append(value)
+
+    expected_ece = sum(seed_eces) / len(seed_eces)
+    block = published["calibration"][MODELS[0]]["uncalibrated"]
+    assert block["ece"] == pytest.approx(expected_ece, rel=0.0, abs=1e-12)
+
+
+def test_the_metrics_document_carries_every_declared_risk_profile(tmp_path: Path) -> None:
+    """Publishing one cost profile would make the study's own question unanswerable.
+
+    The question is whether the ranking depends on how cost is assigned, so every
+    profile in the declared directory has to appear, including the one whose
+    critical set is empty — that is the comparison the others are read against.
+    The profiles are written here rather than taken from `configs/`, because the
+    production profiles declare nineteen classes and this fixture has four; a
+    test that reached into the repository's own configuration would be asserting
+    something about the fixture's arity rather than about the aggregation.
+    """
+
+    from drivemetrics.metrics.risk import compute_cost_risk
+    from drivemetrics.protocol.risk_profiles import load_risk_profile
+
+    aggregate = load_aggregate()
+    profiles = tmp_path / "profiles"
+    write_profile(profiles, "balanced", critical=[], sensitivity=1.0)
+    write_profile(profiles, "vru_priority", critical=[2, 3], sensitivity=2.0)
+
+    aggregate.aggregate_runs(
+        build_index(tmp_path / "runs"),
+        tmp_path / "out",
+        resamples=60,
+        risk_profiles_dir=profiles,
+    )
+    published = documents(tmp_path / "out")["metrics"]
+
+    assert sorted(published["risk_profiles"]) == ["balanced", "vru_priority"]
+    for name in ("balanced", "vru_priority"):
+        profile = load_risk_profile(profiles / f"{name}.yaml")
+        block = published["risk_profiles"][name]
+        assert block["sensitivity"] == profile.sensitivity
+        assert block["critical_class_ids"] == list(profile.critical_class_ids)
+        for model in MODELS:
+            per_seed = [
+                compute_cost_risk(
+                    aggregate.summed_confusion(tmp_path / "runs" / f"{model}-seed-{seed}", SAMPLES),
+                    profile,
+                )
+                for seed in SEEDS
+            ]
+            assert block["cost_risk"][model] == pytest.approx(
+                sum(per_seed) / len(per_seed), rel=0.0, abs=1e-12
+            )
+    assert (
+        published["risk_profiles"]["vru_priority"]["cost_risk"]
+        != (published["risk_profiles"]["balanced"]["cost_risk"])
+    )
+
+
+def test_the_default_risk_profile_directory_is_the_repositorys_own(tmp_path: Path) -> None:
+    """The default must be the shipped configuration, not a path a caller happens to pass."""
+
+    aggregate = load_aggregate()
+    profiles = aggregate.DEFAULT_RISK_PROFILES_DIR
+
+    assert profiles.is_dir()
+    assert sorted(path.stem for path in profiles.glob("*.yaml")) == [
+        "balanced",
+        "drivable_boundary",
+        "vru_priority",
+    ]
+
+
+def test_summing_calibration_over_an_empty_cohort_is_refused(tmp_path: Path) -> None:
+    """An empty cohort has no calibration to finalise, and zero error is a perfect score.
+
+    The accumulator learns its array shapes from the first artifact it reads, so
+    with nothing to read it has no shapes and no sums. Returning zeros would
+    publish a perfectly calibrated model for a run that produced nothing.
+    """
+
+    aggregate = load_aggregate()
+    directory = tmp_path / "runs" / f"{MODELS[0]}-seed-17"
+    build_index(tmp_path / "runs")
+
+    with pytest.raises(ValueError, match=r"^no artifacts found for the cohort under "):
+        aggregate._accumulate_calibration(directory, ())

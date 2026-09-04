@@ -157,3 +157,97 @@ def classwise_ece_sufficient_statistics(
         confidence_sums=confidence_sums,
         positive_counts=positive_counts,
     )
+
+
+def multiclass_brier_score(
+    brier_sum_by_class: Float64Array,
+    valid_pixel_count: int,
+) -> float | None:
+    """Return the multiclass Brier score from summed squared error over N pixels.
+
+    The artifacts store per-class SUMS rather than a score, because sums from two
+    images add exactly and a score does not. This is the only reason a cohort
+    number can be recomputed years later from artifacts that never retained a
+    probability: add the sums, add the counts, divide once.
+
+    ``None`` for an empty cohort. Zero squared error is a perfect score, so
+    returning zero for "nothing was measured" would make the best outcome
+    indistinguishable from no outcome at all.
+    """
+
+    sums = np.asarray(brier_sum_by_class, dtype=np.float64)
+    if sums.ndim != 1:
+        raise ValueError(f"brier_sum_by_class must be a flat array, got shape {sums.shape}")
+    if not np.all(np.isfinite(sums)) or np.any(sums < 0.0):
+        raise ValueError("brier_sum_by_class must contain finite nonnegative values")
+    if not isinstance(valid_pixel_count, (int, np.integer)) or isinstance(valid_pixel_count, bool):
+        raise ValueError("valid_pixel_count must be an integer")
+    if valid_pixel_count < 0:
+        raise ValueError("valid_pixel_count must be nonnegative")
+    if valid_pixel_count == 0:
+        return None
+    return float(sums.sum()) / float(valid_pixel_count)
+
+
+def _validated_ece(
+    statistics: ECEBinSufficientStatistics,
+) -> tuple[Int64Array, Float64Array, Int64Array]:
+    counts = np.asarray(statistics.counts, dtype=np.int64)
+    sums = np.asarray(statistics.confidence_sums, dtype=np.float64)
+    positives = np.asarray(statistics.positive_counts, dtype=np.int64)
+    if counts.ndim != 2 or counts.shape != sums.shape or counts.shape != positives.shape:
+        raise ValueError("ECE statistics must share one class-by-bin shape")
+    if np.any(counts < 0) or np.any(positives < 0):
+        raise ValueError("ECE counts must be nonnegative")
+    if np.any(positives > counts):
+        raise ValueError("ECE positive_counts must not exceed counts")
+    if not np.all(np.isfinite(sums)):
+        raise ValueError("ECE confidence_sums must be finite")
+    return counts, sums, positives
+
+
+def classwise_expected_calibration_error(
+    statistics: ECEBinSufficientStatistics,
+) -> tuple[float | None, ...]:
+    """Return one-vs-rest expected calibration error per class, or ``None`` per class.
+
+    Each bin contributes the gap between how often the class actually occurred in
+    it and how confident the model was there, WEIGHTED by how many pixels landed
+    in that bin. Weighting the bins equally instead would let a bin holding three
+    pixels count as much as one holding three million, which is the difference
+    between a calibration number and a decoration.
+
+    A class no pixel ever saw is ``None``, not zero: zero calibration error is
+    the best possible score and an unmeasured class has no score at all.
+    """
+
+    counts, sums, positives = _validated_ece(statistics)
+    per_class: list[float | None] = []
+    for class_id in range(counts.shape[0]):
+        total = int(counts[class_id].sum())
+        if total == 0:
+            per_class.append(None)
+            continue
+        occupied = counts[class_id] > 0
+        accuracy = positives[class_id][occupied] / counts[class_id][occupied]
+        confidence = sums[class_id][occupied] / counts[class_id][occupied]
+        weight = counts[class_id][occupied] / total
+        per_class.append(float(np.sum(weight * np.abs(accuracy - confidence))))
+    return tuple(per_class)
+
+
+def mean_classwise_expected_calibration_error(
+    statistics: ECEBinSufficientStatistics,
+) -> float | None:
+    """Average the per-class errors over the classes that have support.
+
+    Counting an unmeasured class as zero would flatter every published number,
+    and by an amount that grows with how many classes the cohort never contained.
+    """
+
+    supported = [
+        value for value in classwise_expected_calibration_error(statistics) if value is not None
+    ]
+    if not supported:
+        return None
+    return float(np.mean(supported))
