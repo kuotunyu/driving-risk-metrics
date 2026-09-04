@@ -5,6 +5,7 @@ from __future__ import annotations
 from types import ModuleType
 
 import numpy as np
+import numpy.typing as npt
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
@@ -374,3 +375,121 @@ def test_the_curve_follows_confidence_order_rather_than_array_order() -> None:
     # Confidence order accepts the two correct samples first, so risk stays at
     # zero until the last sample; array order would put the error first.
     assert risk.tolist() == [0.0, 0.0, pytest.approx(1.0 / 3.0)]
+
+
+def test_a_histogram_curve_matches_the_per_pixel_curve_at_every_bin_boundary() -> None:
+    """A cohort has a billion pixels, so the curve is rebuilt from counts, not from pixels.
+
+    Nine hundred and twenty million per-pixel confidences cannot be retained, and
+    the artifacts store a quantized histogram instead. Inside one bin the
+    per-pixel curve is not recoverable — the pixels there are indistinguishable
+    by construction — so the published curve is DEFINED at bin boundaries, and
+    this test pins that it agrees with the per-pixel curve exactly wherever both
+    are defined.
+    """
+
+    module = load_selective_module()
+    bins = 8
+    counts = np.zeros(bins, dtype=np.int64)
+    correct = np.zeros(bins, dtype=np.int64)
+    # Three pixels at bin 6, two at bin 3, one at bin 1: high confidence is mostly
+    # right and low confidence is mostly wrong, which is the shape a curve reads.
+    counts[6], correct[6] = 3, 3
+    counts[3], correct[3] = 2, 1
+    counts[1], correct[1] = 1, 0
+
+    coverage, risk = module.selective_risk_from_histogram(counts, correct)
+
+    # The equivalent per-pixel population, accepted in descending bin order.
+    confidence = np.array([6, 6, 6, 3, 3, 1], dtype=np.float64)
+    correctness = np.array([True, True, True, True, False, False])
+    exact_coverage, exact_risk = module.selective_risk_curve(confidence, correctness)
+
+    assert coverage.tolist() == [3 / 6, 5 / 6, 6 / 6]
+    for position, point in enumerate(coverage):
+        index = int(np.argmin(np.abs(exact_coverage - point)))
+        assert exact_coverage[index] == pytest.approx(point, rel=0.0, abs=1e-12)
+        assert risk[position] == pytest.approx(exact_risk[index], rel=0.0, abs=1e-12)
+
+
+def test_an_empty_bin_adds_no_point_to_the_curve() -> None:
+    """A bin no pixel reached is not a coverage level anything can be evaluated at."""
+
+    module = load_selective_module()
+    counts = np.array([0, 2, 0, 2, 0], dtype=np.int64)
+    correct = np.array([0, 2, 0, 1, 0], dtype=np.int64)
+
+    coverage, _ = module.selective_risk_from_histogram(counts, correct)
+
+    assert coverage.tolist() == [0.5, 1.0]
+
+
+def test_the_histogram_curve_reads_the_bins_from_most_confident_to_least() -> None:
+    """Reversing the order would report the model's worst pixels as its most certain."""
+
+    module = load_selective_module()
+    counts = np.array([2, 2], dtype=np.int64)
+    correct = np.array([0, 2], dtype=np.int64)
+
+    _, risk = module.selective_risk_from_histogram(counts, correct)
+
+    # Bin 1 is the confident one and is entirely correct, so the first point is 0.
+    assert risk.tolist() == [0.0, 0.5]
+
+
+def test_a_histogram_with_no_pixels_at_all_is_refused() -> None:
+    """An empty cohort has no curve, and a curve of one point has no area."""
+
+    module = load_selective_module()
+
+    with pytest.raises(ValueError, match=r"^the histogram contains no pixel"):
+        module.selective_risk_from_histogram(
+            np.zeros(4, dtype=np.int64), np.zeros(4, dtype=np.int64)
+        )
+
+
+def test_a_histogram_claiming_more_correct_than_it_counted_is_refused() -> None:
+    """Correct pixels are a subset of the pixels in a bin, and the artifact may be wrong."""
+
+    module = load_selective_module()
+
+    with pytest.raises(ValueError, match=r"^correct counts must not exceed the bin counts"):
+        module.selective_risk_from_histogram(
+            np.array([1, 2], dtype=np.int64), np.array([2, 2], dtype=np.int64)
+        )
+
+
+@pytest.mark.parametrize(
+    ("counts", "correct", "expected"),
+    [
+        (
+            np.zeros((2, 2), dtype=np.int64),
+            np.zeros((2, 2), dtype=np.int64),
+            r"^counts and correct counts must be flat arrays of the same length$",
+        ),
+        (
+            np.zeros(3, dtype=np.int64),
+            np.zeros(4, dtype=np.int64),
+            r"^counts and correct counts must be flat arrays of the same length$",
+        ),
+        (
+            np.array([-1, 2], dtype=np.int64),
+            np.array([0, 2], dtype=np.int64),
+            r"^histogram counts must be nonnegative$",
+        ),
+        (
+            np.array([1, 2], dtype=np.int64),
+            np.array([-1, 2], dtype=np.int64),
+            r"^histogram counts must be nonnegative$",
+        ),
+    ],
+)
+def test_a_malformed_histogram_is_refused_rather_than_curved(
+    counts: npt.NDArray[np.int64], correct: npt.NDArray[np.int64], expected: str
+) -> None:
+    """The histogram comes from a file, and a negative count would run the cumulative sum backwards."""
+
+    module = load_selective_module()
+
+    with pytest.raises(ValueError, match=expected):
+        module.selective_risk_from_histogram(counts, correct)

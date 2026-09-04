@@ -29,14 +29,25 @@ from drivemetrics.artifacts.formal_set import (
     validate_formal_run_index,
 )
 from drivemetrics.artifacts.predictions import read_prediction_artifact
+from drivemetrics.metrics.calibration import (
+    ECEBinSufficientStatistics,
+    mean_classwise_expected_calibration_error,
+    multiclass_brier_score,
+)
 from drivemetrics.metrics.confusion import summarize_confusion
-from drivemetrics.metrics.risk import critical_false_negative_rate
+from drivemetrics.metrics.risk import compute_cost_risk, critical_false_negative_rate
+from drivemetrics.protocol.risk_profiles import load_risk_profile
 
 Float64Array = npt.NDArray[np.float64]
 Int64Array = npt.NDArray[np.int64]
 
 OUTPUT_NAMES: tuple[str, ...] = ("metrics", "intervals", "rankings")
 BASELINE_METRIC = "miou"
+#: Every declared cost profile is published, not one. The study's question is
+#: whether the ranking depends on how cost is assigned, and a single profile
+#: cannot answer it; `balanced`, whose critical set is empty, is the comparison
+#: the other two are read against.
+DEFAULT_RISK_PROFILES_DIR = Path(__file__).resolve().parents[3] / "configs" / "risk_profiles"
 RATIO_ESTIMATOR = "ratio_of_sums"
 BOOTSTRAP_SEED = 20260831
 
@@ -88,6 +99,26 @@ def _metric_from_confusion(
     return 1.0 - rate
 
 
+def _mean_or_none(values: Sequence[float | None]) -> float | None:
+    """Average the values that exist, or report that none did.
+
+    A class no cohort pixel ever carried has no score, and averaging it in as
+    zero would flatter the published number by an amount that grows with how
+    many classes were absent.
+    """
+
+    present = [value for value in values if value is not None]
+    if not present:
+        return None
+    return float(np.mean(present))
+
+
+def _mean_over_seeds(rows: Sequence[Sequence[float | None]]) -> list[float | None]:
+    """Mean each class position across the seeds that measured it."""
+
+    return [_mean_or_none([row[position] for row in rows]) for position in range(len(rows[0]))]
+
+
 def _statistic_for(name: str, num_classes: int, critical_class_ids: tuple[int, ...]):
     """Build the run-wise statistic that recomputes one metric from summed components."""
 
@@ -99,6 +130,63 @@ def _statistic_for(name: str, num_classes: int, critical_class_ids: tuple[int, .
         )
 
     return statistic
+
+
+@dataclass(frozen=True)
+class _CalibrationSums:
+    """One run's summed calibration statistics over the cohort."""
+
+    ece: ECEBinSufficientStatistics
+    brier_sum_by_class: Float64Array
+    valid_pixel_count: int
+
+    def finalised(self) -> dict[str, float | None]:
+        return {
+            "ece": mean_classwise_expected_calibration_error(self.ece),
+            "brier": multiclass_brier_score(self.brier_sum_by_class, self.valid_pixel_count),
+        }
+
+
+def _accumulate_calibration(directory: Path, sample_ids: Sequence[str]) -> _CalibrationSums:
+    """Sum one evaluation's calibration statistics, which is the only way they combine.
+
+    ECE and Brier are stored per image as sufficient statistics rather than as
+    scores, because statistics add exactly and scores do not. Averaging per-image
+    ECEs would weight a small image like a large one and would not be the cohort
+    number at all.
+    """
+
+    counts: Int64Array | None = None
+    confidence_sums: Float64Array | None = None
+    positive_counts: Int64Array | None = None
+    brier: Float64Array | None = None
+    pixels = 0
+    for sample_id in sample_ids:
+        _, record, ece = read_prediction_artifact(directory / f"{sample_id}.json")
+        counts = ece.counts.copy() if counts is None else counts + ece.counts
+        confidence_sums = (
+            ece.confidence_sums.copy()
+            if confidence_sums is None
+            else confidence_sums + ece.confidence_sums
+        )
+        positive_counts = (
+            ece.positive_counts.copy()
+            if positive_counts is None
+            else positive_counts + ece.positive_counts
+        )
+        brier = (
+            record.brier_sum_by_class.copy() if brier is None else brier + record.brier_sum_by_class
+        )
+        pixels += int(record.valid_pixel_count)
+    if counts is None or confidence_sums is None or positive_counts is None or brier is None:
+        raise ValueError(f"no artifacts found for the cohort under {directory}")
+    return _CalibrationSums(
+        ece=ECEBinSufficientStatistics(
+            counts=counts, confidence_sums=confidence_sums, positive_counts=positive_counts
+        ),
+        brier_sum_by_class=brier,
+        valid_pixel_count=pixels,
+    )
 
 
 def _load_components(
@@ -144,6 +232,7 @@ def aggregate_runs(
     *,
     resamples: int = 5000,
     seed: int = BOOTSTRAP_SEED,
+    risk_profiles_dir: Path = DEFAULT_RISK_PROFILES_DIR,
 ) -> AggregateResult:
     """Compute the metric table, paired intervals and ranking comparison.
 
@@ -190,8 +279,9 @@ def aggregate_runs(
 
     models = tuple(dict.fromkeys(str(entry["model"]) for entry in runs))
     model_ids = tuple(models.index(str(entry["model"])) for entry in runs)
+    index_dir = index_path.parent
     components, totals = _load_components(
-        index_path.parent,
+        index_dir,
         runs,
         sample_ids,
         protocol_sha256=protocol_sha256,
@@ -207,6 +297,49 @@ def aggregate_runs(
                 if entry["model"] == model
             ]
             table[model][name] = float(np.mean(values))
+
+    per_class: dict[str, dict[str, list[float | None]]] = {}
+    calibration: dict[str, dict[str, dict[str, float | None]]] = {}
+    for model in models:
+        positions = [index for index, label in enumerate(model_ids) if models[label] == model]
+        summaries = [summarize_confusion(totals[index]) for index in positions]
+        per_class[model] = {
+            "iou": _mean_over_seeds([summary.class_iou for summary in summaries]),
+            "recall": _mean_over_seeds([summary.class_recall for summary in summaries]),
+        }
+        calibration[model] = {}
+        for kind, key in (
+            ("uncalibrated", "artifacts_dir"),
+            ("calibrated", "calibrated_artifacts_dir"),
+        ):
+            finalised = [
+                _accumulate_calibration(index_dir / str(runs[index][key]), sample_ids).finalised()
+                for index in positions
+            ]
+            calibration[model][kind] = {
+                field: _mean_or_none([row[field] for row in finalised])
+                for field in ("ece", "brier")
+            }
+
+    risk_profiles: dict[str, dict[str, Any]] = {}
+    for profile_path in sorted(Path(risk_profiles_dir).glob("*.yaml")):
+        profile = load_risk_profile(profile_path)
+        risk_profiles[profile_path.stem] = {
+            "sensitivity": profile.sensitivity,
+            "critical_class_ids": list(profile.critical_class_ids),
+            "cost_risk": {
+                model: float(
+                    np.mean(
+                        [
+                            compute_cost_risk(totals[index], profile)
+                            for index, label in enumerate(model_ids)
+                            if models[label] == model
+                        ]
+                    )
+                )
+                for model in models
+            },
+        }
 
     intervals: dict[str, dict[str, Any]] = {}
     for name in METRIC_NAMES:
@@ -256,6 +389,9 @@ def aggregate_runs(
                 f"resamples, seed {seed}"
             ),
             "metrics": table,
+            "per_class": per_class,
+            "calibration": calibration,
+            "risk_profiles": risk_profiles,
         },
     )
     _write(output_dir / "intervals.json", {**common, "intervals": intervals})
