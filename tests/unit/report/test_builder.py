@@ -198,7 +198,7 @@ def test_a_failing_claim_audit_refuses_to_publish(tmp_path: Path) -> None:
 def test_a_missing_report_input_fails_closed(tmp_path: Path) -> None:
     """A page built from a partial artifact set would silently omit a whole result."""
 
-    with pytest.raises(FileNotFoundError, match=r"rankings\.json"):
+    with pytest.raises(FileNotFoundError, match=r"^report input is missing:"):
         build(tmp_path, drop="rankings")
 
 

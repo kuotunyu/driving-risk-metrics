@@ -93,25 +93,37 @@ def test_loader_accepts_valid_partial_taxonomy_profile(tmp_path: Path) -> None:
     ("content", "expected"),
     [
         ("- not\n- a\n- mapping\n", r"^risk profile document must be a mapping$"),
-        (profile_yaml(extra="name: tiny"), "duplicate mapping key"),
-        (profile_yaml(extra="unexpected: true"), "unexpected"),
-        (profile_yaml(schema_version="bdd100k-risk-profile/v2"), "schema_version"),
-        (profile_yaml(taxonomy="other"), "taxonomy"),
-        (profile_yaml(sensitivity=1.5), "sensitivity"),
+        (profile_yaml(extra="name: tiny"), r"^duplicate mapping key: 'name'$"),
+        (
+            profile_yaml(extra="unexpected: true"),
+            r"^1 validation error for RiskProfileDocument\nunexpected\n  Extra inputs are not permitted",
+        ),
+        (
+            profile_yaml(schema_version="bdd100k-risk-profile/v2"),
+            r"^1 validation error for RiskProfileDocument\nschema_version\n  Input should be 'bdd100k-risk-profile/v1'",
+        ),
+        (
+            profile_yaml(taxonomy="other"),
+            r"^1 validation error for RiskProfileDocument\ntaxonomy\n  Input should be 'bdd100k-semantic-train-id/v1'",
+        ),
+        (
+            profile_yaml(sensitivity=1.5),
+            r"^1 validation error for RiskProfileDocument\nsensitivity\n  Value error, sensitivity must be one of 0\.5, 1\.0, or 2\.0",
+        ),
         (
             profile_yaml(
                 costs="""  - {class_id: 0, class_name: road, cost: 1.0, extra: true}
   - {class_id: 1, class_name: sidewalk, cost: 1.0}""",
                 critical="[]",
             ),
-            "extra",
+            r"^1 validation error for RiskProfileDocument\nclass_costs\.0\.extra\n  Extra inputs are not permitted",
         ),
         (
             profile_yaml(
                 costs="""  - {class_id: 0, class_name: road, cost: 1.0, cost: 1.0}""",
                 critical="[]",
             ),
-            "duplicate mapping key",
+            r"^duplicate mapping key: 'cost'$",
         ),
         (
             profile_yaml(
@@ -119,21 +131,21 @@ def test_loader_accepts_valid_partial_taxonomy_profile(tmp_path: Path) -> None:
   - {class_id: 0, class_name: road, cost: 1.0}""",
                 critical="[]",
             ),
-            "unique",
+            r"^1 validation error for RiskProfileDocument\n  Value error, class cost IDs must be unique",
         ),
         (
             profile_yaml(
                 costs="""  - {class_id: 19, class_name: road, cost: 1.0}""",
                 critical="[]",
             ),
-            "taxonomy",
+            r"^1 validation error for RiskProfileDocument\nclass_costs\.0\.class_id\n  Value error, class ID is outside the BDD100K taxonomy",
         ),
         (
             profile_yaml(
                 costs="""  - {class_id: 0, class_name: sidewalk, cost: 1.0}""",
                 critical="[]",
             ),
-            "name",
+            r"^1 validation error for RiskProfileDocument\nclass_costs\.0\n  Value error, class name must be 'road' for ID 0",
         ),
         (
             profile_yaml(
@@ -141,14 +153,14 @@ def test_loader_accepts_valid_partial_taxonomy_profile(tmp_path: Path) -> None:
   - {class_id: 1, class_name: sidewalk, cost: 3.0}""",
                 critical="[]",
             ),
-            "nonnegative",
+            r"^1 validation error for RiskProfileDocument\nclass_costs\.0\n  Value error, class costs must be nonnegative",
         ),
         (
             profile_yaml(
                 costs="""  - {class_id: 0, class_name: road, cost: .inf}""",
                 critical="[]",
             ),
-            "finite",
+            r"^1 validation error for RiskProfileDocument\nclass_costs\.0\n  Value error, class costs must be finite",
         ),
         (
             profile_yaml(
@@ -156,7 +168,7 @@ def test_loader_accepts_valid_partial_taxonomy_profile(tmp_path: Path) -> None:
   - {class_id: 1, class_name: sidewalk, cost: 0.0}""",
                 critical="[]",
             ),
-            "positive",
+            r"^risk profile must contain at least one positive cost$",
         ),
         (
             profile_yaml(
@@ -164,10 +176,16 @@ def test_loader_accepts_valid_partial_taxonomy_profile(tmp_path: Path) -> None:
   - {class_id: 1, class_name: sidewalk, cost: 2.0}""",
                 critical="[]",
             ),
-            "mean non-zero",
+            r"^mean non-zero class cost must equal 1 within 1e-12$",
         ),
-        (profile_yaml(critical="[2, 2]"), "unique"),
-        (profile_yaml(critical="[3]"), "declared"),
+        (
+            profile_yaml(critical="[2, 2]"),
+            r"^1 validation error for RiskProfileDocument\n  Value error, critical class IDs must be unique",
+        ),
+        (
+            profile_yaml(critical="[3]"),
+            r"^1 validation error for RiskProfileDocument\n  Value error, critical class IDs must be declared in class_costs",
+        ),
     ],
 )
 def test_loader_rejects_invalid_documents(tmp_path: Path, content: str, expected: str) -> None:

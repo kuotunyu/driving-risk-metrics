@@ -204,7 +204,7 @@ def test_the_fit_refuses_to_overwrite_an_existing_temperature(tmp_path: Path) ->
     workspace = build_workspace(tmp_path)
     run(workspace, tmp_path / "calibration")
 
-    with pytest.raises(FileExistsError, match=r"temperature\.json"):
+    with pytest.raises(FileExistsError, match=r"^a frozen temperature already exists:"):
         run(workspace, tmp_path / "calibration")
 
 
@@ -264,7 +264,9 @@ def test_a_manifest_whose_files_drifted_is_refused(tmp_path: Path) -> None:
     drifted = workspace["data_root"] / "images/10k/train" / manifest.relative_image_paths[0]
     drifted.write_bytes(b"different bytes entirely")
 
-    with pytest.raises(ValueError, match=r"SHA-256 does not match"):
+    with pytest.raises(
+        ValueError, match=r"^dataset file SHA-256 does not match the frozen manifest: c0000\.jpg$"
+    ):
         run(workspace, tmp_path / "calibration")
 
 

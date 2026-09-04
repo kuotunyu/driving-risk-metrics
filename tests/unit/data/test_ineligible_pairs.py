@@ -103,8 +103,8 @@ def test_marking_pairs_ineligible_removes_them_from_the_eligible_list_and_rehash
 @pytest.mark.parametrize(
     ("reasons", "message"),
     [
-        ({"nobody": REASON}, "not present"),
-        ({"t00001": ""}, "reason"),
+        ({"nobody": REASON}, r"^sample IDs are not present in the manifest: \('nobody',\)$"),
+        ({"t00001": ""}, r"^every ineligible sample needs a reason$"),
     ],
 )
 def test_marking_an_unknown_or_unreasoned_pair_fails_closed(
@@ -121,17 +121,23 @@ def test_marking_an_unknown_or_unreasoned_pair_fails_closed(
 @pytest.mark.parametrize(
     ("changes", "message"),
     [
-        ({"ineligibility_reasons": ()}, "aligned"),
+        ({"ineligibility_reasons": ()}, r"^ineligible sample IDs and reasons must be aligned$"),
         (
             {
                 "ineligible_sample_ids": ("t00001", "t00001"),
                 "ineligibility_reasons": (REASON, REASON),
             },
-            "duplicate ineligible",
+            r"^manifest contains duplicate ineligible sample IDs$",
         ),
-        ({"ineligible_sample_ids": ("t00000",)}, "both eligible and ineligible"),
-        ({"ineligibility_reasons": ("",)}, "reason"),
-        ({"ineligible_sample_ids": ("a/b",)}, "path-free"),
+        (
+            {"ineligible_sample_ids": ("t00000",)},
+            r"^a sample cannot be both eligible and ineligible$",
+        ),
+        ({"ineligibility_reasons": ("",)}, r"^every ineligible sample needs a reason$"),
+        (
+            {"ineligible_sample_ids": ("a/b",)},
+            r"^manifest sample IDs must be nonempty path-free names$",
+        ),
     ],
 )
 def test_a_manifest_with_an_inconsistent_ineligible_record_fails_closed(

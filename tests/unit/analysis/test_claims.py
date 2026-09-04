@@ -134,7 +134,11 @@ def test_registry_requires_exact_shared_vocabulary(
     values = valid_registry_values([])
     values[vocabulary_field] = invalid_value
 
-    with pytest.raises(ValidationError, match=vocabulary_field):
+    expected = (
+        rf"^1 validation error for ClaimsRegistryV1\n  Value error, {vocabulary_field} "
+        r"must match the approved vocabulary"
+    )
+    with pytest.raises(ValidationError, match=expected):
         claims.ClaimsRegistryV1.model_validate(values)
 
 

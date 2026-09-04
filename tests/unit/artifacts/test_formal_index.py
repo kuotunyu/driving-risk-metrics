@@ -201,7 +201,9 @@ def test_each_entry_carries_its_own_temperature_and_checkpoint(
 def test_a_missing_run_is_named_not_skipped(tmp_path: Path, hashes: dict[str, Any]) -> None:
     """An index silently built from eight runs is the failure the gate exists to catch."""
 
-    with pytest.raises(FileNotFoundError, match=r"upernet_dinov2_small.*seed-73"):
+    with pytest.raises(
+        FileNotFoundError, match=r"^missing run_record\.json for upernet_dinov2_small seed-73:"
+    ):
         build(tmp_path, hashes, skip=("upernet_dinov2_small", 73))
 
 
@@ -299,16 +301,61 @@ def _mutating(target: tuple[str, int], key: str, field: str, value: Any) -> Any:
 @pytest.mark.parametrize(
     ("key", "field", "value", "message"),
     [
-        ("train", "seed", 42, "seed"),
-        ("train", "run_id", "someone-else", "run_id"),
-        ("train", "protocol_sha256", "9" * 64, "protocol"),
-        ("train", "artifacts", {}, "final_checkpoint"),
-        ("temperature", "schema_version", "other/v9", "schema_version"),
-        ("temperature", "protocol_sha256", "9" * 64, "protocol"),
-        ("temperature", "temperature", 0.0, "positive"),
-        ("eval_raw", "status", "aborted", "succeeded"),
-        ("eval_raw", "protocol_sha256", "9" * 64, "protocol"),
-        ("eval_cal", "seed", 73, "seed"),
+        ("train", "seed", 42, r"^training run segformer_b2-seed-17 carries seed 42, expected 17$"),
+        (
+            "train",
+            "run_id",
+            "someone-else",
+            r"^training run_id 'someone-else' does not match 'segformer_b2-seed-17'$",
+        ),
+        (
+            "train",
+            "protocol_sha256",
+            "9" * 64,
+            r"^training run segformer_b2-seed-17 was produced under a different protocol hash$",
+        ),
+        (
+            "train",
+            "artifacts",
+            {},
+            r"^training run segformer_b2-seed-17 recorded no final_checkpoint artifact$",
+        ),
+        (
+            "temperature",
+            "schema_version",
+            "other/v9",
+            r"^temperature for segformer_b2-seed-17 has the wrong schema_version$",
+        ),
+        (
+            "temperature",
+            "protocol_sha256",
+            "9" * 64,
+            r"^temperature for segformer_b2-seed-17 was fitted under another protocol$",
+        ),
+        (
+            "temperature",
+            "temperature",
+            0.0,
+            r"^temperature for segformer_b2-seed-17 must be finite and positive$",
+        ),
+        (
+            "eval_raw",
+            "status",
+            "aborted",
+            r"^uncalibrated evaluation of segformer_b2-seed-17 status must be succeeded, got 'aborted'$",
+        ),
+        (
+            "eval_raw",
+            "protocol_sha256",
+            "9" * 64,
+            r"^uncalibrated evaluation of segformer_b2-seed-17 was produced under a different protocol hash$",
+        ),
+        (
+            "eval_cal",
+            "seed",
+            73,
+            r"^calibrated evaluation of segformer_b2-seed-17 carries seed 73, expected 17$",
+        ),
     ],
 )
 def test_every_binding_in_a_run_directory_is_checked(
@@ -332,7 +379,7 @@ def test_a_run_record_that_fails_its_schema_is_refused(
 
     with pytest.raises(
         ValueError,
-        match=r"run_record\.json is not a valid run record: 1 validation error for RunRecordV1",
+        match=r"is not a valid run record: 1 validation error for RunRecordV1\ncommit\n  String should match pattern '\^\[0-9a-f\]\{40\}\$'",
     ):
         build(tmp_path, hashes, mutate=_mutating(("segformer_b2", 17), "train", "commit", "x"))
 
@@ -349,7 +396,7 @@ def test_a_run_file_that_is_not_an_object_is_refused(
         "[1.3]", encoding="utf-8"
     )
 
-    with pytest.raises(TypeError, match=r"temperature\.json must contain a JSON object$"):
+    with pytest.raises(TypeError, match=r"must contain a JSON object$"):
         load_index_module().build_formal_run_index(
             runs, PROTOCOL, hashes["locked_path"], runs / "x.json", critical_class_ids=CRITICAL
         )

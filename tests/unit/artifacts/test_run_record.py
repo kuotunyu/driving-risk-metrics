@@ -120,7 +120,7 @@ def test_running_record_requires_unfinished_timestamp() -> None:
 
     with pytest.raises(
         ValidationError,
-        match=r"Value error, running run must not have finished_at_utc \[type=value_error,",
+        match=r"^1 validation error for RunRecordV1\n  Value error, running run must not have finished_at_utc",
     ):
         run_record.RunRecordV1.model_validate(values)
 
@@ -140,7 +140,7 @@ def test_terminal_record_requires_finished_timestamp(terminal_status: str) -> No
 
     with pytest.raises(
         ValidationError,
-        match=r"Value error, terminal run requires finished_at_utc \[type=value_error,",
+        match=r"^1 validation error for RunRecordV1\n  Value error, terminal run requires finished_at_utc",
     ):
         run_record.RunRecordV1.model_validate(values)
 
@@ -154,7 +154,7 @@ def test_run_record_rejects_finish_before_start() -> None:
 
     with pytest.raises(
         ValidationError,
-        match=r"Value error, finished_at_utc must not precede started_at_utc \[type=value_error,",
+        match=r"^1 validation error for RunRecordV1\n  Value error, finished_at_utc must not precede started_at_utc",
     ):
         run_record.RunRecordV1.model_validate(values)
 

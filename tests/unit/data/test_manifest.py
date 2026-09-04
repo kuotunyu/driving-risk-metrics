@@ -67,7 +67,10 @@ def test_build_manifest_is_sorted_and_independent_of_creation_order(tmp_path: Pa
 
 @pytest.mark.parametrize(
     ("remove_glob", "expected"),
-    [("*.png", "missing label"), ("*.jpg", "extra label")],
+    [
+        ("*.png", r"^missing label for sample IDs: \['sample-b'\]$"),
+        ("*.jpg", r"^extra label for sample IDs: \['sample-b'\]$"),
+    ],
 )
 def test_build_manifest_rejects_missing_or_extra_pair(
     tmp_path: Path,
@@ -206,7 +209,7 @@ def test_manifest_rejects_duplicate_ids_and_manifest_hash_drift(tmp_path: Path) 
 @pytest.mark.parametrize(
     ("changes", "expected"),
     [
-        ({"dataset_name": ""}, "identity"),
+        ({"dataset_name": ""}, r"^manifest identity fields must be nonempty$"),
         (
             {
                 "sample_ids": (),
@@ -214,9 +217,12 @@ def test_manifest_rejects_duplicate_ids_and_manifest_hash_drift(tmp_path: Path) 
                 "relative_label_paths": (),
                 "file_sha256": (),
             },
-            "at least one sample",
+            r"^manifest must contain at least one sample$",
         ),
-        ({"sample_ids": ("../sample-a", "sample-b")}, "path-free"),
+        (
+            {"sample_ids": ("../sample-a", "sample-b")},
+            r"^manifest sample IDs must be nonempty path-free names$",
+        ),
     ],
 )
 def test_manifest_rejects_empty_identity_cohort_or_path_like_id(
@@ -235,8 +241,12 @@ def test_manifest_rejects_empty_identity_cohort_or_path_like_id(
 @pytest.mark.parametrize(
     ("function_name", "filename", "expected"),
     [
-        ("image_sample_id", "sample-a.png", "image filename"),
-        ("label_sample_id", "sample-a_color.png", "train-ID label filename"),
+        ("image_sample_id", "sample-a.png", r"^unsupported BDD100K image filename: sample-a\.png$"),
+        (
+            "label_sample_id",
+            "sample-a_color.png",
+            r"^unsupported BDD100K train-ID label filename: sample-a_color\.png$",
+        ),
     ],
 )
 def test_bdd100k_filename_parsers_reject_wrong_artifact_type(
