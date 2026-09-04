@@ -204,7 +204,10 @@ def test_a_malformed_temperature_artifact_fails_closed(workspace: dict[str, Any]
     broken = tmp_path / "broken-temperature.json"
     broken.write_text(json.dumps({"temperature": 1.5}), encoding="utf-8")
 
-    with pytest.raises((ValueError, KeyError)):
+    with pytest.raises(
+        (ValueError, KeyError),
+        match=r"^temperature artifact must declare drivemetrics-temperature/v1, got ",
+    ):
         evaluate(workspace, tmp_path / "out", broken)
 
 

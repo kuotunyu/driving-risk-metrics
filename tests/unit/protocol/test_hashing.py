@@ -202,18 +202,35 @@ def test_protocol_loader_rejects_unsafe_path_or_changed_fixed_model(
 
 
 @pytest.mark.parametrize(
-    "document",
-    ["- not-a-mapping\n", "schema_version: bdd100k-semseg-protocol/v2\n"],
+    ("document", "expected"),
+    [
+        ("- not-a-mapping\n", r"^protocol document must be a mapping$"),
+        (
+            "schema_version: bdd100k-semseg-protocol/v2\n",
+            r"^9 validation errors for BDD100KSemanticProtocolV1\nschema_version"
+            r"\n  Input should be 'bdd100k-semseg-protocol/v1'",
+        ),
+    ],
 )
 def test_protocol_loader_rejects_wrong_document_shape_or_version(
     tmp_path: Path,
     document: str,
+    expected: str,
 ) -> None:
+    """The two rows are two different refusals, so each names the one it expects.
+
+    A YAML list is not a protocol at all and never reaches the schema. A document
+    that IS a mapping but declares the wrong version reaches the schema and is
+    turned down by it, and the version error has to be the FIRST one reported:
+    this document is missing every other field too, so an assertion that only
+    checked "something was refused" would pass even if the version were accepted.
+    """
+
     config = load_config_module()
     path = tmp_path / "invalid.yaml"
     path.write_text(document, encoding="utf-8")
 
-    with pytest.raises((TypeError, ValidationError)):
+    with pytest.raises((TypeError, ValidationError), match=expected):
         config.load_protocol(path)
 
 
