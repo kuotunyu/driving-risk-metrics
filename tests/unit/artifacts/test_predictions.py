@@ -878,7 +878,7 @@ def test_prediction_manifest_rejects_wrong_hash_shape(field: str) -> None:
     }
     values[field] = "0" * 63
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match=rf"\n{field}\n"):
         prediction.PredictionArtifactV1.model_validate(values)
 
 

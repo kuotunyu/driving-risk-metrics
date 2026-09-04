@@ -73,7 +73,7 @@ def test_run_record_rejects_invalid_identity_or_hash(
     values = valid_run_values()
     values[field] = invalid_value
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match=rf"\n{field}\n"):
         run_record.RunRecordV1.model_validate(values)
 
 
@@ -107,7 +107,7 @@ def test_run_record_requires_parseable_utc_timestamps_ending_in_z(
     values = valid_run_values()
     values[field] = invalid_value
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match=rf"\n{field}\n"):
         run_record.RunRecordV1.model_validate(values)
 
 
