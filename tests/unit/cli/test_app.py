@@ -945,6 +945,7 @@ def test_extended_metrics_forwards_every_ground_truth_path(
     monkeypatch.setattr(extended_cli, "EXTENDED_SERVICE", record)
     labels = tmp_path / "labels"
     labels.mkdir()
+    manifest = touch(tmp_path / "locked_validation.json")
     tertiles = touch(tmp_path / "area_tertiles.json")
 
     result = runner.invoke(
@@ -955,6 +956,8 @@ def test_extended_metrics_forwards_every_ground_truth_path(
             str(touch(tmp_path / "formal_run_index.json")),
             "--output",
             str(tmp_path / "extended-metrics.json"),
+            "--manifest",
+            str(manifest),
             "--labels-root",
             str(labels),
             "--instance-root",
@@ -965,6 +968,7 @@ def test_extended_metrics_forwards_every_ground_truth_path(
     )
 
     assert result.exit_code == 0
+    assert seen["manifest_path"] == manifest
     assert seen["labels_root"] == labels
     assert seen["instance_root"] == labels
     assert seen["tertiles_path"] == tertiles

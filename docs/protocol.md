@@ -120,6 +120,45 @@ difference, which is what this project published until P1-17 and is recorded in
 ordered by the approved model and seed lists, so a published interval cannot
 depend on the order an index happened to list them in.
 
+## Ground-truth metrics
+
+Per-band pixel accuracy and instance coverage are the only published numbers that
+open the label files again after evaluation, so they carry rules the
+confusion-derived metrics never need.
+
+**Predictions are scattered, never reshaped.** An artifact holds one prediction
+per NON-IGNORED pixel, in row-major order of the source mask, because that is
+exactly the set of pixels the evaluation scored. Reshaping that flat array onto
+the image grid would misalign every pixel after the first ignored one and would
+still produce a plausible-looking number.
+
+**Ignored pixels appear in no denominator.** No model was asked about them, and
+counting them would publish a model as wrong about pixels it was never shown.
+
+**The masks are located through the frozen manifest**, by the relative paths the
+runs themselves read, and each file is checked against the digest the manifest
+recorded. A directory that merely resembles a BDD100K tree cannot stand in for
+the cohort, and a mask edited after the runs read it cannot pass unnoticed.
+
+**Instance categories are translated before anything is compared.** BDD100K
+numbers its instance categories 1-8 while the semantic masks carry the nineteen
+Cityscapes train IDs. The correspondence is written as names and the IDs are
+derived from the semantic class list, so a change to that list breaks the
+translation loudly instead of silently remapping every published instance.
+
+**An instance is scored only where the semantic mask corroborates it.** It must
+have at least one non-ignored semantic pixel, and those pixels must all carry its
+own class. The instance bitmasks and the semantic masks are separate
+rasterizations of the same image and need not agree everywhere; an instance they
+disagree about is not evidence about the model. Exclusions are counted and
+published in the same block, because a silent drop would shrink the denominator
+of every rate beside it and leave no trace that it had.
+
+These five rules were written after the first implementation of these blocks met
+real data. Its test fixture had no ignored pixels, a four-wide class space and
+single-byte annotation IDs, and so agreed with a wrong implementation on every
+one of them.
+
 ## Rules that outlive the constants
 
 1. **The locked cohort is spent the moment it influences a decision.** Not only
