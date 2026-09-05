@@ -154,7 +154,10 @@ git push origin v1.0.0
 ```
 
 - [ ] The annotated tag points at the commit remote CI passed on.
-- [ ] Release assets and their checksums match the local build.
+- [ ] Release assets carry the `SHA256SUMS` the Release workflow computed for them,
+      and a download of each asset matches that sum. A local build is not the
+      reference: the archives carry build timestamps and are not byte-identical
+      across builds (see [`clean-clone.md`](clean-clone.md)).
 - [ ] A public clean clone of the tag installs and passes `verify`.
 - [ ] The handoff status becomes `released`, with the public URL, the tag and
       the commit, and the handoff itself is still in no Git index anywhere.
