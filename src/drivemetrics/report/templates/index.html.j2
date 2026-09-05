@@ -141,10 +141,18 @@ td em {
 }
 figure {
   margin: 1.25rem 0 0;
+  padding: 0.85rem 0.85rem 0.35rem;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  /* The Plotly charts draw themselves on a light canvas, so the card that holds
+     them is light in both themes. Letting a dark page show through would leave
+     dark axis text on a dark ground. */
+  background: #ffffff;
+  color: #16202c;
 }
 figcaption {
-  margin-bottom: 0.4rem;
-  color: var(--muted);
+  margin-bottom: 0.5rem;
+  color: #5b6b7c;
   font-size: 0.85rem;
 }
 #limitations ul {
