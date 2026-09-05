@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from drivemetrics.artifacts.documents import validated_document
+from drivemetrics.artifacts.documents import write_document
 from drivemetrics.artifacts.formal_set import (
     APPROVED_MODELS,
     APPROVED_SEEDS,
@@ -145,11 +145,5 @@ def select_gallery(
         },
         "per_model": per_model_block,
     }
-    manifest = validated_document(manifest)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    write_document(output_path, manifest)
     return GalleryResult(manifest_path=output_path, per_model=per_model, models=models)

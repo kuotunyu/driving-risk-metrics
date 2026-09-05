@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import copy
 import json
+from pathlib import Path
 from types import ModuleType
 from typing import Any, get_args
 
@@ -296,3 +297,31 @@ def test_integer_fields_refuse_a_whole_float() -> None:
 
     with pytest.raises(ValidationError):
         documents.MetricsTableV1.model_validate(payload)
+
+
+def test_the_serialised_form_is_two_space_indented_key_sorted_and_newline_terminated() -> None:
+    """Indentation, key order and the trailing newline are all part of what a hash cites."""
+
+    documents = load_documents()
+
+    assert documents.serialised_document({"b": 2, "a": {"d": 4, "c": 3}}).encode("utf-8") == (
+        b'{\n  "a": {\n    "c": 3,\n    "d": 4\n  },\n  "b": 2\n}\n'
+    )
+
+
+def test_write_document_validates_creates_the_directory_and_writes_the_cited_bytes(
+    tmp_path: Path,
+) -> None:
+    """One writer for every published document: shape check and byte format in one place."""
+
+    documents = load_documents()
+    payload = MINIMAL["driving-risk-intervals/v1"]
+    path = tmp_path / "analysis" / "deadbeef" / "intervals.json"
+
+    documents.write_document(path, payload)
+
+    assert path.read_bytes() == documents.serialised_document(
+        documents.validated_document(payload)
+    ).encode("utf-8")
+    with pytest.raises(ValidationError):
+        documents.write_document(tmp_path / "bad.json", {**payload, "unexpected": 1})
