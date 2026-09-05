@@ -90,3 +90,23 @@ Reproducible comparison of three segmentation architectures under standard and
 risk-weighted metrics on one frozen cohort. Not intended for model selection for
 deployment, for benchmarking against published leaderboard numbers, or for any
 commercial use the BDD100K licence does not grant.
+
+## Regenerating the frozen area tertiles
+
+The classwise area tertiles in `docs/evidence/bdd100k_semseg_v1/area_tertiles.json`
+were learned at P1-14 from the training cohort's instance bitmasks, over
+whole-instance areas as `instance_areas` counts them, with no semantic-mask
+filter. They are regenerated, never edited, with
+
+```
+driving-risk data tertiles --manifest <train manifest> --instance-root <bitmasks/train> --output <path>
+```
+
+and the regenerated file must be byte-identical to the tracked one. The file P1-14
+wrote on Windows carried CRLF line endings (630 bytes, SHA-256
+`27330b08bf46929ad060adae02618ab6f612173de8e674fdb476658a41e33799`); the repository
+normalises text to LF, so the tracked copy is the same content at 581 bytes,
+SHA-256 `5f9365d5b9189b49649e34fc8403f16f4934d630ceb5cf903429007a52997206`, and that
+is the hash the extended metrics publish as `tertile_edges_sha256`. Areas are
+whole instances while coverage is measured over corroborated footprints; the
+extended metrics publish `mean_corroborated_fraction` so that gap is visible.

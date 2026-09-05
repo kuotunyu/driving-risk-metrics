@@ -9,10 +9,12 @@ import typer
 
 from drivemetrics.cli._output import run
 from drivemetrics.data.preflight import run_preflight
+from drivemetrics.data.tertiles import learn_tertiles_from_bitmasks
 
 app = typer.Typer(help="Dataset preflight and manifest commands.", no_args_is_help=True)
 
 PREFLIGHT_SERVICE = run_preflight
+TERTILES_SERVICE = learn_tertiles_from_bitmasks
 
 
 @app.command("preflight")
@@ -35,6 +37,38 @@ def preflight_command(
             "ineligible": {name: dict(reasons) for name, reasons in result.ineligible.items()},
             "manifest_sha256": dict(result.manifest_sha256),
             "manifests": {name: str(path) for name, path in result.manifest_paths.items()},
+        }
+
+    run(operation)
+
+
+@app.command("tertiles")
+def tertiles_command(
+    manifest: Annotated[
+        Path,
+        typer.Option("--manifest", exists=True, dir_okay=False, readable=True),
+    ],
+    instance_root: Annotated[
+        Path,
+        typer.Option(
+            "--instance-root",
+            exists=True,
+            file_okay=False,
+            help="Directory holding <sample_id>.png instance bitmasks for the cohort.",
+        ),
+    ],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+) -> None:
+    """Learn the classwise area tertiles from a frozen cohort's instance bitmasks."""
+
+    def operation() -> dict[str, Any]:
+        result = TERTILES_SERVICE(manifest, instance_root, output)
+        return {
+            "command": "data tertiles",
+            "output_path": str(result.output_path),
+            "eligible_images": result.eligible_images,
+            "missing_bitmasks": list(result.missing_bitmasks),
+            "total_instances": result.total_instances,
         }
 
     run(operation)
