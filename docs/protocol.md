@@ -120,6 +120,15 @@ difference, which is what this project published until P1-17 and is recorded in
 ordered by the approved model and seed lists, so a published interval cannot
 depend on the order an index happened to list them in.
 
+Per-class values are published with the class names, the pixel support and the
+number of images each class appears in, all read from the same summed confusions
+that produce the scores; the nine runs must agree on that support exactly, because
+they scored one ground truth, and a run that does not is another study. A class
+whose denominator is zero is published as `null`, never as `0.0`. Calibration is
+published per seed beside its mean. The ranking document carries, for every pair
+and every metric, whether the paired interval excludes zero — separability is a
+different question from order, and on this cohort the two answers differ.
+
 ## Ground-truth metrics
 
 Per-band pixel accuracy and instance coverage are the only published numbers that

@@ -36,7 +36,7 @@ from drivemetrics.metrics.calibration import (
 )
 from drivemetrics.metrics.confusion import summarize_confusion
 from drivemetrics.metrics.risk import compute_cost_risk, critical_false_negative_rate
-from drivemetrics.protocol.risk_profiles import load_risk_profile
+from drivemetrics.protocol.risk_profiles import BDD100K_SEMANTIC_CLASS_NAMES, load_risk_profile
 
 Float64Array = npt.NDArray[np.float64]
 Int64Array = npt.NDArray[np.int64]
@@ -55,6 +55,9 @@ BOOTSTRAP_SEED = 20260831
 #: comparison depends on that orientation, and a metric left in its natural
 #: lower-is-better form would invert its own ranking silently.
 METRIC_NAMES: tuple[str, ...] = ("miou", "pixel_accuracy", "critical_recall")
+METRICS_SCHEMA_VERSION = "driving-risk-metrics-table/v1"
+INTERVALS_SCHEMA_VERSION = "driving-risk-intervals/v1"
+RANKINGS_SCHEMA_VERSION = "driving-risk-rankings/v1"
 
 
 @dataclass(frozen=True)
@@ -111,6 +114,36 @@ def _mean_or_none(values: Sequence[float | None]) -> float | None:
     if not present:
         return None
     return float(np.mean(present))
+
+
+def _ground_truth_support(
+    components: Float64Array,
+    runs: Sequence[dict[str, Any]],
+    image_count: int,
+    num_classes: int,
+) -> tuple[list[int], list[int]]:
+    """Read the cohort's per-class support from the confusions, and prove the runs share it.
+
+    The true-row sums of a confusion are the ground truth's class counts, and the
+    ground truth is the same for every run of one study. The index validator proves
+    the runs share a SET of sample IDs; it cannot see whether the confusions behind
+    those IDs were built from the same masks. A run evaluated against different
+    masks would pass every hash check while its numbers described another cohort,
+    so the agreement is checked here, once, before anything is published.
+    """
+
+    per_image = components.reshape(len(runs), image_count, num_classes, num_classes)
+    true_rows = per_image.sum(axis=3)
+    for position in range(1, len(runs)):
+        if not np.array_equal(true_rows[position], true_rows[0]):
+            raise ValueError(
+                "the runs do not share one ground truth: "
+                f"{runs[position]['run_id']} has different per-class support "
+                f"than {runs[0]['run_id']}"
+            )
+    support = true_rows[0].sum(axis=0)
+    images = (true_rows[0] > 0).sum(axis=0)
+    return [int(value) for value in support], [int(value) for value in images]
 
 
 def _mean_over_seeds(rows: Sequence[Sequence[float | None]]) -> list[float | None]:
@@ -273,6 +306,12 @@ def aggregate_runs(
     # study would then publish different intervals.
     sample_ids = tuple(sorted(runs[0]["uncalibrated_sample_ids"]))
     num_classes = int(document["num_classes"])
+    if num_classes > len(BDD100K_SEMANTIC_CLASS_NAMES):
+        raise ValueError(
+            f"the index declares {num_classes} classes but the BDD100K class table names "
+            f"{len(BDD100K_SEMANTIC_CLASS_NAMES)}; a class without a name cannot be published"
+        )
+    class_names = list(BDD100K_SEMANTIC_CLASS_NAMES[:num_classes])
     critical_class_ids = tuple(int(value) for value in document["critical_class_ids"])
     protocol_sha256 = str(document["protocol_sha256"])
     dataset_manifest_sha256 = str(document["dataset_manifest_sha256"])
@@ -287,6 +326,9 @@ def aggregate_runs(
         protocol_sha256=protocol_sha256,
         dataset_manifest_sha256=dataset_manifest_sha256,
     )
+    support_pixels, images_with_class = _ground_truth_support(
+        components, runs, len(sample_ids), num_classes
+    )
 
     table: dict[str, dict[str, float]] = {model: {} for model in models}
     for name in METRIC_NAMES:
@@ -298,12 +340,17 @@ def aggregate_runs(
             ]
             table[model][name] = float(np.mean(values))
 
-    per_class: dict[str, dict[str, list[float | None]]] = {}
-    calibration: dict[str, dict[str, dict[str, float | None]]] = {}
+    # Per-class values travel with their names and their support. A class the
+    # cohort holds in seven images can legitimately score zero, and a reader who
+    # cannot see the seven cannot tell that from a model that failed. The names
+    # are the table the risk-profile schema pins classes to, so the two documents
+    # can never disagree about what class 2 is called.
+    by_model: dict[str, dict[str, list[float | None]]] = {}
+    calibration: dict[str, dict[str, dict[str, Any]]] = {}
     for model in models:
         positions = [index for index, label in enumerate(model_ids) if models[label] == model]
         summaries = [summarize_confusion(totals[index]) for index in positions]
-        per_class[model] = {
+        by_model[model] = {
             "iou": _mean_over_seeds([summary.class_iou for summary in summaries]),
             "recall": _mean_over_seeds([summary.class_recall for summary in summaries]),
         }
@@ -316,10 +363,25 @@ def aggregate_runs(
                 _accumulate_calibration(index_dir / str(runs[index][key]), sample_ids).finalised()
                 for index in positions
             ]
+            # The mean is published beside the values it is a mean of. Three seeds
+            # that agree and three that disagree give the same mean, and whether a
+            # calibration effect is one seed or all of them is the whole question.
             calibration[model][kind] = {
-                field: _mean_or_none([row[field] for row in finalised])
-                for field in ("ece", "brier")
+                **{
+                    field: _mean_or_none([row[field] for row in finalised])
+                    for field in ("ece", "brier")
+                },
+                "per_seed": {
+                    str(runs[index]["seed"]): {"ece": row["ece"], "brier": row["brier"]}
+                    for index, row in zip(positions, finalised, strict=True)
+                },
             }
+    per_class: dict[str, Any] = {
+        "class_names": class_names,
+        "support_pixels": support_pixels,
+        "images_with_class": images_with_class,
+        "by_model": by_model,
+    }
 
     risk_profiles: dict[str, dict[str, Any]] = {}
     for profile_path in sorted(Path(risk_profiles_dir).glob("*.yaml")):
@@ -372,6 +434,28 @@ def aggregate_runs(
         name: {model: table[model][name] for model in models} for name in METRIC_NAMES
     }
     comparisons = compare_rankings(by_metric, BASELINE_METRIC)
+    # Whether two models can be told apart at all is a different question from
+    # which is ahead, and the ranking comparison answers only the second. Each
+    # pair's interval is copied from the intervals document, never recomputed, and
+    # the flag is a plain reading of it. On the real cohort the two best models
+    # are inseparable on mIoU and separable on VRU recall; a document that said
+    # only "no reversal" would hide that.
+    separability: dict[str, list[dict[str, Any]]] = {
+        name: [
+            {
+                "left": models[left],
+                "right": models[right],
+                "estimate": entry["estimate"],
+                "low": entry["low"],
+                "high": entry["high"],
+                "excludes_zero": bool(entry["low"] > 0.0 or entry["high"] < 0.0),
+            }
+            for left in range(len(models))
+            for right in range(left + 1, len(models))
+            for entry in (intervals[f"{models[left]} minus {models[right]} ({name})"],)
+        ]
+        for name in METRIC_NAMES
+    }
     output_dir.mkdir(parents=True, exist_ok=True)
     common = {
         "protocol_hash": protocol_sha256,
@@ -380,6 +464,7 @@ def aggregate_runs(
     _write(
         output_dir / "metrics.json",
         {
+            "schema_version": METRICS_SCHEMA_VERSION,
             **common,
             "cohort": str(document.get("cohort", "locked_validation")),
             "sample_count": len(sample_ids),
@@ -394,12 +479,17 @@ def aggregate_runs(
             "risk_profiles": risk_profiles,
         },
     )
-    _write(output_dir / "intervals.json", {**common, "intervals": intervals})
+    _write(
+        output_dir / "intervals.json",
+        {"schema_version": INTERVALS_SCHEMA_VERSION, **common, "intervals": intervals},
+    )
     _write(
         output_dir / "rankings.json",
         {
+            "schema_version": RANKINGS_SCHEMA_VERSION,
             **common,
             "baseline_metric": BASELINE_METRIC,
+            "separability": separability,
             "comparisons": [
                 {
                     "metric_name": comparison.metric_name,
