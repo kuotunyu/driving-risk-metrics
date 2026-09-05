@@ -33,6 +33,8 @@ three metrics, and that is reported as plainly as a reversal would have been:
 What changes between metrics is not the order but whether the top two can be
 separated at all.
 
+![Paired differences with bootstrap intervals, drawn from rankings.json](docs/figures/paired-differences.svg)
+
 ## Headline results
 
 Averaged over three seeds on the locked cohort. Numbers appear at full precision
@@ -68,6 +70,8 @@ Against cars, the same model on the same instances:
 
 A model that recovers roughly four out of five small cars and roughly one out of
 three small pedestrians has a mean IoU that says none of this.
+
+![Critical misses on the smallest-tertile instances by class, drawn from extended-metrics.json](docs/figures/small-tertile-critical-misses.svg)
 
 Instance coverage is measured over the footprint that the semantic and instance
 annotations corroborate, not over the raw bitmask, because the two annotations

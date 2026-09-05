@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="556" viewBox="0 0 760 556" role="img" aria-label="Critical misses on the smallest-tertile instances, by class">
+<rect width="760" height="556" fill="#ffffff"/>
+<text x="330" y="20" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold">Critical misses on the smallest-tertile instances, by class</text>
+<text x="330" y="36" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#555555">bar: share of instances with less than half their footprint recovered; label: misses / instances</text>
+<text x="322" y="74.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">motorcycle</text>
+<rect class="bar" x="330" y="48.00" width="342.00" height="12" fill="#1f3a5f"/>
+<text x="678.00" y="58.00" font-family="Helvetica, Arial, sans-serif" font-size="12">14/14</text>
+<rect class="bar" x="330" y="62.00" width="342.00" height="12" fill="#c0392b"/>
+<text x="678.00" y="72.00" font-family="Helvetica, Arial, sans-serif" font-size="12">14/14</text>
+<rect class="bar" x="330" y="76.00" width="342.00" height="12" fill="#7f8c8d"/>
+<text x="678.00" y="86.00" font-family="Helvetica, Arial, sans-serif" font-size="12">14/14</text>
+<text x="322" y="126.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">rider</text>
+<rect class="bar" x="330" y="100.00" width="342.00" height="12" fill="#1f3a5f"/>
+<text x="678.00" y="110.00" font-family="Helvetica, Arial, sans-serif" font-size="12">17/17</text>
+<rect class="bar" x="330" y="114.00" width="342.00" height="12" fill="#c0392b"/>
+<text x="678.00" y="124.00" font-family="Helvetica, Arial, sans-serif" font-size="12">17/17</text>
+<rect class="bar" x="330" y="128.00" width="342.00" height="12" fill="#7f8c8d"/>
+<text x="678.00" y="138.00" font-family="Helvetica, Arial, sans-serif" font-size="12">17/17</text>
+<text x="322" y="178.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">train</text>
+<rect class="bar" x="330" y="152.00" width="342.00" height="12" fill="#1f3a5f"/>
+<text x="678.00" y="162.00" font-family="Helvetica, Arial, sans-serif" font-size="12">3/3</text>
+<rect class="bar" x="330" y="166.00" width="342.00" height="12" fill="#c0392b"/>
+<text x="678.00" y="176.00" font-family="Helvetica, Arial, sans-serif" font-size="12">3/3</text>
+<rect class="bar" x="330" y="180.00" width="342.00" height="12" fill="#7f8c8d"/>
+<text x="678.00" y="190.00" font-family="Helvetica, Arial, sans-serif" font-size="12">3/3</text>
+<text x="322" y="230.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">bus</text>
+<rect class="bar" x="330" y="204.00" width="324.46" height="12" fill="#1f3a5f"/>
+<text x="660.46" y="214.00" font-family="Helvetica, Arial, sans-serif" font-size="12">74/78</text>
+<rect class="bar" x="330" y="218.00" width="342.00" height="12" fill="#c0392b"/>
+<text x="678.00" y="228.00" font-family="Helvetica, Arial, sans-serif" font-size="12">78/78</text>
+<rect class="bar" x="330" y="232.00" width="333.23" height="12" fill="#7f8c8d"/>
+<text x="669.23" y="242.00" font-family="Helvetica, Arial, sans-serif" font-size="12">76/78</text>
+<text x="322" y="282.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">truck</text>
+<rect class="bar" x="330" y="256.00" width="298.98" height="12" fill="#1f3a5f"/>
+<text x="634.98" y="266.00" font-family="Helvetica, Arial, sans-serif" font-size="12">139/159</text>
+<rect class="bar" x="330" y="270.00" width="307.58" height="12" fill="#c0392b"/>
+<text x="643.58" y="280.00" font-family="Helvetica, Arial, sans-serif" font-size="12">143/159</text>
+<rect class="bar" x="330" y="284.00" width="322.64" height="12" fill="#7f8c8d"/>
+<text x="658.64" y="294.00" font-family="Helvetica, Arial, sans-serif" font-size="12">150/159</text>
+<text x="322" y="334.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">bicycle</text>
+<rect class="bar" x="330" y="308.00" width="256.50" height="12" fill="#1f3a5f"/>
+<text x="592.50" y="318.00" font-family="Helvetica, Arial, sans-serif" font-size="12">24/32</text>
+<rect class="bar" x="330" y="322.00" width="277.88" height="12" fill="#c0392b"/>
+<text x="613.88" y="332.00" font-family="Helvetica, Arial, sans-serif" font-size="12">26/32</text>
+<rect class="bar" x="330" y="336.00" width="309.94" height="12" fill="#7f8c8d"/>
+<text x="645.94" y="346.00" font-family="Helvetica, Arial, sans-serif" font-size="12">29/32</text>
+<text x="322" y="386.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">person</text>
+<rect class="bar" x="330" y="360.00" width="226.52" height="12" fill="#1f3a5f"/>
+<text x="562.52" y="370.00" font-family="Helvetica, Arial, sans-serif" font-size="12">306/462</text>
+<rect class="bar" x="330" y="374.00" width="260.57" height="12" fill="#c0392b"/>
+<text x="596.57" y="384.00" font-family="Helvetica, Arial, sans-serif" font-size="12">352/462</text>
+<rect class="bar" x="330" y="388.00" width="290.92" height="12" fill="#7f8c8d"/>
+<text x="626.92" y="398.00" font-family="Helvetica, Arial, sans-serif" font-size="12">393/462</text>
+<text x="322" y="438.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">car</text>
+<rect class="bar" x="330" y="412.00" width="74.99" height="12" fill="#1f3a5f"/>
+<text x="410.99" y="422.00" font-family="Helvetica, Arial, sans-serif" font-size="12">822/3749</text>
+<rect class="bar" x="330" y="426.00" width="71.98" height="12" fill="#c0392b"/>
+<text x="407.98" y="436.00" font-family="Helvetica, Arial, sans-serif" font-size="12">789/3749</text>
+<rect class="bar" x="330" y="440.00" width="111.11" height="12" fill="#7f8c8d"/>
+<text x="447.11" y="450.00" font-family="Helvetica, Arial, sans-serif" font-size="12">1218/3749</text>
+<line x1="330" y1="470" x2="672" y2="470" stroke="#333333"/>
+<line x1="330.00" y1="470" x2="330.00" y2="475" stroke="#333333"/>
+<text x="330.00" y="488" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">0%</text>
+<line x1="415.50" y1="470" x2="415.50" y2="475" stroke="#333333"/>
+<text x="415.50" y="488" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">25%</text>
+<line x1="501.00" y1="470" x2="501.00" y2="475" stroke="#333333"/>
+<text x="501.00" y="488" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">50%</text>
+<line x1="586.50" y1="470" x2="586.50" y2="475" stroke="#333333"/>
+<text x="586.50" y="488" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">75%</text>
+<line x1="672.00" y1="470" x2="672.00" y2="475" stroke="#333333"/>
+<text x="672.00" y="488" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">100%</text>
+<rect x="330" y="497" width="10" height="10" fill="#1f3a5f"/>
+<text x="344" y="506" font-family="Helvetica, Arial, sans-serif" font-size="12">ConvNeXtV2-Tiny</text>
+<rect x="330" y="511" width="10" height="10" fill="#c0392b"/>
+<text x="344" y="520" font-family="Helvetica, Arial, sans-serif" font-size="12">SegFormer-B2</text>
+<rect x="330" y="525" width="10" height="10" fill="#7f8c8d"/>
+<text x="344" y="534" font-family="Helvetica, Arial, sans-serif" font-size="12">DINOv2-Small</text>
+</svg>

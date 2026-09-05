@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="300" viewBox="0 0 760 300" role="img" aria-label="Paired differences with bootstrap intervals">
+<rect width="760" height="300" fill="#ffffff"/>
+<text x="330" y="20" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold">Paired differences with bootstrap intervals</text>
+<text x="330" y="36" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#555555">filled: interval excludes zero; hollow: interval includes zero</text>
+<line class="zero" x1="411.20" y1="48" x2="411.20" y2="256" stroke="#999999" stroke-dasharray="4 3"/>
+<text x="8" y="65.00" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold">mean IoU</text>
+<g class="row includes-zero">
+<text x="322" y="91.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">SegFormer-B2 minus ConvNeXtV2-Tiny</text>
+<line x1="393.13" y1="87.00" x2="413.10" y2="87.00" stroke="#1f3a5f" stroke-width="2"/>
+<circle cx="403.06" cy="87.00" r="4.5" fill="#ffffff" stroke="#1f3a5f" stroke-width="2"/>
+</g>
+<g class="row excludes-zero">
+<text x="322" y="117.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">SegFormer-B2 minus DINOv2-Small</text>
+<line x1="515.74" y1="113.00" x2="544.08" y2="113.00" stroke="#1f3a5f" stroke-width="2"/>
+<circle cx="531.16" cy="113.00" r="4.5" fill="#1f3a5f" stroke="#1f3a5f" stroke-width="2"/>
+</g>
+<g class="row excludes-zero">
+<text x="322" y="143.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">ConvNeXtV2-Tiny minus DINOv2-Small</text>
+<line x1="524.43" y1="139.00" x2="551.29" y2="139.00" stroke="#1f3a5f" stroke-width="2"/>
+<circle cx="539.30" cy="139.00" r="4.5" fill="#1f3a5f" stroke="#1f3a5f" stroke-width="2"/>
+</g>
+<text x="8" y="169.00" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold">critical-class recall</text>
+<g class="row excludes-zero">
+<text x="322" y="195.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">SegFormer-B2 minus ConvNeXtV2-Tiny</text>
+<line x1="378.73" y1="191.00" x2="404.67" y2="191.00" stroke="#1f3a5f" stroke-width="2"/>
+<circle cx="392.28" cy="191.00" r="4.5" fill="#1f3a5f" stroke="#1f3a5f" stroke-width="2"/>
+</g>
+<g class="row excludes-zero">
+<text x="322" y="221.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">SegFormer-B2 minus DINOv2-Small</text>
+<line x1="579.23" y1="217.00" x2="689.39" y2="217.00" stroke="#1f3a5f" stroke-width="2"/>
+<circle cx="627.87" cy="217.00" r="4.5" fill="#1f3a5f" stroke="#1f3a5f" stroke-width="2"/>
+</g>
+<g class="row excludes-zero">
+<text x="322" y="247.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">ConvNeXtV2-Tiny minus DINOv2-Small</text>
+<line x1="599.35" y1="243.00" x2="703.94" y2="243.00" stroke="#1f3a5f" stroke-width="2"/>
+<circle cx="646.79" cy="243.00" r="4.5" fill="#1f3a5f" stroke="#1f3a5f" stroke-width="2"/>
+</g>
+<line x1="330" y1="264.00" x2="736" y2="264.00" stroke="#333333" stroke-width="1"/>
+<line x1="330.00" y1="264.00" x2="330.00" y2="269.00" stroke="#333333"/>
+<text x="330.00" y="282.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">-0.1</text>
+<line x1="411.20" y1="264.00" x2="411.20" y2="269.00" stroke="#333333"/>
+<text x="411.20" y="282.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">0</text>
+<line x1="492.40" y1="264.00" x2="492.40" y2="269.00" stroke="#333333"/>
+<text x="492.40" y="282.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">0.1</text>
+<line x1="573.60" y1="264.00" x2="573.60" y2="269.00" stroke="#333333"/>
+<text x="573.60" y="282.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">0.2</text>
+<line x1="654.80" y1="264.00" x2="654.80" y2="269.00" stroke="#333333"/>
+<text x="654.80" y="282.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">0.3</text>
+<line x1="736.00" y1="264.00" x2="736.00" y2="269.00" stroke="#333333"/>
+<text x="736.00" y="282.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">0.4</text>
+</svg>

@@ -30,6 +30,8 @@
 
 換指標改變的不是順序，而是前兩名到底能不能被區分開來。
 
+![配對差與 bootstrap 區間，由 rankings.json 繪製](docs/figures/paired-differences.svg)
+
 ## 主要結果
 
 三個 seed 平均，在 locked cohort 上量測。本頁所有數字都以完整精度呈現：四捨五入後的
@@ -63,6 +65,8 @@
 
 一個模型能救回大約五分之四的小型車、卻只能救回大約三分之一的小型行人，而它的
 mean IoU 對這件事隻字未提。
+
+![各類別在最小 tertile 上的 critical miss，由 extended-metrics.json 繪製](docs/figures/small-tertile-critical-misses.svg)
 
 instance coverage 是在語意標註與 instance 標註互相佐證的 footprint 上量測，而不是在
 原始 bitmask 上。兩種標註在物體邊界會不一致，若在只有其中一方主張的像素上評分，
