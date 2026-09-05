@@ -70,7 +70,14 @@ def verify_repository(repo_root: Path, runner: StageRunner = subprocess_runner) 
 
 
 def verify_schema_contracts(repo_root: Path) -> int:
-    """Parse every JSON schema and report all malformed files."""
+    """Parse every JSON schema, then validate every published document against its contract.
+
+    A schema that parses is only half a contract; the other half is that the
+    documents the release cites actually satisfy it. Every JSON file under
+    `docs/evidence/` is validated against the model its `schema_version` names,
+    so a hand edit, a stale file or a producer that drifted fails the build here
+    rather than in a reader's hands.
+    """
 
     invalid: list[Path] = []
     for path in sorted((repo_root / "schemas").glob("**/*.json")):
@@ -81,7 +88,54 @@ def verify_schema_contracts(repo_root: Path) -> int:
 
     for path in invalid:
         print(f"invalid JSON schema: {path.relative_to(repo_root).as_posix()}", file=sys.stderr)
-    return 1 if invalid else 0
+    problems = _verify_evidence_documents(repo_root)
+    for message in problems:
+        print(message, file=sys.stderr)
+    return 1 if invalid or problems else 0
+
+
+def _verify_evidence_documents(repo_root: Path) -> list[str]:
+    """Validate each document under docs/evidence against the contract it declares."""
+
+    from pydantic import ValidationError
+
+    from drivemetrics.artifacts.documents import DOCUMENT_MODELS, UNVERSIONED_DOCUMENT_MODELS
+    from drivemetrics.artifacts.formal_set import SCHEMA_VERSION as FORMAL_SET_SCHEMA_VERSION
+    from drivemetrics.artifacts.formal_set import validate_formal_run_index
+
+    messages: list[str] = []
+    for path in sorted((repo_root / "docs" / "evidence").glob("**/*.json")):
+        relative = path.relative_to(repo_root).as_posix()
+        try:
+            document = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            messages.append(f"invalid JSON document: {relative}")
+            continue
+        if not isinstance(document, dict):
+            messages.append(f"document is not an object: {relative}")
+            continue
+        version = document.get("schema_version")
+        if version == FORMAL_SET_SCHEMA_VERSION:
+            messages.extend(f"{relative}: {v}" for v in validate_formal_run_index(document))
+            continue
+        model = DOCUMENT_MODELS.get(version) if isinstance(version, str) else None
+        if model is None and version is None:
+            model = UNVERSIONED_DOCUMENT_MODELS.get(path.name)
+        if model is None:
+            messages.append(
+                f"no contract names this document: {relative} (schema_version={version!r})"
+            )
+            continue
+        try:
+            model.model_validate(document)
+        except ValidationError as error:
+            first = error.errors()[0]
+            location = "/".join(str(part) for part in first["loc"]) or "<document>"
+            messages.append(
+                f"{relative}: {error.error_count()} contract violation(s); "
+                f"first at {location}: {first['msg']}"
+            )
+    return messages
 
 
 def _iter_markdown_files(repo_root: Path) -> list[Path]:

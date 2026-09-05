@@ -100,7 +100,7 @@ git diff --check
       package, never in the repository.
 - [ ] No tracked file is larger than the aggregated evidence needs; no raw
       dataset, checkpoint, prediction artifact or `.zip` is tracked.
-- [ ] Every JSON schema regenerates byte-identically and the cross-repository
+- [ ] Every JSON schema regenerates byte-identically, every document under `docs/evidence/` validates against the contract its `schema_version` names, and the cross-repository
       envelope fixture conforms.
 - [ ] License scan: every runtime dependency in `uv.lock` carries a license
       compatible with MIT redistribution. Record the tool and its output in the

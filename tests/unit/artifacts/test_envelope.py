@@ -220,6 +220,12 @@ def test_contract_schema_writer_is_deterministic(tmp_path: Path) -> None:
         "portfolio_artifact_envelope_v1.json",
         "prediction_artifact_v1.json",
         "run_record_v1.json",
+        "metrics_table_v1.json",
+        "intervals_v1.json",
+        "rankings_v1.json",
+        "gallery_manifest_v1.json",
+        "extended_metrics_v1.json",
+        "area_tertiles_v1.json",
     )
     assert {path.name: path.read_bytes() for path in second_paths} == first_bytes
 
