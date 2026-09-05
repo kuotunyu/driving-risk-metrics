@@ -2,10 +2,178 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>driving-risk-metrics evidence report</title>
+<style>
+:root {
+  --ink: #16202c;
+  --muted: #5b6b7c;
+  --rule: #d9e0e7;
+  --page: #ffffff;
+  --panel: #f6f8fa;
+  --accent: #1f3a5f;
+  --warn: #8a5a00;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e6edf3;
+    --muted: #9aa7b4;
+    --rule: #2d3742;
+    --page: #0f141a;
+    --panel: #161d25;
+    --accent: #7aa7dd;
+    --warn: #e3b341;
+  }
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  padding: 0 1.25rem 5rem;
+  background: var(--page);
+  color: var(--ink);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC",
+        "Microsoft JhengHei", Roboto, Helvetica, Arial, sans-serif;
+}
+h1, h2, h3 {
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+h1 {
+  max-width: 60rem;
+  margin: 2.5rem auto 0.5rem;
+  font-size: 1.9rem;
+}
+section {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding-top: 2.25rem;
+}
+section > h2 {
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--rule);
+  font-size: 1.3rem;
+}
+section > h3 {
+  margin: 1.75rem 0 0.5rem;
+  color: var(--accent);
+  font-size: 1.05rem;
+}
+p {
+  max-width: 46rem;
+  color: var(--muted);
+}
+section > p:first-of-type {
+  margin-top: 0;
+}
+code {
+  font-family: ui-monospace, SFMono-Regular, "Cascadia Mono", Consolas,
+               "Liberation Mono", monospace;
+  font-size: 0.86em;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.35rem 1.25rem;
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--panel);
+}
+dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+dd {
+  margin: 0;
+  min-width: 0;
+}
+.scroll {
+  overflow-x: auto;
+  margin: 0.75rem 0 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+caption {
+  padding-bottom: 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-align: left;
+}
+th, td {
+  padding: 0.45rem 0.7rem;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  vertical-align: top;
+}
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+  border-bottom: 2px solid var(--rule);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+tbody tr:hover td {
+  background: var(--panel);
+}
+td em {
+  color: var(--warn);
+  font-style: normal;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+figure {
+  margin: 1.25rem 0 0;
+}
+figcaption {
+  margin-bottom: 0.4rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+#limitations ul {
+  max-width: 46rem;
+  padding-left: 1.1rem;
+  color: var(--muted);
+}
+#limitations li {
+  margin-bottom: 0.4rem;
+}
+.lede {
+  max-width: 60rem;
+  margin: 0 auto;
+  color: var(--muted);
+}
+.lede a {
+  color: var(--accent);
+}
+</style>
 </head>
 <body>
 <h1>Safety-aware segmentation evidence</h1>
+<p class="lede">
+Generated from the committed evidence of
+<a href="https://github.com/kuotunyu/driving-risk-metrics">driving-risk-metrics</a>.
+Every number below is bound to a verified claim and its artifact.
+繁體中文說明在
+<a href="https://github.com/kuotunyu/driving-risk-metrics#readme">repository 首頁</a>。
+</p>
 
 <section id="provenance">
 <h2>What these numbers describe</h2>
@@ -21,6 +189,7 @@
 
 <section id="claims">
 <h2>Verified claims</h2>
+<div class="scroll">
 <table>
 <thead><tr><th>Claim</th><th>Evidence type</th><th>Artifact</th></tr></thead>
 <tbody>
@@ -33,6 +202,7 @@
 {% endfor %}
 </tbody>
 </table>
+</div>
 </section>
 
 <section id="figures">
@@ -54,6 +224,7 @@
 Every aggregate on this page is computed from these runs and no others. The
 checkpoint digest identifies the exact weights each row was evaluated from.
 </p>
+<div class="scroll">
 <table>
 <thead><tr><th>Run</th><th>Model</th><th>Seed</th><th>Status</th><th>Final step</th><th>Temperature</th><th>Checkpoint SHA-256</th></tr></thead>
 <tbody>
@@ -70,6 +241,7 @@ checkpoint digest identifies the exact weights each row was evaluated from.
 {% endfor %}
 </tbody>
 </table>
+</div>
 </section>
 
 <section id="per-class">
@@ -80,6 +252,7 @@ A class is marked <strong>thin</strong> when it appears in fewer than
 judgement: a score computed over a handful of images is reported, and how little it
 rests on is reported beside it.
 </p>
+<div class="scroll">
 <table>
 <thead><tr><th>Class</th><th>Labelled pixels</th><th>Images</th>{% for model in per_class.models %}<th>{{ model }} IoU</th><th>{{ model }} recall</th>{% endfor %}</tr></thead>
 <tbody>
@@ -93,6 +266,7 @@ rests on is reported beside it.
 {% endfor %}
 </tbody>
 </table>
+</div>
 </section>
 
 <section id="calibration">
@@ -109,6 +283,7 @@ Temperature scaling {{ row.direction }} the expected calibration error, from
 {{ row.uncalibrated.ece }} to {{ row.calibrated.ece }}; the Brier score moved from
 {{ row.uncalibrated.brier }} to {{ row.calibrated.brier }}.
 </p>
+<div class="scroll">
 <table>
 <thead><tr><th>Seed</th><th>Uncalibrated ECE</th><th>Calibrated ECE</th></tr></thead>
 <tbody>
@@ -117,6 +292,7 @@ Temperature scaling {{ row.direction }} the expected calibration error, from
 {% endfor %}
 </tbody>
 </table>
+</div>
 {% endfor %}
 </section>
 
@@ -126,6 +302,7 @@ Temperature scaling {{ row.direction }} the expected calibration error, from
 A cost-risk figure means nothing without the profile that weighted it, so each is
 published beside the class identifiers it treats as critical.
 </p>
+<div class="scroll">
 <table>
 <thead><tr><th>Profile</th><th>Critical class IDs</th><th>Sensitivity</th><th>Model</th><th>Cost risk</th></tr></thead>
 <tbody>
@@ -140,6 +317,7 @@ published beside the class identifiers it treats as critical.
 {% endfor %}{% endfor %}
 </tbody>
 </table>
+</div>
 </section>
 
 <section id="bands">
@@ -148,6 +326,7 @@ published beside the class identifiers it treats as critical.
 <p>Not computed: {{ bands.not_computed }}.</p>
 {% else %}
 <p>{{ bands.definition }}.</p>
+<div class="scroll">
 <table>
 <thead><tr><th>Model</th><th>Band</th><th>Pixel accuracy</th><th>Pixels</th></tr></thead>
 <tbody>
@@ -156,6 +335,7 @@ published beside the class identifiers it treats as critical.
 {% endfor %}{% endfor %}
 </tbody>
 </table>
+</div>
 {% endif %}
 </section>
 
@@ -187,6 +367,7 @@ excluded for having no corroborated pixel, mean corroborated fraction
 {{ row.mean_corroborated_fraction }}, tertile edges
 <code>{{ row.tertile_edges_sha256 }}</code>.
 </p>
+<div class="scroll">
 <table>
 <thead><tr><th>Class</th><th>Tertile</th><th>Instances</th><th>Critical misses</th><th>Mean correct fraction</th></tr></thead>
 <tbody>
@@ -198,6 +379,7 @@ excluded for having no corroborated pixel, mean corroborated fraction
 {% endfor %}{% endfor %}
 </tbody>
 </table>
+</div>
 {% endfor %}
 </section>
 
@@ -208,6 +390,7 @@ Each curve is evaluated at confidence-bin boundaries rather than continuously, s
 the area below is the area under a quantized curve. It is comparable across the
 models on this page and not with a figure computed another way.
 </p>
+<div class="scroll">
 <table>
 <thead><tr><th>Model</th><th>Uncalibrated AURC</th><th>Calibrated AURC</th><th>Coverage points</th><th>Defined at</th></tr></thead>
 <tbody>
@@ -222,6 +405,7 @@ models on this page and not with a figure computed another way.
 {% endfor %}
 </tbody>
 </table>
+</div>
 </section>
 
 <section id="gallery">
@@ -234,6 +418,7 @@ dataset images, so the samples are named rather than shown.
 </p>
 {% for row in gallery.rows %}
 <h3>{{ row.model }}</h3>
+<div class="scroll">
 <table>
 <thead><tr><th>End</th><th>Sample ID</th><th>Mean IoU over seeds</th>{% for seed in row.seeds %}<th>seed {{ seed }}</th>{% endfor %}</tr></thead>
 <tbody>
@@ -245,6 +430,7 @@ dataset images, so the samples are named rather than shown.
 {% endfor %}
 </tbody>
 </table>
+</div>
 {% endfor %}
 </section>
 
@@ -255,6 +441,7 @@ Each safety metric below is compared against the baseline metric
 <code>{{ rankings.baseline_metric }}</code>. A reversal is an observation about this
 cohort, not a success criterion.
 </p>
+<div class="scroll">
 <table>
 <thead><tr><th>Metric</th><th>Baseline order</th><th>Comparison order</th><th>Reversal observed</th></tr></thead>
 <tbody>
@@ -268,6 +455,7 @@ cohort, not a success criterion.
 {% endfor %}
 </tbody>
 </table>
+</div>
 </section>
 
 <section id="limitations">
