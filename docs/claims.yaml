@@ -1,20 +1,285 @@
 allowed_evidence_types:
-  - observed
-  - derived
-  - synthetic
-  - illustrative
+- observed
+- derived
+- synthetic
+- illustrative
 claim_required_fields:
-  - claim_id
-  - text
-  - evidence_type
-  - protocol_hash
-  - dataset_manifest_hash
-  - artifact_path
-  - metric_path
-  - status
+- claim_id
+- text
+- evidence_type
+- protocol_hash
+- dataset_manifest_hash
+- artifact_path
+- metric_path
+- status
 allowed_statuses:
-  - draft
-  - verified
-  - rejected
-  - superseded
-claims: []
+- draft
+- verified
+- rejected
+- superseded
+claims:
+- claim_id: p1.miou.locked
+  text: On the locked BDD100K validation cohort, mean IoU averaged over three seeds is 0.6320100232208011
+    for UperNet-ConvNeXtV2-Tiny, 0.6219827462429768 for SegFormer-B2, 0.47424706184502113 for UperNet-DINOv2-Small.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/metrics.json
+  metric_path: /metrics
+  status: verified
+- claim_id: p1.critical-recall.locked
+  text: Recall over the vulnerable-road-user critical classes is 0.8105162716623479 for UperNet-ConvNeXtV2-Tiny,
+    0.7872117542228393 for SegFormer-B2, 0.520379600009604 for UperNet-DINOv2-Small.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/metrics.json
+  metric_path: /metrics
+  status: verified
+- claim_id: p1.interval.miou.segformer-minus-convnextv2
+  text: The paired difference in mean IoU between SegFormer-B2 and UperNet-ConvNeXtV2-Tiny is -0.010027276977824351,
+    and its bootstrap interval from -0.02224922437284147 to 0.0023369779504553204 includes zero.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/rankings.json
+  metric_path: /separability/miou/0
+  status: verified
+- claim_id: p1.interval.miou.segformer-minus-dinov2
+  text: The paired difference in mean IoU between SegFormer-B2 and UperNet-DINOv2-Small is 0.14773568439795565,
+    and its bootstrap interval from 0.1287437445802294 to 0.1636514110329344 excludes zero.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/rankings.json
+  metric_path: /separability/miou/1
+  status: verified
+- claim_id: p1.interval.miou.convnextv2-minus-dinov2
+  text: The paired difference in mean IoU between UperNet-ConvNeXtV2-Tiny and UperNet-DINOv2-Small is
+    0.15776296137578, and its bootstrap interval from 0.13945051592642926 to 0.1725201052648975 excludes
+    zero.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/rankings.json
+  metric_path: /separability/miou/2
+  status: verified
+- claim_id: p1.interval.critical-recall.segformer-minus-convnextv2
+  text: The paired difference in critical-class recall between SegFormer-B2 and UperNet-ConvNeXtV2-Tiny
+    is -0.023304517439508565, and its bootstrap interval from -0.03998178645924999 to -0.008046430169669789
+    excludes zero.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/rankings.json
+  metric_path: /separability/critical_recall/0
+  status: verified
+- claim_id: p1.interval.critical-recall.segformer-minus-dinov2
+  text: The paired difference in critical-class recall between SegFormer-B2 and UperNet-DINOv2-Small is
+    0.26683215421323525, and its bootstrap interval from 0.20693240182806819 to 0.3425933504481617 excludes
+    zero.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/rankings.json
+  metric_path: /separability/critical_recall/1
+  status: verified
+- claim_id: p1.interval.critical-recall.convnextv2-minus-dinov2
+  text: The paired difference in critical-class recall between UperNet-ConvNeXtV2-Tiny and UperNet-DINOv2-Small
+    is 0.2901366716527438, and its bootstrap interval from 0.23171791423120566 to 0.3605113226367889 excludes
+    zero.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/rankings.json
+  metric_path: /separability/critical_recall/2
+  status: verified
+- claim_id: p1.interval.method
+  text: Every paired interval is a two-stage paired bootstrap over summed confusions at 0.95 confidence,
+    using 5000 resamples from seed 20260831.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/intervals.json
+  metric_path: /intervals/segformer_b2 minus upernet_convnextv2_tiny (miou)
+  status: verified
+- claim_id: p1.ranking.critical-recall.no-reversal
+  text: 'Ranking the three models by critical_recall produces the same order as ranking them by miou:
+    no reversal is observed.'
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/rankings.json
+  metric_path: /comparisons/0
+  status: verified
+- claim_id: p1.ranking.pixel-accuracy.no-reversal
+  text: 'Ranking the three models by pixel_accuracy produces the same order as ranking them by miou: no
+    reversal is observed.'
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/rankings.json
+  metric_path: /comparisons/1
+  status: verified
+- claim_id: p1.calibration.convnextv2.ece
+  text: Temperature scaling lowered the expected calibration error of UperNet-ConvNeXtV2-Tiny on the locked
+    cohort, from 0.004609387187919981 to 0.0032855195799122.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/metrics.json
+  metric_path: /calibration/upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.calibration.segformer.ece
+  text: Temperature scaling raised the expected calibration error of SegFormer-B2 on the locked cohort,
+    from 0.0028840449773854925 to 0.0035196866015977167.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/metrics.json
+  metric_path: /calibration/segformer_b2
+  status: verified
+- claim_id: p1.calibration.dinov2.ece
+  text: Temperature scaling lowered the expected calibration error of UperNet-DINOv2-Small on the locked
+    cohort, from 0.005448051902032049 to 0.003985369701553616.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/metrics.json
+  metric_path: /calibration/upernet_dinov2_small
+  status: verified
+- claim_id: p1.calibration.segformer.ece-per-seed
+  text: 'Every SegFormer-B2 seed moved the same way after temperature scaling: calibrated 0.003590665043061051,
+    0.0034857099631801494, 0.0034826847985519496 against uncalibrated 0.0028459279224686924, 0.002904871031420072,
+    0.0029013359782677135.'
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/metrics.json
+  metric_path: /calibration/segformer_b2
+  status: verified
+- claim_id: p1.per-class.train
+  text: All three models score an IoU of 0.0 on the class train, which carries 109005 labelled pixels
+    in 7 of the cohort's images.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/metrics.json
+  metric_path: /per_class
+  status: verified
+- claim_id: p1.ground-truth.masks
+  text: Every one of the 998 locked-cohort ground-truth masks was verified against the frozen manifest
+    before it was scored.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /ground_truth
+  status: verified
+- claim_id: p1.instances.corroboration
+  text: Instance coverage scores 12860 instances over the footprint that the semantic and instance annotations
+    corroborate, a mean corroborated fraction of 0.94643690780947; 115 instances had no corroborated pixel
+    and were excluded.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /instances/segformer_b2
+  status: verified
+- claim_id: p1.instances.convnextv2.person-small
+  text: UperNet-ConvNeXtV2-Tiny recovers less than half the pixels of 306 of the 462 smallest-tertile
+    person instances.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /instances/upernet_convnextv2_tiny/by_class/person/by_tertile/small
+  status: verified
+- claim_id: p1.instances.convnextv2.car-small
+  text: UperNet-ConvNeXtV2-Tiny recovers less than half the pixels of 822 of the 3749 smallest-tertile
+    car instances.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /instances/upernet_convnextv2_tiny/by_class/car/by_tertile/small
+  status: verified
+- claim_id: p1.instances.convnextv2.rider-small
+  text: UperNet-ConvNeXtV2-Tiny recovers less than half the pixels of every one of the 17 smallest-tertile
+    rider instances.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /instances/upernet_convnextv2_tiny/by_class/rider/by_tertile/small
+  status: verified
+- claim_id: p1.instances.convnextv2.motorcycle-small
+  text: UperNet-ConvNeXtV2-Tiny recovers less than half the pixels of every one of the 14 smallest-tertile
+    motorcycle instances.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /instances/upernet_convnextv2_tiny/by_class/motorcycle/by_tertile/small
+  status: verified
+- claim_id: p1.instances.convnextv2.small-overall
+  text: Across all classes UperNet-ConvNeXtV2-Tiny misses more than half the pixels of 1399 of the 4514
+    smallest-tertile instances.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /instances/upernet_convnextv2_tiny/by_tertile/small
+  status: verified
+- claim_id: p1.instances.segformer.person-small
+  text: SegFormer-B2 recovers less than half the pixels of 352 of the 462 smallest-tertile person instances.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /instances/segformer_b2/by_class/person/by_tertile/small
+  status: verified
+- claim_id: p1.instances.segformer.car-small
+  text: SegFormer-B2 recovers less than half the pixels of 789 of the 3749 smallest-tertile car instances.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /instances/segformer_b2/by_class/car/by_tertile/small
+  status: verified
+- claim_id: p1.instances.segformer.rider-small
+  text: SegFormer-B2 recovers less than half the pixels of every one of the 17 smallest-tertile rider
+    instances.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /instances/segformer_b2/by_class/rider/by_tertile/small
+  status: verified
+- claim_id: p1.instances.segformer.motorcycle-small
+  text: SegFormer-B2 recovers less than half the pixels of every one of the 14 smallest-tertile motorcycle
+    instances.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /instances/segformer_b2/by_class/motorcycle/by_tertile/small
+  status: verified
+- claim_id: p1.instances.segformer.small-overall
+  text: Across all classes SegFormer-B2 misses more than half the pixels of 1422 of the 4514 smallest-tertile
+    instances.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /instances/segformer_b2/by_tertile/small
+  status: verified
+- claim_id: p1.bands.middle
+  text: Pixel accuracy in the middle third of the image, where distant road users appear, is 0.9063993962745598
+    for UperNet-ConvNeXtV2-Tiny, 0.9039825378430191 for SegFormer-B2, 0.8681091984773754 for UperNet-DINOv2-Small.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/extended-metrics.json
+  metric_path: /normalized_image_bands/by_model
+  status: verified
