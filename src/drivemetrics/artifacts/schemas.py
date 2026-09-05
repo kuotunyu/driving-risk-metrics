@@ -6,6 +6,14 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
+from .documents import (
+    AreaTertilesV1,
+    ExtendedMetricsV1,
+    GalleryManifestV1,
+    IntervalsV1,
+    MetricsTableV1,
+    RankingsV1,
+)
 from .envelope import PortfolioArtifactEnvelopeV1, canonical_json_bytes
 from .predictions import PredictionArtifactV1
 from .run_record import RunRecordV1
@@ -14,6 +22,12 @@ _SCHEMA_MODELS: tuple[tuple[str, type[BaseModel]], ...] = (
     ("portfolio_artifact_envelope_v1.json", PortfolioArtifactEnvelopeV1),
     ("prediction_artifact_v1.json", PredictionArtifactV1),
     ("run_record_v1.json", RunRecordV1),
+    ("metrics_table_v1.json", MetricsTableV1),
+    ("intervals_v1.json", IntervalsV1),
+    ("rankings_v1.json", RankingsV1),
+    ("gallery_manifest_v1.json", GalleryManifestV1),
+    ("extended_metrics_v1.json", ExtendedMetricsV1),
+    ("area_tertiles_v1.json", AreaTertilesV1),
 )
 
 
