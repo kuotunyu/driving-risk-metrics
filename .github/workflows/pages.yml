@@ -46,6 +46,7 @@ jobs:
           --claims docs/claims.yaml --repo-root .
           --document README.md --document README.en.md
           --document docs/release-notes/v1.0.0.md
+          --document docs/release-notes/v1.0.1.md
 
       - name: Build the report from the committed evidence
         run: >-
