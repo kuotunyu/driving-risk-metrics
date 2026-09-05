@@ -662,8 +662,15 @@ def test_an_index_that_fails_its_own_gate_is_refused(tmp_path: Path) -> None:
 
     # Two runs are missing, so the message carries two reasons joined by the
     # separator; a joiner that changed would change what a reader is told.
-    with pytest.raises(ValueError, match=r"^formal run index is not valid: [^;]+; [^;]+$"):
+    from drivemetrics.artifacts.formal_set import validate_formal_run_index
+
+    # The whole message, built from the validator's own reasons: a changed
+    # separator or a dropped reason cannot pass a permissive pattern.
+    expected = "formal run index is not valid: " + "; ".join(validate_formal_run_index(document))
+    assert "; " in expected
+    with pytest.raises(ValueError) as caught:
         extended.extended_metrics(index_path, tmp_path / "extended-metrics.json")
+    assert str(caught.value) == expected
 
 
 def test_instance_coverage_is_broken_down_by_class(tmp_path: Path) -> None:

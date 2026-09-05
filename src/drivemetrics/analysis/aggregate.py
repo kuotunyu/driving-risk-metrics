@@ -23,7 +23,7 @@ from drivemetrics.analysis.bootstrap import (
     two_stage_paired_bootstrap_statistic,
 )
 from drivemetrics.analysis.rankings import compare_rankings
-from drivemetrics.artifacts.documents import validated_document
+from drivemetrics.artifacts.documents import write_document
 from drivemetrics.artifacts.formal_set import (
     APPROVED_MODELS,
     APPROVED_SEEDS,
@@ -537,13 +537,5 @@ def _signed_difference_statistic(statistic, labels: tuple[int, ...]):
     return signed
 
 
-def _serialised(document: dict[str, Any]) -> str:
-    """The exact text a document is cited by: two-space indent, sorted keys, one trailing newline."""
-
-    return json.dumps(document, indent=2, sort_keys=True) + "\n"
-
-
 def _write(path: Path, document: dict[str, Any]) -> None:
-    # Validated through the contract its version names BEFORE it is written, so a
-    # shape regression fails here, in the producer, and never reaches a reader.
-    path.write_text(_serialised(validated_document(document)), encoding="utf-8", newline="\n")
+    write_document(path, document)

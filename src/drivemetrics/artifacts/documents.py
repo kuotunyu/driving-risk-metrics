@@ -17,7 +17,9 @@ edit or a stale file fails the build.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -301,3 +303,29 @@ def validated_document(payload: Mapping[str, Any]) -> dict[str, Any]:
     """
 
     return document_model_for(payload).model_validate(payload).model_dump(mode="json")
+
+
+def serialised_document(document: Mapping[str, Any]) -> str:
+    """The exact text a document is cited by: two-space indent, sorted keys, one trailing newline.
+
+    Documents are cited by hash, so their bytes are the contract. Indentation, key
+    order, encoding and the trailing newline are all part of what a claim's
+    `artifact_path` resolves to, and a reformat that changed any of them would
+    change every hash that ever cited the file.
+    """
+
+    return json.dumps(document, indent=2, sort_keys=True) + "\n"
+
+
+def write_document(path: Path, payload: Mapping[str, Any]) -> None:
+    """Validate a document through its contract, then write it in the cited byte format.
+
+    Every producer writes through here, so the shape check and the byte format
+    live in one place: a producer cannot publish a document its contract rejects,
+    and cannot publish one in a format a hash would not recognise.
+    """
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        serialised_document(validated_document(payload)), encoding="utf-8", newline="\n"
+    )

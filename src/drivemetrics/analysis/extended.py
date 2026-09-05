@@ -32,7 +32,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
-from drivemetrics.artifacts.documents import validated_document
+from drivemetrics.artifacts.documents import write_document
 from drivemetrics.artifacts.envelope import canonical_json_bytes
 from drivemetrics.artifacts.formal_set import (
     APPROVED_MODELS,
@@ -552,13 +552,7 @@ def extended_metrics(
         "normalized_image_bands": bands,
         "instances": instances,
     }
-    payload = validated_document(payload)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-        newline="\n",
-    )
+    write_document(output_path, payload)
     return ExtendedMetricsResult(document_path=output_path, models=models, computed=tuple(computed))
 
 

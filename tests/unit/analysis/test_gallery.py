@@ -244,8 +244,15 @@ def test_an_index_that_fails_its_own_gate_is_refused(tmp_path: Path) -> None:
     document["runs"] = document["runs"][:-2]
     index_path.write_text(json.dumps(document, indent=2, sort_keys=True), encoding="utf-8")
 
-    with pytest.raises(ValueError, match=r"^formal run index is not valid: [^;]+; [^;]+$"):
+    from drivemetrics.artifacts.formal_set import validate_formal_run_index
+
+    # The whole message, built from the validator's own reasons: a changed
+    # separator or a dropped reason cannot pass a permissive pattern.
+    expected = "formal run index is not valid: " + "; ".join(validate_formal_run_index(document))
+    assert "; " in expected
+    with pytest.raises(ValueError) as caught:
         gallery.select_gallery(index_path, tmp_path / "gallery-manifest.json", per_model=2)
+    assert str(caught.value) == expected
 
 
 def test_the_hashes_bind_the_gallery_to_the_study_that_produced_it(tmp_path: Path) -> None:
@@ -360,3 +367,18 @@ def test_each_model_is_ranked_on_its_own_runs(tmp_path: Path) -> None:
             str(seed): pytest.approx(value, rel=0.0, abs=1e-12)
             for seed, value in zip(SEEDS, expected, strict=True)
         }
+
+
+def test_the_result_names_the_manifest_the_size_and_the_models(tmp_path: Path) -> None:
+    """The CLI prints this result; a field it did not fill would print as nothing."""
+
+    from drivemetrics.artifacts.formal_set import APPROVED_MODELS
+
+    gallery = load_gallery()
+    output_path = tmp_path / "gallery-manifest.json"
+
+    result = gallery.select_gallery(build_index(tmp_path / "runs"), output_path, per_model=2)
+
+    assert result.manifest_path == output_path
+    assert result.per_model == 2
+    assert result.models == APPROVED_MODELS

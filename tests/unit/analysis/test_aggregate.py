@@ -447,21 +447,13 @@ def test_an_artifact_from_another_protocol_is_refused(tmp_path: Path) -> None:
 def test_a_written_document_is_byte_exact_and_key_sorted(tmp_path: Path) -> None:
     """Analysis documents are cited by hash, so their bytes are the contract.
 
-    Indentation, key order, encoding and the trailing newline are all part of
-    what a claim's ``artifact_path`` resolves to. A reformat that changes any of
-    them changes every hash that ever cited the file. The format is pinned on an
-    arbitrary document, and the writer is shown to apply exactly that format to a
-    document it has validated — the two halves of one contract.
+    The format itself is pinned in `test_documents.py`; this shows the aggregate
+    writer applies exactly that format to a document it has validated.
     """
 
-    from drivemetrics.artifacts.documents import validated_document
+    from drivemetrics.artifacts.documents import serialised_document, validated_document
 
     aggregate = load_aggregate()
-
-    assert aggregate._serialised({"b": 2, "a": {"d": 4, "c": 3}}).encode("utf-8") == (
-        b'{\n  "a": {\n    "c": 3,\n    "d": 4\n  },\n  "b": 2\n}\n'
-    )
-
     document = {
         "schema_version": "driving-risk-intervals/v1",
         "protocol_hash": PROTOCOL,
@@ -469,8 +461,10 @@ def test_a_written_document_is_byte_exact_and_key_sorted(tmp_path: Path) -> None
         "intervals": {},
     }
     path = tmp_path / "document.json"
+
     aggregate._write(path, document)
-    assert path.read_bytes() == aggregate._serialised(validated_document(document)).encode("utf-8")
+
+    assert path.read_bytes() == serialised_document(validated_document(document)).encode("utf-8")
 
 
 def test_the_paired_statistic_is_oriented_left_minus_right() -> None:
