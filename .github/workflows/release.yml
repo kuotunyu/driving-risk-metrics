@@ -48,4 +48,4 @@ jobs:
         run: >-
           gh release create "$GITHUB_REF_NAME" dist/*
           --title "driving-risk-metrics $GITHUB_REF_NAME"
-          --notes "Built by the Release workflow from tag $GITHUB_REF_NAME at commit $GITHUB_SHA. Verify assets against SHA256SUMS."
+          --notes-file "docs/release-notes/$GITHUB_REF_NAME.md"

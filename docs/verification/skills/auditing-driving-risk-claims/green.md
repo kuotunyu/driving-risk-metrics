@@ -159,7 +159,7 @@ section records that run so the evidence is not only a rehearsal.
 - Proposal audit at Task 8: a proposal built from the 29 registry sentences of
   that moment; 29 statements traced, 65 numbers, every verdict `pass`, exit 0.
 - Document audit at Task 9: `validate_claims.py --claims docs/claims.yaml
-  --repo-root . --document README.md --document README.zh-TW.md`; 42 marked
+  --repo-root . --document README.md --document README.zh-TW.md` (the files were later renamed to `README.md`, Traditional Chinese, and `README.en.md`); 42 marked
   statements (21 per README), 96 numbers, every verdict `pass`, exit 0; no line
   stating a metric term and a number without a marker.
 - What the real run taught, recorded here rather than left for the next author:

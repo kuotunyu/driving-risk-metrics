@@ -65,7 +65,7 @@ uv run --frozen mutmut results
 ```powershell
 uv run --frozen driving-risk audit-claims --claims docs/claims.yaml
 uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/validate_claims.py `
-  --claims docs/claims.yaml --document README.md --document README.zh-TW.md
+  --claims docs/claims.yaml --document README.md --document README.en.md --document docs/release-notes/v1.0.0.md
 ```
 
 - [ ] The registry audit exits 0.

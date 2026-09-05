@@ -54,7 +54,7 @@ not hold is not a result yet: register it, audit it, then write the sentence.
 
 ```bash
 uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/validate_claims.py \
-  --claims docs/claims.yaml --repo-root . --document README.md --document README.zh-TW.md
+  --claims docs/claims.yaml --repo-root . --document README.md --document README.en.md --document docs/release-notes/v1.0.0.md
 
 uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/validate_claims.py \
   --claims docs/claims.yaml --repo-root . --proposal proposal.yaml
