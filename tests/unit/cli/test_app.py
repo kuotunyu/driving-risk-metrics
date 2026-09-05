@@ -972,3 +972,50 @@ def test_extended_metrics_forwards_every_ground_truth_path(
     assert seen["labels_root"] == labels
     assert seen["instance_root"] == labels
     assert seen["tertiles_path"] == tertiles
+
+
+def test_data_tertiles_forwards_every_path_and_reports_the_counts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A path the command accepted but did not pass on would learn edges from the wrong cohort."""
+
+    import drivemetrics.cli.data as data_cli
+
+    seen: dict[str, object] = {}
+
+    def record(manifest: Path, instance_root: Path, output: Path) -> SimpleNamespace:
+        seen.update(manifest=manifest, instance_root=instance_root, output=output)
+        return SimpleNamespace(
+            output_path=output, eligible_images=2, missing_bitmasks=("v0003",), total_instances=5
+        )
+
+    monkeypatch.setattr(data_cli, "TERTILES_SERVICE", record)
+    bitmasks = tmp_path / "bitmasks"
+    bitmasks.mkdir()
+    manifest = touch(tmp_path / "train.json")
+
+    result = runner.invoke(
+        app,
+        [
+            "data",
+            "tertiles",
+            "--manifest",
+            str(manifest),
+            "--instance-root",
+            str(bitmasks),
+            "--output",
+            str(tmp_path / "area_tertiles.json"),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert seen == {
+        "manifest": manifest,
+        "instance_root": bitmasks,
+        "output": tmp_path / "area_tertiles.json",
+    }
+    payload = json.loads(result.stdout)
+    assert payload["command"] == "data tertiles"
+    assert payload["missing_bitmasks"] == ["v0003"]
+    assert payload["total_instances"] == 5
