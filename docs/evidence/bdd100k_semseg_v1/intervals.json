@@ -1,0 +1,88 @@
+{
+  "dataset_manifest_hash": "d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f",
+  "intervals": {
+    "segformer_b2 minus upernet_convnextv2_tiny (critical_recall)": {
+      "confidence": 0.95,
+      "estimate": -0.023304517439508565,
+      "estimator": "ratio_of_sums",
+      "high": -0.008046430169669789,
+      "low": -0.03998178645924999,
+      "resamples": 5000,
+      "seed": 20260831
+    },
+    "segformer_b2 minus upernet_convnextv2_tiny (miou)": {
+      "confidence": 0.95,
+      "estimate": -0.010027276977824351,
+      "estimator": "ratio_of_sums",
+      "high": 0.0023369779504553204,
+      "low": -0.02224922437284147,
+      "resamples": 5000,
+      "seed": 20260831
+    },
+    "segformer_b2 minus upernet_convnextv2_tiny (pixel_accuracy)": {
+      "confidence": 0.95,
+      "estimate": -0.0001872898646443355,
+      "estimator": "ratio_of_sums",
+      "high": 0.0013454765768248916,
+      "low": -0.0016728389376054222,
+      "resamples": 5000,
+      "seed": 20260831
+    },
+    "segformer_b2 minus upernet_dinov2_small (critical_recall)": {
+      "confidence": 0.95,
+      "estimate": 0.26683215421323525,
+      "estimator": "ratio_of_sums",
+      "high": 0.3425933504481617,
+      "low": 0.20693240182806819,
+      "resamples": 5000,
+      "seed": 20260831
+    },
+    "segformer_b2 minus upernet_dinov2_small (miou)": {
+      "confidence": 0.95,
+      "estimate": 0.14773568439795565,
+      "estimator": "ratio_of_sums",
+      "high": 0.1636514110329344,
+      "low": 0.1287437445802294,
+      "resamples": 5000,
+      "seed": 20260831
+    },
+    "segformer_b2 minus upernet_dinov2_small (pixel_accuracy)": {
+      "confidence": 0.95,
+      "estimate": 0.02445467993751571,
+      "estimator": "ratio_of_sums",
+      "high": 0.02728723632522628,
+      "low": 0.0216400019244743,
+      "resamples": 5000,
+      "seed": 20260831
+    },
+    "upernet_convnextv2_tiny minus upernet_dinov2_small (critical_recall)": {
+      "confidence": 0.95,
+      "estimate": 0.2901366716527438,
+      "estimator": "ratio_of_sums",
+      "high": 0.3605113226367889,
+      "low": 0.23171791423120566,
+      "resamples": 5000,
+      "seed": 20260831
+    },
+    "upernet_convnextv2_tiny minus upernet_dinov2_small (miou)": {
+      "confidence": 0.95,
+      "estimate": 0.15776296137578,
+      "estimator": "ratio_of_sums",
+      "high": 0.1725201052648975,
+      "low": 0.13945051592642926,
+      "resamples": 5000,
+      "seed": 20260831
+    },
+    "upernet_convnextv2_tiny minus upernet_dinov2_small (pixel_accuracy)": {
+      "confidence": 0.95,
+      "estimate": 0.024641969802160046,
+      "estimator": "ratio_of_sums",
+      "high": 0.02733724833031023,
+      "low": 0.02210442043021823,
+      "resamples": 5000,
+      "seed": 20260831
+    }
+  },
+  "protocol_hash": "b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f",
+  "schema_version": "driving-risk-intervals/v1"
+}

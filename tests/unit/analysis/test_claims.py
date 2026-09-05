@@ -396,15 +396,35 @@ def test_verified_claims_excludes_every_unverified_status(tmp_path: Path) -> Non
     assert tuple(claim.claim_id for claim in verified) == ("p1-miou-example",)
 
 
-def test_checked_in_claim_registry_has_exact_vocabulary_and_no_claims() -> None:
-    """P1-03 must establish vocabulary without publishing invented results."""
+def test_checked_in_claim_registry_reproduces_every_claim_from_its_artifact() -> None:
+    """The published registry must audit clean, and every claim must be a measurement.
+
+    P1-03 established the vocabulary while the registry was empty, and this test
+    asserted exactly that emptiness. The registry now carries the study's claims,
+    so the assertion that earns its place is the one this project exists to make:
+    every number in every publishable sentence resolves at a JSON pointer inside a
+    committed artifact whose protocol and dataset manifest hashes match the claim
+    citing it. An empty registry would satisfy that vacuously, so the claim count
+    is asserted to be non-zero, and every claim is required to be a measurement
+    rather than a synthetic or illustrative value.
+
+    This is what makes the evidence self-checking: an edited number, a moved
+    artifact or a regenerated document whose protocol hash changed fails here,
+    inside the ordinary test run, rather than at a release gate or in public.
+    """
 
     claims = load_claims_module()
     claims_path = REPO_ROOT / "docs" / "claims.yaml"
     raw_value = yaml.safe_load(claims_path.read_text(encoding="utf-8"))
 
-    assert raw_value == valid_registry_values([])
-    assert claims.verified_claims(claims_path) == ()
+    assert raw_value["allowed_evidence_types"] == list(EXPECTED_EVIDENCE_TYPES)
+    assert raw_value["claim_required_fields"] == list(EXPECTED_REQUIRED_FIELDS)
+    assert raw_value["allowed_statuses"] == list(EXPECTED_STATUSES)
+
+    verified = claims.verified_claims(claims_path)
+    assert len(verified) == len(raw_value["claims"]) > 0
+    assert {claim.evidence_type for claim in verified} <= {"observed", "derived"}
+    assert claims.audit_claims(claims_path, REPO_ROOT) == ()
 
 
 def test_the_audit_examines_every_claim_after_the_first_violation(tmp_path: Path) -> None:

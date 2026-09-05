@@ -1,0 +1,116 @@
+{
+  "baseline_metric": "miou",
+  "comparisons": [
+    {
+      "baseline_order": [
+        "upernet_convnextv2_tiny",
+        "segformer_b2",
+        "upernet_dinov2_small"
+      ],
+      "comparison_order": [
+        "upernet_convnextv2_tiny",
+        "segformer_b2",
+        "upernet_dinov2_small"
+      ],
+      "metric_name": "critical_recall",
+      "reversal_observed": false
+    },
+    {
+      "baseline_order": [
+        "upernet_convnextv2_tiny",
+        "segformer_b2",
+        "upernet_dinov2_small"
+      ],
+      "comparison_order": [
+        "upernet_convnextv2_tiny",
+        "segformer_b2",
+        "upernet_dinov2_small"
+      ],
+      "metric_name": "pixel_accuracy",
+      "reversal_observed": false
+    }
+  ],
+  "dataset_manifest_hash": "d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f",
+  "protocol_hash": "b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f",
+  "schema_version": "driving-risk-rankings/v1",
+  "separability": {
+    "critical_recall": [
+      {
+        "estimate": -0.023304517439508565,
+        "excludes_zero": true,
+        "high": -0.008046430169669789,
+        "left": "segformer_b2",
+        "low": -0.03998178645924999,
+        "right": "upernet_convnextv2_tiny"
+      },
+      {
+        "estimate": 0.26683215421323525,
+        "excludes_zero": true,
+        "high": 0.3425933504481617,
+        "left": "segformer_b2",
+        "low": 0.20693240182806819,
+        "right": "upernet_dinov2_small"
+      },
+      {
+        "estimate": 0.2901366716527438,
+        "excludes_zero": true,
+        "high": 0.3605113226367889,
+        "left": "upernet_convnextv2_tiny",
+        "low": 0.23171791423120566,
+        "right": "upernet_dinov2_small"
+      }
+    ],
+    "miou": [
+      {
+        "estimate": -0.010027276977824351,
+        "excludes_zero": false,
+        "high": 0.0023369779504553204,
+        "left": "segformer_b2",
+        "low": -0.02224922437284147,
+        "right": "upernet_convnextv2_tiny"
+      },
+      {
+        "estimate": 0.14773568439795565,
+        "excludes_zero": true,
+        "high": 0.1636514110329344,
+        "left": "segformer_b2",
+        "low": 0.1287437445802294,
+        "right": "upernet_dinov2_small"
+      },
+      {
+        "estimate": 0.15776296137578,
+        "excludes_zero": true,
+        "high": 0.1725201052648975,
+        "left": "upernet_convnextv2_tiny",
+        "low": 0.13945051592642926,
+        "right": "upernet_dinov2_small"
+      }
+    ],
+    "pixel_accuracy": [
+      {
+        "estimate": -0.0001872898646443355,
+        "excludes_zero": false,
+        "high": 0.0013454765768248916,
+        "left": "segformer_b2",
+        "low": -0.0016728389376054222,
+        "right": "upernet_convnextv2_tiny"
+      },
+      {
+        "estimate": 0.02445467993751571,
+        "excludes_zero": true,
+        "high": 0.02728723632522628,
+        "left": "segformer_b2",
+        "low": 0.0216400019244743,
+        "right": "upernet_dinov2_small"
+      },
+      {
+        "estimate": 0.024641969802160046,
+        "excludes_zero": true,
+        "high": 0.02733724833031023,
+        "left": "upernet_convnextv2_tiny",
+        "low": 0.02210442043021823,
+        "right": "upernet_dinov2_small"
+      }
+    ]
+  }
+}
