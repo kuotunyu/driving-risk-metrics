@@ -203,7 +203,7 @@ def _band_block(
             total[band_id] += int(np.count_nonzero(scored & selected))
             correct[band_id] += int(np.count_nonzero(hit & selected))
 
-    block: dict[str, Any] = {"definition": BAND_DEFINITION}
+    block: dict[str, Any] = {}
     for band_id, name in enumerate(NORMALIZED_IMAGE_BAND_NAMES):
         block[name] = {
             "pixels": int(total[band_id]),

@@ -493,3 +493,23 @@ def test_a_malformed_histogram_is_refused_rather_than_curved(
 
     with pytest.raises(ValueError, match=expected):
         module.selective_risk_from_histogram(counts, correct)
+
+
+def test_histogram_counts_of_any_integer_like_dtype_build_the_same_curve() -> None:
+    """A histogram is counts; whether they arrive as booleans or int64 must not matter.
+
+    Boolean arrays are the sharp case: without the normalisation to int64 the
+    subtraction of correct from total is not defined on them at all.
+    """
+
+    from drivemetrics.metrics import selective
+
+    as_bool = selective.selective_risk_from_histogram(
+        np.array([True, False, True, True]), np.array([True, False, False, True])
+    )
+    as_int = selective.selective_risk_from_histogram(
+        np.array([1, 0, 1, 1], dtype=np.int64), np.array([1, 0, 0, 1], dtype=np.int64)
+    )
+
+    assert as_bool[0].tolist() == as_int[0].tolist()
+    assert as_bool[1].tolist() == as_int[1].tolist()

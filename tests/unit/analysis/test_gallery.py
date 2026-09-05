@@ -241,10 +241,10 @@ def test_an_index_that_fails_its_own_gate_is_refused(tmp_path: Path) -> None:
     gallery = load_gallery()
     index_path = build_index(tmp_path / "runs")
     document = json.loads(index_path.read_text(encoding="utf-8"))
-    document["runs"] = document["runs"][:-1]
+    document["runs"] = document["runs"][:-2]
     index_path.write_text(json.dumps(document, indent=2, sort_keys=True), encoding="utf-8")
 
-    with pytest.raises(ValueError, match=r"^formal run index is not valid: "):
+    with pytest.raises(ValueError, match=r"^formal run index is not valid: [^;]+; [^;]+$"):
         gallery.select_gallery(index_path, tmp_path / "gallery-manifest.json", per_model=2)
 
 
@@ -293,3 +293,70 @@ def test_the_gallery_reads_the_calibrated_evaluation(tmp_path: Path) -> None:
 
     assert manifest["evaluation"] == "eval_calibrated"
     assert manifest["per_model"][MODELS[0]]["worst"][0]["sample_id"] == "v0001"
+
+
+def test_a_gallery_of_one_image_per_model_is_the_smallest_allowed(tmp_path: Path) -> None:
+    """One is a small gallery, not an empty one; the refusal boundary is at zero."""
+
+    manifest = select(tmp_path, per_model=1)
+
+    for model in MODELS:
+        assert [entry["sample_id"] for entry in manifest["per_model"][model]["worst"]] == ["v0001"]
+        assert [entry["sample_id"] for entry in manifest["per_model"][model]["best"]] == ["v0005"]
+
+
+def test_a_boolean_gallery_size_is_refused(tmp_path: Path) -> None:
+    """`True` is an int to Python and a mistake to a reader; it is refused by name."""
+
+    gallery = load_gallery()
+
+    with pytest.raises(ValueError, match=r"^per_model must be a positive integer, got True$"):
+        gallery.select_gallery(
+            build_index(tmp_path / "runs"), tmp_path / "gallery-manifest.json", per_model=True
+        )
+
+
+def test_the_output_directory_is_created_when_it_does_not_exist(tmp_path: Path) -> None:
+    """The evidence directory is named by commit and does not exist until the first run."""
+
+    gallery = load_gallery()
+    output_path = tmp_path / "analysis" / "deadbeef" / "gallery-manifest.json"
+
+    gallery.select_gallery(build_index(tmp_path / "runs"), output_path, per_model=2)
+
+    assert output_path.is_file()
+
+
+def test_each_model_is_ranked_on_its_own_runs(tmp_path: Path) -> None:
+    """Every model's worst image is the same image here by design, so order alone cannot tell.
+
+    The per-image mIoU behind the selection is recomputed from the model's OWN
+    three calibrated evaluations. A gallery that averaged the other models' runs
+    would pick the same sample IDs and publish different numbers beside them.
+    """
+
+    from drivemetrics.artifacts.predictions import read_prediction_artifact
+    from drivemetrics.metrics.confusion import summarize_confusion
+
+    gallery = load_gallery()
+    index_path = build_index(tmp_path / "runs")
+    output_path = tmp_path / "gallery-manifest.json"
+    gallery.select_gallery(index_path, output_path, per_model=1)
+    manifest = json.loads(output_path.read_text(encoding="utf-8"))
+
+    for model in MODELS:
+        worst = manifest["per_model"][model]["worst"][0]
+        expected = []
+        for seed in SEEDS:
+            path = (
+                tmp_path / "runs" / f"{model}-seed-{seed}-calibrated" / f"{worst['sample_id']}.json"
+            )
+            _, record, _ = read_prediction_artifact(path)
+            expected.append(summarize_confusion(record.confusion).mean_iou)
+        assert worst["mean_iou_over_seeds"] == pytest.approx(
+            sum(expected) / len(expected), rel=0.0, abs=1e-12
+        )
+        assert worst["per_seed"] == {
+            str(seed): pytest.approx(value, rel=0.0, abs=1e-12)
+            for seed, value in zip(SEEDS, expected, strict=True)
+        }

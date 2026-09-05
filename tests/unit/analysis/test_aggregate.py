@@ -1179,13 +1179,49 @@ def test_runs_that_do_not_share_one_ground_truth_are_refused(tmp_path: Path) -> 
     The index validator proves the runs share a SET of sample IDs. It cannot see
     whether the confusions behind those IDs were built from the same truth, and a
     run evaluated against different masks would pass every hash check while its
-    numbers described a different cohort.
+    numbers described a different cohort. The divergent run here is the SECOND in
+    the canonical order, and the message names both it and the run it disagrees
+    with, so a check that started one run too late, or named the wrong reference,
+    is caught.
     """
 
     aggregate = load_aggregate()
     index_path = build_index(tmp_path / "runs")
     write_run_artifacts(
-        tmp_path / "runs" / f"{MODELS[1]}-seed-{SEEDS[1]}",
+        tmp_path / "runs" / f"{PUBLISHED_MODELS[0]}-seed-{SEEDS[1]}",
+        accuracy=0.7,
+        sizes=(400, 1200, 800),
+        present_classes=NUM_CLASSES - 1,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            rf"^the runs do not share one ground truth: {PUBLISHED_MODELS[0]}-seed-{SEEDS[1]} "
+            rf"has different per-class support than {PUBLISHED_MODELS[0]}-seed-{SEEDS[0]}$"
+        ),
+    ):
+        aggregate.aggregate_runs(
+            index_path,
+            tmp_path / "out",
+            resamples=60,
+            risk_profiles_dir=fixture_profiles(tmp_path),
+        )
+
+
+def test_a_divergent_first_run_is_caught_by_the_runs_that_follow_it(tmp_path: Path) -> None:
+    """The reference run can be the odd one out; the check must not trust it by position.
+
+    If the FIRST run were evaluated against different masks, every later run would
+    disagree with it. A check that compared the later runs against the second run
+    instead would find them all in agreement and publish the first run's numbers
+    as the cohort's.
+    """
+
+    aggregate = load_aggregate()
+    index_path = build_index(tmp_path / "runs")
+    write_run_artifacts(
+        tmp_path / "runs" / f"{PUBLISHED_MODELS[0]}-seed-{SEEDS[0]}",
         accuracy=0.7,
         sizes=(400, 1200, 800),
         present_classes=NUM_CLASSES - 1,
@@ -1198,6 +1234,39 @@ def test_runs_that_do_not_share_one_ground_truth_are_refused(tmp_path: Path) -> 
             resamples=60,
             risk_profiles_dir=fixture_profiles(tmp_path),
         )
+
+
+def test_an_image_counts_for_a_class_from_its_first_pixel() -> None:
+    """Support is a count of images with ANY pixel of the class, and one pixel is any.
+
+    Built directly from per-image confusions: two runs, two images, two classes.
+    The second image holds exactly one pixel of the second class, so a threshold
+    of two would report that class in one image instead of two.
+    """
+
+    aggregate = load_aggregate()
+    first_image = np.array([[3, 0], [0, 1]], dtype=np.float64)  # class 1 has one pixel
+    second_image = np.array([[2, 0], [0, 0]], dtype=np.float64)  # class 1 absent
+    per_run = np.stack([first_image.reshape(-1), second_image.reshape(-1)])
+    components = np.stack([per_run, per_run])
+    runs = [{"run_id": "a"}, {"run_id": "b"}]
+
+    support, images = aggregate._ground_truth_support(components, runs, 2, 2)
+
+    assert support == [5, 1]
+    assert images == [2, 1]
+
+
+def test_an_interval_excludes_zero_only_when_neither_bound_touches_it() -> None:
+    """The flag is a strict reading of two bounds, and the boundaries are where it matters."""
+
+    aggregate = load_aggregate()
+
+    assert aggregate._excludes_zero(0.1, 0.5) is True
+    assert aggregate._excludes_zero(-0.5, -0.1) is True
+    assert aggregate._excludes_zero(-0.5, 0.5) is False
+    assert aggregate._excludes_zero(0.0, 0.5) is False
+    assert aggregate._excludes_zero(-0.5, 0.0) is False
 
 
 def test_a_taxonomy_the_class_table_cannot_name_is_refused(tmp_path: Path) -> None:

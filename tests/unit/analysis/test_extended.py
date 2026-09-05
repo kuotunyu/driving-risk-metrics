@@ -30,6 +30,7 @@ import pytest
 from PIL import Image
 
 from drivemetrics.artifacts.envelope import canonical_json_bytes
+from drivemetrics.artifacts.formal_set import APPROVED_MODELS
 from drivemetrics.artifacts.predictions import PredictionRecord, write_prediction_artifact
 from drivemetrics.data.manifest import build_paired_manifest, save_manifest
 from drivemetrics.metrics.calibration import (
@@ -45,6 +46,7 @@ PROTOCOL = "a" * 64
 NUM_CLASSES = 19
 IGNORE = 255
 SAMPLES = ("v0001", "v0002")
+MANIFEST_PLACEHOLDER = "b" * 64
 HEIGHT, WIDTH = 6, 4
 
 #: Train IDs, with three IGNORED pixels: one in the top band and two in the
@@ -54,7 +56,7 @@ HEIGHT, WIDTH = 6, 4
 TRUTH = np.array(
     [
         [10, 10, 10, IGNORE],
-        [10, 10, 10, 10],
+        [1, 10, 10, 10],
         [2, 2, 11, 11],
         [2, 2, 11, 11],
         [0, 0, 13, 13],
@@ -78,13 +80,18 @@ def load_extended() -> ModuleType:
     return extended
 
 
-def prediction_grid(sample_id: str) -> np.ndarray:
+def prediction_grid(sample_id: str, *, model_position: int = 0, seed: int = 17) -> np.ndarray:
     """Correct everywhere except the errors this fixture is built to measure.
 
     One middle-band pixel is wrong in both images, which makes the person
     instance three-quarters covered. The bottom band is entirely wrong in the
     first image and wrong in one pixel in the second, which makes the car
     instance a critical miss in one image and perfect in the other.
+
+    The fixture's first model keeps exactly that. Every other model adds one
+    top-band error, and its seed 42 adds one more on the person instance, so the
+    three models and the three seeds are distinguishable: a block that read the
+    wrong model's runs, or the wrong seed's, produces different numbers.
     """
 
     predicted = TRUTH.copy()
@@ -94,16 +101,22 @@ def prediction_grid(sample_id: str) -> np.ndarray:
         predicted[5, :2] = 1
     else:
         predicted[5, 0] = 1
+    if model_position >= 1:
+        predicted[1, 1] = 0
+        if seed == 42:
+            predicted[3, 3] = 0
     return predicted
 
 
-def write_run_artifacts(directory: Path, dataset_manifest_sha256: str) -> None:
+def write_run_artifacts(
+    directory: Path, dataset_manifest_sha256: str, *, model_position: int = 0, seed: int = 17
+) -> None:
     """One run's artifacts, holding a prediction per NON-IGNORED pixel only."""
 
     directory.mkdir(parents=True, exist_ok=True)
     for sample_id in SAMPLES:
         targets = TRUTH[VALID]
-        predicted = prediction_grid(sample_id)[VALID]
+        predicted = prediction_grid(sample_id, model_position=model_position, seed=seed)[VALID]
         size = int(targets.size)
 
         confusion = np.zeros((NUM_CLASSES, NUM_CLASSES), dtype=np.int64)
@@ -173,9 +186,10 @@ def write_instance_bitmasks(root: Path) -> Path:
     Instance 1 is a person on five pixels of which the semantic mask agrees with
     four and calls the fifth building — the ordinary boundary disagreement that
     measurement showed affects about ninety per cent of real instances, and that
-    must narrow the footprint rather than delete the instance. Instance 300 is a
-    car on four pixels of which two are semantically ignored, and its ID does not
-    fit in one byte, so a reader that drops the high byte fails here. Instance 3
+    must narrow the footprint rather than delete the instance. Instance 256 is a
+    car on four pixels of which two are semantically ignored, and its ID has a
+    zero LOW byte, so a reader that drops or misplaces the high byte turns it
+    into background and loses it. Instance 3
     is a rider lying entirely on ignored pixels, instance 4 a car where the
     semantic mask says building, and instance 5 carries category 9, which is not
     an instance category at all; none of the three has a corroborated pixel.
@@ -190,7 +204,7 @@ def write_instance_bitmasks(root: Path) -> Path:
         bitmask = np.zeros((HEIGHT, WIDTH, 4), dtype=np.uint8)
         place(bitmask, slice(2, 4), slice(2, 4), category=1, annotation_id=1)
         place(bitmask, 3, 1, category=1, annotation_id=1)
-        place(bitmask, slice(4, 6), slice(2, 4), category=3, annotation_id=300)
+        place(bitmask, slice(4, 6), slice(2, 4), category=3, annotation_id=256)
         place(bitmask, 0, 3, category=2, annotation_id=3)
         place(bitmask, 2, 0, category=3, annotation_id=4)
         place(bitmask, 1, 0, category=9, annotation_id=5)
@@ -203,8 +217,16 @@ def build_index(root: Path, dataset_manifest_sha256: str) -> Path:
     for model_position, model in enumerate(MODELS):
         for seed in SEEDS:
             run_id = f"{model}-seed-{seed}"
-            write_run_artifacts(root / run_id, dataset_manifest_sha256)
-            write_run_artifacts(root / f"{run_id}-calibrated", dataset_manifest_sha256)
+            position = MODELS.index(model)
+            write_run_artifacts(
+                root / run_id, dataset_manifest_sha256, model_position=position, seed=seed
+            )
+            write_run_artifacts(
+                root / f"{run_id}-calibrated",
+                dataset_manifest_sha256,
+                model_position=position,
+                seed=seed,
+            )
             runs.append(
                 {
                     "model": model,
@@ -535,7 +557,13 @@ def test_ground_truth_needs_both_the_manifest_and_the_root(tmp_path: Path) -> No
     index_path = build_index(tmp_path / "runs", digest)
 
     for kwargs in ({"manifest_path": manifest_path}, {"labels_root": labels_root}):
-        with pytest.raises(ValueError, match=r"^the ground-truth blocks need both "):
+        with pytest.raises(
+            ValueError,
+            match=(
+                r"^the ground-truth blocks need both the frozen manifest and the labels root, "
+                r"or neither; one without the other cannot place a single mask$"
+            ),
+        ):
             extended.extended_metrics(index_path, tmp_path / "out.json", **kwargs)
 
 
@@ -629,10 +657,12 @@ def test_an_index_that_fails_its_own_gate_is_refused(tmp_path: Path) -> None:
     _, _, digest = write_ground_truth(tmp_path / "gt")
     index_path = build_index(tmp_path / "runs", digest)
     document = json.loads(index_path.read_text(encoding="utf-8"))
-    document["runs"] = document["runs"][:-1]
+    document["runs"] = document["runs"][:-2]
     index_path.write_text(json.dumps(document, indent=2, sort_keys=True), encoding="utf-8")
 
-    with pytest.raises(ValueError, match=r"^formal run index is not valid: "):
+    # Two runs are missing, so the message carries two reasons joined by the
+    # separator; a joiner that changed would change what a reader is told.
+    with pytest.raises(ValueError, match=r"^formal run index is not valid: [^;]+; [^;]+$"):
         extended.extended_metrics(index_path, tmp_path / "extended-metrics.json")
 
 
@@ -721,3 +751,211 @@ def test_the_instance_bitmask_set_is_recorded_for_later_comparison(tmp_path: Pat
 
     bands_only = compute(tmp_path / "again", ground_truth=True)
     assert bands_only["ground_truth"]["instance_bitmasks"] is None
+
+
+def write_single_pixel_bitmasks(root: Path) -> Path:
+    """One person instance covering exactly one corroborated pixel."""
+
+    directory = root / "labels" / "ins_seg" / "bitmasks" / "val"
+    directory.mkdir(parents=True, exist_ok=True)
+    for sample_id in SAMPLES:
+        bitmask = np.zeros((HEIGHT, WIDTH, 4), dtype=np.uint8)
+        place(bitmask, 2, 2, category=1, annotation_id=9)
+        Image.fromarray(bitmask, mode="RGBA").save(directory / f"{sample_id}.png")
+    return root
+
+
+def test_a_single_pixel_instance_the_semantic_mask_corroborates_is_scored(tmp_path: Path) -> None:
+    """A distant pedestrian can be one pixel; the class lookup must not assume two.
+
+    Reading the instance's class from its second pixel would raise on a one-pixel
+    footprint, and the instances most likely to be one pixel are exactly the small
+    vulnerable ones the study exists to measure.
+    """
+
+    document = compute(
+        tmp_path,
+        ground_truth=True,
+        instance_root=write_single_pixel_bitmasks(tmp_path / "ins"),
+        tertiles_path=write_tertiles(tmp_path),
+    )
+
+    person = document["instances"][MODELS[0]]["by_class"]["person"]
+    assert person["instance_count"] == 2
+    # The fixture predicts that pixel wrongly, so the instance is wholly missed.
+    assert person["critical_misses"] == 2
+    assert person["mean_correct_fraction"] == pytest.approx(0.0, rel=0.0, abs=1e-12)
+
+
+def test_label_hashes_are_checked_at_the_label_position_not_the_image_position(
+    tmp_path: Path,
+) -> None:
+    """The manifest interleaves image and label digests; reading the wrong slot passes wrong files.
+
+    The two masks here differ by one pixel, so their digests differ, so an index
+    that pointed at a neighbouring slot — or at the last entry through a negative
+    index — would compare a mask against the wrong digest and refuse a correct file.
+    """
+
+    extended = load_extended()
+    images, labels = tmp_path / "images", tmp_path / "labels"
+    images.mkdir()
+    labels.mkdir()
+    variant = TRUTH.copy()
+    variant[0, 0] = 0
+    for sample_id, mask in zip(SAMPLES, (TRUTH, variant), strict=True):
+        Image.fromarray(np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)).save(
+            images / f"{sample_id}.jpg"
+        )
+        Image.fromarray(mask.astype(np.uint8)).save(labels / f"{sample_id}_train_id.png")
+    manifest = build_paired_manifest(images, labels, "locked_validation")
+    manifest_path = tmp_path / "locked_validation.json"
+    save_manifest(manifest, manifest_path)
+
+    loaded, paths = extended._resolve_label_paths(
+        manifest_path, labels, tuple(sorted(SAMPLES)), manifest.manifest_sha256
+    )
+
+    assert loaded.manifest_sha256 == manifest.manifest_sha256
+    assert set(paths) == set(SAMPLES)
+    assert paths["v0002"].read_bytes() != paths["v0001"].read_bytes()
+
+
+def write_confidence_levels_run(directory: Path, digest: str, *, levels: int) -> None:
+    """Artifacts whose top-1 confidence takes exactly `levels` distinct values."""
+
+    directory.mkdir(parents=True, exist_ok=True)
+    tops = (0.9, 0.8, 0.7)[:levels]
+    for sample_id in SAMPLES:
+        targets = TRUTH[VALID]
+        predicted = prediction_grid(sample_id)[VALID]
+        size = int(targets.size)
+        top = np.asarray([tops[index % levels] for index in range(size)], dtype=np.float64)
+        probabilities = np.tile(((1.0 - top) / (NUM_CLASSES - 1))[:, None], (1, NUM_CLASSES))
+        probabilities[np.arange(size), predicted] = top
+        confusion = np.zeros((NUM_CLASSES, NUM_CLASSES), dtype=np.int64)
+        np.add.at(confusion, (targets, predicted), 1)
+        write_prediction_artifact(
+            directory / f"{sample_id}.json",
+            PredictionRecord(
+                sample_id=sample_id,
+                predicted_class=predicted.astype(np.uint8),
+                top1_confidence_q16=quantize_confidence(top),
+                correctness_bitset=pack_correctness(predicted == targets),
+                confusion=confusion,
+                brier_sum_by_class=multiclass_brier_sums(probabilities, targets, NUM_CLASSES),
+                valid_pixel_count=size,
+            ),
+            classwise_ece_sufficient_statistics(probabilities, targets, NUM_CLASSES),
+            protocol_sha256=PROTOCOL,
+            dataset_manifest_sha256=digest,
+        )
+
+
+def test_selective_risk_has_no_area_at_one_confidence_level_and_an_area_at_two(
+    tmp_path: Path,
+) -> None:
+    """A one-point curve has no span; a two-point curve is the smallest that has one.
+
+    The boundary is exactly at two points. Refusing two would drop a real curve;
+    accepting one would ask the area kernel for the area of a point.
+    """
+
+    extended = load_extended()
+    one = tmp_path / "one"
+    two = tmp_path / "two"
+    write_confidence_levels_run(one, MANIFEST_PLACEHOLDER, levels=1)
+    write_confidence_levels_run(two, MANIFEST_PLACEHOLDER, levels=2)
+
+    single = extended._selective_block(one, SAMPLES)
+    double = extended._selective_block(two, SAMPLES)
+
+    assert single["coverage_points"] == 1
+    assert single["aurc"] is None
+    assert double["coverage_points"] == 2
+    assert double["aurc"] is not None
+
+
+def test_each_model_is_scored_on_its_own_runs_and_instances_read_the_first_seed(
+    tmp_path: Path,
+) -> None:
+    """A block that read another model's runs, or another seed's, would still produce numbers.
+
+    The fixture gives every model after the first an extra top-band error, and
+    that model's seed 42 an extra error on the person instance. So the first
+    model's top band is perfect and the second's is not; and the second model's
+    instance block, which reads its FIRST seed, sees the person three-quarters
+    covered rather than half.
+    """
+
+    document = compute(
+        tmp_path,
+        ground_truth=True,
+        instance_root=write_instance_bitmasks(tmp_path / "ins"),
+        tertiles_path=write_tertiles(tmp_path),
+    )
+
+    first, second = MODELS[0], MODELS[1]
+    bands = document["normalized_image_bands"]["by_model"]
+    assert bands[first]["top"]["pixel_accuracy"] == pytest.approx(1.0, rel=0.0, abs=1e-12)
+    assert bands[second]["top"]["pixel_accuracy"] < 1.0
+    person = document["instances"][second]["by_class"]["person"]
+    assert person["mean_correct_fraction"] == pytest.approx(0.75, rel=0.0, abs=1e-12)
+
+
+def test_the_output_directory_is_created_when_it_does_not_exist(tmp_path: Path) -> None:
+    """The evidence directory is named by commit and does not exist until the first run."""
+
+    extended = load_extended()
+    _, _, digest = write_ground_truth(tmp_path / "gt")
+    index_path = build_index(tmp_path / "runs", digest)
+    output_path = tmp_path / "analysis" / "deadbeef" / "extended-metrics.json"
+
+    extended.extended_metrics(index_path, output_path)
+
+    assert output_path.is_file()
+
+
+def test_the_result_names_the_document_the_models_and_the_blocks_it_computed(
+    tmp_path: Path,
+) -> None:
+    """The CLI prints this result; a field it did not fill would print as nothing."""
+
+    extended = load_extended()
+    manifest_path, labels_root, digest = write_ground_truth(tmp_path / "gt")
+    index_path = build_index(tmp_path / "runs", digest)
+
+    partial = extended.extended_metrics(index_path, tmp_path / "partial.json")
+    full = extended.extended_metrics(
+        index_path,
+        tmp_path / "full.json",
+        manifest_path=manifest_path,
+        labels_root=labels_root,
+        instance_root=write_instance_bitmasks(tmp_path / "ins"),
+        tertiles_path=write_tertiles(tmp_path),
+    )
+
+    assert partial.document_path == tmp_path / "partial.json"
+    assert partial.models == APPROVED_MODELS
+    assert partial.computed == ("selective_risk",)
+    assert full.document_path == tmp_path / "full.json"
+    assert full.computed == ("selective_risk", "normalized_image_bands", "instances")
+
+
+def test_the_confidence_histogram_pools_every_image_not_the_last_one(tmp_path: Path) -> None:
+    """A histogram that kept only the final image's correct counts would still be a histogram.
+
+    Both images hold 21 scored pixels. The first has seven wrong and the second
+    two, so the pooled correct count is 33; a histogram that overwrote instead of
+    accumulating would report the second image's 19 alone.
+    """
+
+    extended = load_extended()
+    _, _, digest = write_ground_truth(tmp_path / "gt")
+    directory = tmp_path / "run"
+    write_run_artifacts(directory, digest)
+
+    counts, correct = extended._confidence_histogram(directory, SAMPLES)
+
+    assert int(counts.sum()) == 42
+    assert int(correct.sum()) == 33
