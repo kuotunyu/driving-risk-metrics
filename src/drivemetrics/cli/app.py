@@ -10,6 +10,7 @@ from drivemetrics.cli import (
     data,
     evaluate,
     extended,
+    figures,
     gallery,
     index,
     report,
@@ -31,4 +32,5 @@ app.command("aggregate")(aggregate.aggregate_command)
 app.command("gallery")(gallery.gallery_command)
 app.command("extended-metrics")(extended.extended_metrics_command)
 app.command("report")(report.report_command)
+app.command("figures")(figures.figures_command)
 app.command("audit-claims")(report.audit_claims_command)

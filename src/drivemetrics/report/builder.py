@@ -52,7 +52,7 @@ class ReportResult:
     claim_count: int
 
 
-def _load_json_object(path: Path) -> dict[str, Any]:
+def load_json_object(path: Path) -> dict[str, Any]:
     if not path.is_file():
         raise FileNotFoundError(f"report input is missing: {path}")
     document = json.loads(path.read_text(encoding="utf-8"))
@@ -300,7 +300,7 @@ def build_report(
     if violations:
         raise ValueError("claim audit failed: " + "; ".join(violations))
 
-    documents = {name: _load_json_object(artifacts_dir / f"{name}.json") for name in REPORT_INPUTS}
+    documents = {name: load_json_object(artifacts_dir / f"{name}.json") for name in REPORT_INPUTS}
     claims = verified_claims(claims_path)
     metrics = documents["metrics"]
     metric_table: dict[str, dict[str, float]] = metrics["metrics"]

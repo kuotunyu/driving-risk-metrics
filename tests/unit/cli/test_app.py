@@ -257,6 +257,35 @@ def test_report_prints_one_machine_readable_status(
     assert status["claim_count"] == 2
 
 
+def test_figures_prints_one_machine_readable_status(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The release checklist compares the drawn figures by path, not by reading prose."""
+
+    import drivemetrics.cli.figures as figures_cli
+
+    class Result:
+        figure_paths = (
+            tmp_path / "figures" / "paired-differences.svg",
+            tmp_path / "figures" / "small-tertile-critical-misses.svg",
+        )
+
+    monkeypatch.setattr(figures_cli, "FIGURES_SERVICE", lambda *_, **__: Result())
+    artifacts = tmp_path / "artifacts"
+    artifacts.mkdir()
+
+    result = runner.invoke(
+        app,
+        ["figures", "--artifacts-dir", str(artifacts), "--output-dir", str(tmp_path / "figures")],
+    )
+
+    assert result.exit_code == 0
+    status = status_of(result.stdout)
+    assert status["command"] == "figures"
+    assert status["figure_count"] == 2
+
+
 def test_audit_claims_reports_a_clean_registry(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
