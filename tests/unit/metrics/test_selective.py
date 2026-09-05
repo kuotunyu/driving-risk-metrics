@@ -513,3 +513,26 @@ def test_histogram_counts_of_any_integer_like_dtype_build_the_same_curve() -> No
 
     assert as_bool[0].tolist() == as_int[0].tolist()
     assert as_bool[1].tolist() == as_int[1].tolist()
+
+
+def test_a_fully_incorrect_curve_scores_exactly_one_and_a_correct_one_exactly_zero() -> None:
+    """The documented bounds are exact, so floating-point excess must not escape them.
+
+    A model wrong on every sample has risk 1 at every coverage point, and this
+    function's own docstring says such a model scores 1. Integrating that curve with
+    the trapezoid rule and dividing by its span lands two units in the last place
+    above 1: not a different result, the same one written imprecisely. Both inputs
+    are validated before the integral - risk inside [0, 1], coverage strictly
+    increasing inside (0, 1] - so the coverage-weighted mean of risk cannot
+    mathematically leave [0, 1], and removing the excess can hide nothing.
+
+    Hypothesis found this case on 2026-09-05 with twelve samples of confidence 0.0
+    and no correct prediction. It is pinned here as an ordinary test as well, so the
+    contract holds even where the Hypothesis database does not reach.
+    """
+
+    selective = load_selective_module()
+    coverage = np.arange(1, 13, dtype=np.float64) / 12.0
+
+    assert selective.area_under_risk_coverage(coverage, np.ones(12, dtype=np.float64)) == 1.0
+    assert selective.area_under_risk_coverage(coverage, np.zeros(12, dtype=np.float64)) == 0.0
