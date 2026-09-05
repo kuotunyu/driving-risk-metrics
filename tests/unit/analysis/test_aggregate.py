@@ -8,6 +8,7 @@ metrics rather than each metric answering a slightly different question.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -18,7 +19,11 @@ import numpy as np
 import pytest
 import yaml
 
-from drivemetrics.artifacts.predictions import PredictionRecord, write_prediction_artifact
+from drivemetrics.artifacts.predictions import (
+    PredictionRecord,
+    read_prediction_artifact,
+    write_prediction_artifact,
+)
 from drivemetrics.metrics.calibration import (
     classwise_ece_sufficient_statistics,
     multiclass_brier_sums,
@@ -60,11 +65,19 @@ def write_run_artifacts(
     protocol: str = PROTOCOL,
     manifest: str = MANIFEST,
     off_class_mass: float = 0.1,
+    present_classes: int = NUM_CLASSES,
 ) -> None:
     """Publish one run's per-image artifacts with a controllable correctness rate.
 
     Image sizes deliberately differ, so a ratio of summed confusions and a mean
     of per-image ratios cannot coincide by accident.
+
+    The ground truth of an image depends on the image alone — its ID and size —
+    never on the run's accuracy, because nine runs of one study score the SAME
+    masks. A fixture whose targets moved with the accuracy would give every run
+    its own cohort, and a check that the runs agree on their ground truth could
+    never be written against it. `present_classes` narrows the taxonomy so that a
+    class can be absent from truth and prediction alike.
 
     `off_class_mass` moves probability off the predicted class WITHOUT changing
     which class is predicted, which is exactly what temperature scaling does: the
@@ -76,10 +89,11 @@ def write_run_artifacts(
 
     directory.mkdir(parents=True, exist_ok=True)
     for sample_id, size in zip(SAMPLES, sizes, strict=True):
-        rng = np.random.default_rng(abs(hash((sample_id, accuracy, size))) % (2**32))
-        targets = rng.integers(0, NUM_CLASSES, size, dtype=np.int64)
+        digest = hashlib.sha256(f"{sample_id}:{size}".encode()).digest()
+        rng = np.random.default_rng(int.from_bytes(digest[:4], "big"))
+        targets = rng.integers(0, present_classes, size, dtype=np.int64)
         correct = rng.random(size) < accuracy
-        predicted = np.where(correct, targets, (targets + 1) % NUM_CLASSES).astype(np.int64)
+        predicted = np.where(correct, targets, (targets + 1) % present_classes).astype(np.int64)
 
         confusion = np.zeros((NUM_CLASSES, NUM_CLASSES), dtype=np.int64)
         np.add.at(confusion, (targets, predicted), 1)
@@ -135,7 +149,7 @@ def write_profile(directory: Path, name: str, *, critical: list[int], sensitivit
     return path
 
 
-def build_index(root: Path, **overrides: Any) -> Path:
+def build_index(root: Path, *, present_classes: int = NUM_CLASSES, **overrides: Any) -> Path:
     """Nine runs whose accuracy separates the models but overlaps across seeds."""
 
     runs = []
@@ -144,12 +158,18 @@ def build_index(root: Path, **overrides: Any) -> Path:
             run_id = f"{model}-seed-{seed}"
             directory = root / run_id
             accuracy = 0.55 + 0.08 * model_position + 0.01 * (seed % 7)
-            write_run_artifacts(directory, accuracy=accuracy, sizes=(400, 1200, 800))
+            write_run_artifacts(
+                directory,
+                accuracy=accuracy,
+                sizes=(400, 1200, 800),
+                present_classes=present_classes,
+            )
             write_run_artifacts(
                 root / f"{run_id}-calibrated",
                 accuracy=accuracy,
                 sizes=(400, 1200, 800),
                 off_class_mass=0.2,
+                present_classes=present_classes,
             )
             runs.append(
                 {
@@ -931,7 +951,7 @@ def test_the_metrics_document_carries_per_class_iou_and_recall(tmp_path: Path) -
             per_seed_recall.append(summary.class_recall)
 
         for name, per_seed in (("iou", per_seed_iou), ("recall", per_seed_recall)):
-            published_values = published["per_class"][model][name]
+            published_values = published["per_class"]["by_model"][model][name]
             assert len(published_values) == NUM_CLASSES
             for class_id in range(NUM_CLASSES):
                 supported: list[float] = [
@@ -965,7 +985,7 @@ def test_the_metrics_document_separates_calibration_before_and_after_temperature
         block = published["calibration"][model]
         assert set(block) == {"uncalibrated", "calibrated"}
         for kind in ("uncalibrated", "calibrated"):
-            assert set(block[kind]) == {"ece", "brier"}
+            assert set(block[kind]) == {"ece", "brier", "per_seed"}
             assert block[kind]["ece"] is not None
             assert block[kind]["brier"] is not None
         assert block["uncalibrated"]["ece"] != block["calibrated"]["ece"]
@@ -1088,3 +1108,186 @@ def test_summing_calibration_over_an_empty_cohort_is_refused(tmp_path: Path) -> 
 
     with pytest.raises(ValueError, match=r"^no artifacts found for the cohort under "):
         aggregate._accumulate_calibration(directory, ())
+
+
+def test_per_class_values_carry_their_names_and_their_support(tmp_path: Path) -> None:
+    """Nineteen unlabelled floats are not a table, and a score without support is not a result.
+
+    The real cohort has a class that appears in seven images out of 998. Its IoU
+    of zero is a measurement, but a reader who cannot see the seven cannot tell a
+    catastrophic model from a class the cohort barely holds. The names come from
+    the same table the risk-profile schema pins classes to, so the two can never
+    disagree about what class 2 is called.
+    """
+
+    from drivemetrics.protocol.risk_profiles import BDD100K_SEMANTIC_CLASS_NAMES
+
+    aggregate = load_aggregate()
+    run(tmp_path / "runs", tmp_path / "out")
+    per_class = documents(tmp_path / "out")["metrics"]["per_class"]
+
+    assert per_class["class_names"] == list(BDD100K_SEMANTIC_CLASS_NAMES[:NUM_CLASSES])
+    assert set(per_class["by_model"]) == set(MODELS)
+
+    # Recomputed from the artifacts of one run — any run, because they share it.
+    directory = tmp_path / "runs" / f"{MODELS[0]}-seed-{SEEDS[0]}"
+    expected_support = aggregate.summed_confusion(directory, SAMPLES).sum(axis=1)
+    expected_images = np.zeros(NUM_CLASSES, dtype=np.int64)
+    for sample_id in SAMPLES:
+        _, record, _ = read_prediction_artifact(directory / f"{sample_id}.json")
+        expected_images += record.confusion.sum(axis=1) > 0
+
+    assert per_class["support_pixels"] == [int(value) for value in expected_support]
+    assert per_class["images_with_class"] == [int(value) for value in expected_images]
+    assert all(isinstance(value, int) for value in per_class["support_pixels"])
+    assert sum(per_class["support_pixels"]) == sum((400, 1200, 800))
+
+
+def test_a_class_absent_from_the_cohort_reports_null_scores_and_zero_support(
+    tmp_path: Path,
+) -> None:
+    """Zero support and a zero score must never be the same character on the page."""
+
+    run(tmp_path / "runs", tmp_path / "out", present_classes=NUM_CLASSES - 1)
+    per_class = documents(tmp_path / "out")["metrics"]["per_class"]
+
+    absent = NUM_CLASSES - 1
+    assert per_class["support_pixels"][absent] == 0
+    assert per_class["images_with_class"][absent] == 0
+    for model in MODELS:
+        assert per_class["by_model"][model]["iou"][absent] is None
+        assert per_class["by_model"][model]["recall"][absent] is None
+    assert per_class["support_pixels"][0] > 0
+
+
+def test_runs_that_do_not_share_one_ground_truth_are_refused(tmp_path: Path) -> None:
+    """Nine runs of one study score the same masks; a run that did not is another study.
+
+    The index validator proves the runs share a SET of sample IDs. It cannot see
+    whether the confusions behind those IDs were built from the same truth, and a
+    run evaluated against different masks would pass every hash check while its
+    numbers described a different cohort.
+    """
+
+    aggregate = load_aggregate()
+    index_path = build_index(tmp_path / "runs")
+    write_run_artifacts(
+        tmp_path / "runs" / f"{MODELS[1]}-seed-{SEEDS[1]}",
+        accuracy=0.7,
+        sizes=(400, 1200, 800),
+        present_classes=NUM_CLASSES - 1,
+    )
+
+    with pytest.raises(ValueError, match=r"^the runs do not share one ground truth: "):
+        aggregate.aggregate_runs(
+            index_path,
+            tmp_path / "out",
+            resamples=60,
+            risk_profiles_dir=fixture_profiles(tmp_path),
+        )
+
+
+def test_a_taxonomy_the_class_table_cannot_name_is_refused(tmp_path: Path) -> None:
+    """A class without a name cannot be published, and inventing one would be worse."""
+
+    from drivemetrics.protocol.risk_profiles import BDD100K_SEMANTIC_CLASS_NAMES
+
+    too_many = len(BDD100K_SEMANTIC_CLASS_NAMES) + 1
+    with pytest.raises(ValueError, match=rf"^the index declares {too_many} classes but "):
+        run(tmp_path / "runs", tmp_path / "out", num_classes=too_many)
+
+
+def test_calibration_is_published_per_seed_and_the_mean_is_their_mean(tmp_path: Path) -> None:
+    """One surprising calibration result cannot be read from a mean of three numbers.
+
+    On the real cohort temperature scaling raised one model's ECE while lowering
+    the other two models'. Whether that is one seed or all three is the whole
+    question, and a seed mean cannot answer it. The per-seed values are the
+    kernel's own, recomputed here from the artifacts by the same route.
+    """
+
+    from drivemetrics.metrics.calibration import (
+        ECEBinSufficientStatistics,
+        mean_classwise_expected_calibration_error,
+        multiclass_brier_score,
+    )
+
+    run(tmp_path / "runs", tmp_path / "out")
+    block = documents(tmp_path / "out")["metrics"]["calibration"][MODELS[0]]["uncalibrated"]
+
+    assert set(block["per_seed"]) == {str(seed) for seed in SEEDS}
+    for seed in SEEDS:
+        directory = tmp_path / "runs" / f"{MODELS[0]}-seed-{seed}"
+        counts = np.zeros((NUM_CLASSES, 15), dtype=np.int64)
+        sums = np.zeros((NUM_CLASSES, 15), dtype=np.float64)
+        positives = np.zeros((NUM_CLASSES, 15), dtype=np.int64)
+        brier = np.zeros(NUM_CLASSES, dtype=np.float64)
+        pixels = 0
+        for sample_id in SAMPLES:
+            _, record, ece = read_prediction_artifact(directory / f"{sample_id}.json")
+            counts += ece.counts
+            sums += ece.confidence_sums
+            positives += ece.positive_counts
+            brier += record.brier_sum_by_class
+            pixels += record.valid_pixel_count
+        expected_ece = mean_classwise_expected_calibration_error(
+            ECEBinSufficientStatistics(
+                counts=counts, confidence_sums=sums, positive_counts=positives
+            )
+        )
+        published = block["per_seed"][str(seed)]
+        assert set(published) == {"ece", "brier"}
+        assert published["ece"] == pytest.approx(expected_ece, rel=0.0, abs=1e-12)
+        assert published["brier"] == pytest.approx(
+            multiclass_brier_score(brier, pixels), rel=0.0, abs=1e-12
+        )
+
+    seed_values = [block["per_seed"][str(seed)]["ece"] for seed in SEEDS]
+    assert block["ece"] == pytest.approx(sum(seed_values) / len(seed_values), rel=0.0, abs=1e-12)
+
+
+def test_every_document_declares_its_schema_version(tmp_path: Path) -> None:
+    """A version string is how a later reader knows which contract a file was written under."""
+
+    run(tmp_path / "runs", tmp_path / "out")
+    published = documents(tmp_path / "out")
+
+    assert published["metrics"]["schema_version"] == "driving-risk-metrics-table/v1"
+    assert published["intervals"]["schema_version"] == "driving-risk-intervals/v1"
+    assert published["rankings"]["schema_version"] == "driving-risk-rankings/v1"
+
+
+def test_the_rankings_document_carries_the_separability_of_every_pair(tmp_path: Path) -> None:
+    """ "No reversal" must not be the only thing this document can say about two models.
+
+    On the real cohort the two best models are inseparable on mIoU and separable
+    on VRU recall at the same confidence. The ranking is stable under both, so a
+    document that reported only the order would hide the finding. Each pair's
+    interval is copied from the intervals document — not recomputed — and the
+    flag is a plain reading of it: the interval excludes zero or it does not.
+    """
+
+    run(tmp_path / "runs", tmp_path / "out")
+    published = documents(tmp_path / "out")
+    separability = published["rankings"]["separability"]
+    intervals = published["intervals"]["intervals"]
+
+    assert set(separability) == {"miou", "pixel_accuracy", "critical_recall"}
+    pair_count = len(MODELS) * (len(MODELS) - 1) // 2
+    for metric, pairs in separability.items():
+        assert len(pairs) == pair_count
+        for pair in pairs:
+            assert set(pair) == {"left", "right", "estimate", "low", "high", "excludes_zero"}
+            source = intervals[f"{pair['left']} minus {pair['right']} ({metric})"]
+            assert (pair["estimate"], pair["low"], pair["high"]) == (
+                source["estimate"],
+                source["low"],
+                source["high"],
+            )
+            assert pair["excludes_zero"] is (pair["low"] > 0.0 or pair["high"] < 0.0)
+    # The pairs follow the approved model order, like the intervals they mirror.
+    assert [(pair["left"], pair["right"]) for pair in separability["miou"]] == [
+        (PUBLISHED_MODELS[0], PUBLISHED_MODELS[1]),
+        (PUBLISHED_MODELS[0], PUBLISHED_MODELS[2]),
+        (PUBLISHED_MODELS[1], PUBLISHED_MODELS[2]),
+    ]
