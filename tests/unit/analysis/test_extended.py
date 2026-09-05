@@ -19,6 +19,7 @@ byte agrees with a wrong implementation on every one of those points.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from types import ModuleType
@@ -28,6 +29,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
+from drivemetrics.artifacts.envelope import canonical_json_bytes
 from drivemetrics.artifacts.predictions import PredictionRecord, write_prediction_artifact
 from drivemetrics.data.manifest import build_paired_manifest, save_manifest
 from drivemetrics.metrics.calibration import (
@@ -299,7 +301,7 @@ def test_the_band_accuracy_counts_only_the_pixels_a_model_was_asked_about(
 
     document = compute(tmp_path, ground_truth=True)
 
-    bands = document["normalized_image_bands"][MODELS[0]]
+    bands = document["normalized_image_bands"]["by_model"][MODELS[0]]
     assert bands["top"]["pixels"] == 14
     assert bands["middle"]["pixels"] == 16
     assert bands["bottom"]["pixels"] == 12
@@ -390,7 +392,8 @@ def test_instance_coverage_uses_the_frozen_tertile_edges(tmp_path: Path) -> None
     )
 
     block = document["instances"][MODELS[0]]
-    assert block["tertile_edges_from"] == str(tertiles)
+    assert block["tertile_edges_sha256"] == hashlib.sha256(tertiles.read_bytes()).hexdigest()
+    assert "tertile_edges_from" not in block
     assert block["instance_count"] == 4  # the person and the car, in each of two images
     assert set(block["by_tertile"]) == {"small", "medium", "large"}
     assert block["by_tertile"]["medium"]["instance_count"] == 2  # person, four pixels
@@ -519,6 +522,7 @@ def test_the_document_records_which_cohort_the_masks_came_from(tmp_path: Path) -
         "cohort_manifest_sha256": digest,
         "split_name": "locked_validation",
         "masks_verified": len(SAMPLES),
+        "instance_bitmasks": None,
     }
     assert document["dataset_manifest_hash"] == digest
 
@@ -630,3 +634,90 @@ def test_an_index_that_fails_its_own_gate_is_refused(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match=r"^formal run index is not valid: "):
         extended.extended_metrics(index_path, tmp_path / "extended-metrics.json")
+
+
+def test_instance_coverage_is_broken_down_by_class(tmp_path: Path) -> None:
+    """Pooled over classes the number is mostly about cars, and the study is not.
+
+    On the real cohort 81% of instances are cars. A VRU-priority study that can
+    only say "a third of small instances are critical misses" has said almost
+    nothing about persons. Every instance class is present in the block, with
+    zeros where the cohort holds none, so an absent class and a forgotten class
+    never look the same.
+    """
+
+    document = compute(
+        tmp_path,
+        ground_truth=True,
+        instance_root=write_instance_bitmasks(tmp_path / "ins"),
+        tertiles_path=write_tertiles(tmp_path),
+    )
+
+    block = document["instances"][MODELS[0]]
+    by_class = block["by_class"]
+    # Written with sorted keys, so the ORDER is alphabetical; the SET is the contract.
+    assert set(by_class) == {
+        "person",
+        "rider",
+        "car",
+        "truck",
+        "bus",
+        "train",
+        "motorcycle",
+        "bicycle",
+    }
+    assert sum(entry["instance_count"] for entry in by_class.values()) == block["instance_count"]
+
+    person = by_class["person"]
+    assert person["instance_count"] == 2
+    assert person["critical_misses"] == 0
+    assert person["mean_correct_fraction"] == pytest.approx(0.75, rel=0.0, abs=1e-12)
+    assert person["by_tertile"]["medium"]["instance_count"] == 2
+    assert person["by_tertile"]["small"]["instance_count"] == 0
+    assert person["by_tertile"]["small"]["mean_correct_fraction"] is None
+
+    car = by_class["car"]
+    assert car["instance_count"] == 2
+    assert car["critical_misses"] == 1
+    assert car["mean_correct_fraction"] == pytest.approx(0.5, rel=0.0, abs=1e-12)
+    assert car["by_tertile"]["large"]["critical_misses"] == 1
+
+    for name in ("rider", "truck", "bus", "train", "motorcycle", "bicycle"):
+        assert by_class[name]["instance_count"] == 0
+        assert by_class[name]["mean_correct_fraction"] is None
+        assert all(
+            bucket["instance_count"] == 0 and bucket["mean_correct_fraction"] is None
+            for bucket in by_class[name]["by_tertile"].values()
+        )
+
+
+def test_the_instance_bitmask_set_is_recorded_for_later_comparison(tmp_path: Path) -> None:
+    """The semantic masks are verified against a frozen manifest; the bitmasks have none.
+
+    That asymmetry is stated in the document rather than papered over: the set of
+    bitmask files actually read is digested and published, so a later run can
+    prove it read the same files, even though nothing frozen exists to check
+    this run against. Without an instance root the field is null, not absent.
+    """
+
+    instance_root = write_instance_bitmasks(tmp_path / "ins")
+    document = compute(
+        tmp_path,
+        ground_truth=True,
+        instance_root=instance_root,
+        tertiles_path=write_tertiles(tmp_path),
+    )
+
+    pairs = []
+    for sample_id in sorted(SAMPLES):
+        path = instance_root / "labels" / "ins_seg" / "bitmasks" / "val" / f"{sample_id}.png"
+        pairs.append([sample_id, hashlib.sha256(path.read_bytes()).hexdigest()])
+    expected = hashlib.sha256(canonical_json_bytes(pairs)).hexdigest()
+
+    assert document["ground_truth"]["instance_bitmasks"] == {
+        "count": len(SAMPLES),
+        "set_sha256": expected,
+    }
+
+    bands_only = compute(tmp_path / "again", ground_truth=True)
+    assert bands_only["ground_truth"]["instance_bitmasks"] is None
