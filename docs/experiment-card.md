@@ -14,7 +14,14 @@ method change made after the runs began.
 | Critical class IDs | 11 `person`, 12 `rider`, 17 `motorcycle`, 18 `bicycle` |
 | Training steps | 30000 |
 | Seeds | 17, 42, 73 |
-| Environment lock SHA-256 | `34a90c4086d57333ad7dcfcb82783c4a42c08e6a674353d25058dce600a8a632` |
+| Environment lock SHA-256 at the nine runs | `34a90c4086d57333ad7dcfcb82783c4a42c08e6a674353d25058dce600a8a632` |
+| Environment lock SHA-256 at `v1.0.0` | `dd74159e05038f0868651a79304fa768842f98bfeac9bdf3f792f98c436ed8d4` |
+
+The two lock hashes differ by exactly one line: the root package's own version,
+`0.1.0` at the runs and `1.0.0` at the release. No dependency, version or hash of
+any package changed (`git diff -- uv.lock` between the two commits is that one
+line). The nine run records carry the first value because that is the lock they
+were produced under.
 
 Frozen split manifests, all four hashed before the first run and unchanged since:
 

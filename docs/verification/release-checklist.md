@@ -86,7 +86,7 @@ uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/valid
 
 ```powershell
 uv run --frozen python -m drivemetrics.private_guard
-git grep -nE "PRIVATE HANDOFF|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|hf_[A-Za-z0-9]{34}|-----BEGIN" -- . ":!docs/verification/release-checklist.md"
+git grep -nE "PRIVATE HANDOFF - DO NOT COMMIT|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|hf_[A-Za-z0-9]{34}|-----BEGIN" -- . ":!docs/verification/release-checklist.md"
 git ls-files "*.ipynb"
 git ls-files -z | ForEach-Object { Get-Item $_ } | Sort-Object Length -Descending | Select-Object -First 15 Length, FullName
 uv run --frozen python -m drivemetrics.dev schema-contracts
@@ -95,7 +95,10 @@ git diff --check
 ```
 
 - [ ] The private guard reports zero violations.
-- [ ] The secret grep finds nothing outside this file.
+- [ ] The secret grep finds nothing outside this file. The pattern names the
+      FULL private marker on purpose: the guard and its tests build the marker
+      from two halves precisely so that a grep for the whole string cannot match
+      them, and a grep for half of it would report the guard as a leak.
 - [ ] No notebook is tracked. Colab notebooks live in the private transfer
       package, never in the repository.
 - [ ] No tracked file is larger than the aggregated evidence needs; no raw
