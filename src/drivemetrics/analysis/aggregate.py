@@ -117,6 +117,18 @@ def _mean_or_none(values: Sequence[float | None]) -> float | None:
     return float(np.mean(present))
 
 
+def _excludes_zero(low: float, high: float) -> bool:
+    """Whether a paired interval excludes zero — the plain reading of its two bounds.
+
+    Strict on both sides: an interval whose bound IS zero does not exclude it, and
+    is reported as not separating the pair. The helper exists so that this boundary
+    is tested on its own rather than only through whatever the bootstrap happens to
+    produce.
+    """
+
+    return bool(low > 0.0 or high < 0.0)
+
+
 def _ground_truth_support(
     components: Float64Array,
     runs: Sequence[dict[str, Any]],
@@ -188,32 +200,28 @@ def _accumulate_calibration(directory: Path, sample_ids: Sequence[str]) -> _Cali
     scores, because statistics add exactly and scores do not. Averaging per-image
     ECEs would weight a small image like a large one and would not be the cohort
     number at all.
+
+    The sums are seeded from the first artifact rather than from zeros of a
+    guessed shape: the artifact is what knows how many classes and bins there are.
+    An empty cohort is refused before anything is read, because a sum over nothing
+    is zero and zero calibration error is a perfect score.
     """
 
-    counts: Int64Array | None = None
-    confidence_sums: Float64Array | None = None
-    positive_counts: Int64Array | None = None
-    brier: Float64Array | None = None
-    pixels = 0
-    for sample_id in sample_ids:
-        _, record, ece = read_prediction_artifact(directory / f"{sample_id}.json")
-        counts = ece.counts.copy() if counts is None else counts + ece.counts
-        confidence_sums = (
-            ece.confidence_sums.copy()
-            if confidence_sums is None
-            else confidence_sums + ece.confidence_sums
-        )
-        positive_counts = (
-            ece.positive_counts.copy()
-            if positive_counts is None
-            else positive_counts + ece.positive_counts
-        )
-        brier = (
-            record.brier_sum_by_class.copy() if brier is None else brier + record.brier_sum_by_class
-        )
-        pixels += int(record.valid_pixel_count)
-    if counts is None or confidence_sums is None or positive_counts is None or brier is None:
+    if not sample_ids:
         raise ValueError(f"no artifacts found for the cohort under {directory}")
+    _, first_record, first_ece = read_prediction_artifact(directory / f"{sample_ids[0]}.json")
+    counts = first_ece.counts.copy()
+    confidence_sums = first_ece.confidence_sums.copy()
+    positive_counts = first_ece.positive_counts.copy()
+    brier = first_record.brier_sum_by_class.copy()
+    pixels = int(first_record.valid_pixel_count)
+    for sample_id in sample_ids[1:]:
+        _, record, ece = read_prediction_artifact(directory / f"{sample_id}.json")
+        counts = counts + ece.counts
+        confidence_sums = confidence_sums + ece.confidence_sums
+        positive_counts = positive_counts + ece.positive_counts
+        brier = brier + record.brier_sum_by_class
+        pixels += int(record.valid_pixel_count)
     return _CalibrationSums(
         ece=ECEBinSufficientStatistics(
             counts=counts, confidence_sums=confidence_sums, positive_counts=positive_counts
@@ -449,7 +457,7 @@ def aggregate_runs(
                 "estimate": entry["estimate"],
                 "low": entry["low"],
                 "high": entry["high"],
-                "excludes_zero": bool(entry["low"] > 0.0 or entry["high"] < 0.0),
+                "excludes_zero": _excludes_zero(entry["low"], entry["high"]),
             }
             for left in range(len(models))
             for right in range(left + 1, len(models))

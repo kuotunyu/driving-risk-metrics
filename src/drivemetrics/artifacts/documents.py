@@ -23,8 +23,11 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 Sha256 = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
-NonNegativeInt = Annotated[int, Field(ge=0)]
-PositiveInt = Annotated[int, Field(ge=1)]
+# Strict: a whole float such as 3.0 is not an integer count and is refused rather
+# than coerced. A producer that divided where it should have floor-divided fails
+# its own contract instead of publishing a number that merely looks right.
+NonNegativeInt = Annotated[int, Field(ge=0, strict=True)]
+PositiveInt = Annotated[int, Field(ge=1, strict=True)]
 UnitFloat = Annotated[float, Field(ge=0.0, le=1.0)]
 
 METRICS_TABLE_SCHEMA_VERSION = "driving-risk-metrics-table/v1"

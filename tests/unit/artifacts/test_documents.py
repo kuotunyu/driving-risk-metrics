@@ -285,3 +285,14 @@ def test_a_document_without_a_registered_version_cannot_be_validated() -> None:
         documents.validated_document({"schema_version": "nope"})
     with pytest.raises(ValueError, match=r"^no contract is registered for schema_version None$"):
         documents.validated_document({"protocol_hash": HASH_A})
+
+
+def test_integer_fields_refuse_a_whole_float() -> None:
+    """3.0 seeds is not a count; a producer that divided instead of floor-dividing must fail."""
+
+    documents = load_documents()
+    payload = copy.deepcopy(MINIMAL["driving-risk-metrics-table/v1"])
+    payload["seed_count"] = 3.0
+
+    with pytest.raises(ValidationError):
+        documents.MetricsTableV1.model_validate(payload)

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 from types import ModuleType
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -780,3 +781,64 @@ def test_the_ece_finaliser_refuses_statistics_that_cannot_be_a_histogram(
 
     with pytest.raises(ValueError, match=expected):
         module.classwise_expected_calibration_error(statistics)
+
+
+def test_ece_statistics_are_normalised_to_int64_and_float64_whatever_they_arrive_as() -> None:
+    """The validator's return types are its contract, not a restatement of its inputs.
+
+    Counts may arrive as small unsigned integers and sums as float32 from a caller
+    that never touched this project's artifacts. The validator promises int64 and
+    float64 back, and every finaliser downstream divides on that promise.
+    """
+
+    from drivemetrics.metrics import calibration
+
+    # Declared Any on purpose: the static type says int64, the runtime normalises
+    # whatever arrives, and this test pins the runtime promise.
+    counts: Any = np.array([[4, 0], [2, 1]], dtype=np.uint8)
+    sums: Any = np.array([[2.5, 0.0], [1.25, 0.75]], dtype=np.float32)
+    positives: Any = np.array([[3, 0], [1, 1]], dtype=np.uint8)
+
+    got_counts, got_sums, got_positives = calibration._validated_ece(
+        calibration.ECEBinSufficientStatistics(
+            counts=counts, confidence_sums=sums, positive_counts=positives
+        )
+    )
+
+    assert got_counts.dtype == np.int64
+    assert got_sums.dtype == np.float64
+    assert got_positives.dtype == np.int64
+    assert got_counts.tolist() == counts.tolist()
+    assert got_positives.tolist() == positives.tolist()
+
+
+def test_negative_positive_counts_are_refused() -> None:
+    """A negative count of correct pixels is not a statistic; it is corruption."""
+
+    from drivemetrics.metrics import calibration
+
+    with pytest.raises(ValueError, match=r"^ECE counts must be nonnegative$"):
+        calibration._validated_ece(
+            calibration.ECEBinSufficientStatistics(
+                counts=np.array([[2]], dtype=np.int64),
+                confidence_sums=np.array([[1.0]], dtype=np.float64),
+                positive_counts=np.array([[-1]], dtype=np.int64),
+            )
+        )
+
+
+def test_the_brier_score_is_summed_in_float64_whatever_the_sums_arrive_as() -> None:
+    """Summing nineteen float32 values in float32 and in float64 gives different numbers.
+
+    The sums are promoted before they are added, so the published score is the
+    float64 sum of the values as given. The naive float32 sum is checked to differ
+    first, so this test is known to distinguish the two paths rather than assumed to.
+    """
+
+    from drivemetrics.metrics import calibration
+
+    sums: Any = np.full(19, 0.1, dtype=np.float32)  # float32 on purpose; see above
+    promoted = float(np.asarray(sums, dtype=np.float64).sum()) / 7.0
+    assert float(sums.sum()) / 7.0 != promoted
+
+    assert calibration.multiclass_brier_score(sums, 7) == promoted
