@@ -1,0 +1,51 @@
+name: Release
+
+# Runs only when a human pushes an annotated `v*` tag. It re-runs the full
+# verification gate on the tagged commit, builds the wheel and the source
+# distribution from the lock, and attaches them with their SHA-256 sums to a
+# GitHub release for that tag. It creates no tag and pushes no commit; the
+# human's tag is the only trigger.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the tagged commit
+        uses: actions/checkout@v6
+
+      - name: Install uv and Python 3.11
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.11.18"
+          python-version: "3.11"
+          enable-cache: true
+
+      - name: Sync locked development environment
+        run: uv sync --frozen --all-groups --extra train
+
+      - name: Run the deterministic verification gate on the tagged commit
+        run: uv run --frozen python -m drivemetrics.dev verify
+
+      - name: Build wheel and source distribution
+        run: uv build
+
+      - name: Record checksums
+        run: |
+          cd dist
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Create the GitHub release for this tag with the built assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME" dist/*
+          --title "driving-risk-metrics $GITHUB_REF_NAME"
+          --notes "Built by the Release workflow from tag $GITHUB_REF_NAME at commit $GITHUB_SHA. Verify assets against SHA256SUMS."

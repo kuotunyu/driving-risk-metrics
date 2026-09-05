@@ -145,3 +145,29 @@ The clean baseline ran in a detached worktree of `67cbeee`.
 Full eight-stage verification on the working tree holding this skill, the
 locked-eval refresh and the release checklist is recorded in the private
 handoff with its exit code, test count and coverage before the commit.
+
+## Forward test against the real registry, 2026-09-05
+
+The forward test above ran against a synthetic rehearsal workspace because no real
+claim existed yet. At Task 8 and Task 9 of the P1 evidence plan the skill's
+validator was exercised against the real registry and the real READMEs, and this
+section records that run so the evidence is not only a rehearsal.
+
+- Registry: `docs/claims.yaml`, 32 claims, every one `observed` and `verified`,
+  every number written into the registry by reading it out of the artifact rather
+  than typing it. `driving-risk audit-claims` exit 0, zero violations.
+- Proposal audit at Task 8: a proposal built from the 29 registry sentences of
+  that moment; 29 statements traced, 65 numbers, every verdict `pass`, exit 0.
+- Document audit at Task 9: `validate_claims.py --claims docs/claims.yaml
+  --repo-root . --document README.md --document README.zh-TW.md`; 42 marked
+  statements (21 per README), 96 numbers, every verdict `pass`, exit 0; no line
+  stating a metric term and a number without a marker.
+- What the real run taught, recorded here rather than left for the next author:
+  the number extractor treats CJK characters as word characters, so a digit that
+  directly follows a Chinese character is invisible to it. Every number in the
+  Traditional Chinese README is therefore preceded by a space; the audit was
+  re-run after the change and the 48 numbers of that README were all extracted.
+  A percentage such as `95%` parses as `95` and never matches an artifact holding
+  `0.95`, so confidence is stated as `0.95`.
+- The same validator is the first gate of the Pages workflow, so nothing reaches
+  the published site that did not pass it.
