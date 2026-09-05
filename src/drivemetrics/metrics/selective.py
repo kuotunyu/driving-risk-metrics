@@ -77,7 +77,12 @@ def area_under_risk_coverage(coverage: Float64Array, risk: Float64Array) -> floa
 
     _validate_area_inputs(coverage, risk)
     span = float(coverage[-1] - coverage[0])
-    return float(np.trapezoid(risk, coverage)) / span
+    area = float(np.trapezoid(risk, coverage)) / span
+    # The validation above pins risk inside [0, 1] and coverage strictly increasing
+    # inside (0, 1], so this coverage-weighted mean is mathematically inside [0, 1]
+    # too. Only the trapezoid sum's rounding can push it out, and only by a unit in
+    # the last place; clamping removes that and can hide no real excursion.
+    return min(1.0, max(0.0, area))
 
 
 def selective_risk_from_histogram(
