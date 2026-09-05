@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: driving-risk-metrics
+message: >-
+  If you use this software or its published evidence, please cite it using the
+  metadata below.
+type: software
+authors:
+  - family-names: Kuo
+    given-names: Tun-Yu
+    alias: kuotunyu
+repository-code: https://github.com/kuotunyu/driving-risk-metrics
+abstract: >-
+  Safety-aware evaluation for road-scene semantic segmentation. Three
+  contemporary models are trained on BDD100K under one frozen protocol with three
+  seeds each and evaluated once on a locked cohort. The study reports
+  instance-balanced coverage, risk-weighted cost, confidence calibration and
+  paired bootstrap intervals, and finds that the paired interval for the two best
+  models includes zero on mean IoU while excluding zero on recall over the
+  vulnerable-road-user classes. Every published number is bound to a committed
+  artifact by a claims registry that fails the build if it cannot be reproduced.
+keywords:
+  - semantic-segmentation
+  - autonomous-driving
+  - model-evaluation
+  - calibration
+  - reproducibility
+  - bdd100k
+license: MIT
+version: 1.0.0
+date-released: "2026-09-05"

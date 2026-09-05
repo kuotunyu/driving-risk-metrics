@@ -158,6 +158,36 @@ def write_analysis_artifacts(tmp_path: Path, protocol_hash: str, manifest_hash: 
                 "seed_count": 3,
                 "interval_method": "two-stage paired bootstrap, 5000 resamples, seed 20260831",
                 "metrics": {"upernet_convnextv2_tiny": {"miou": 0.5}},
+                # `aggregate` always writes these three blocks; a stand-in must too.
+                "per_class": {
+                    "class_names": ["road", "person"],
+                    "support_pixels": [10, 5],
+                    "images_with_class": [2, 1],
+                    "by_model": {
+                        "upernet_convnextv2_tiny": {"iou": [0.5, 0.5], "recall": [0.5, 0.5]}
+                    },
+                },
+                "calibration": {
+                    "upernet_convnextv2_tiny": {
+                        "calibrated": {
+                            "brier": 0.1,
+                            "ece": 0.01,
+                            "per_seed": {"17": {"brier": 0.1, "ece": 0.01}},
+                        },
+                        "uncalibrated": {
+                            "brier": 0.1,
+                            "ece": 0.02,
+                            "per_seed": {"17": {"brier": 0.1, "ece": 0.02}},
+                        },
+                    }
+                },
+                "risk_profiles": {
+                    "vru_priority": {
+                        "cost_risk": {"upernet_convnextv2_tiny": 0.05},
+                        "critical_class_ids": [1],
+                        "sensitivity": 1.0,
+                    }
+                },
             },
             sort_keys=True,
         ),
@@ -188,6 +218,94 @@ def write_analysis_artifacts(tmp_path: Path, protocol_hash: str, manifest_hash: 
                 **common,
                 "baseline_metric": "miou",
                 "comparisons": [],
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    # The three documents the extended analysis, the gallery and the index add. The
+    # extended document takes the shape written when no ground truth was supplied,
+    # because that is what a synthetic root without instance bitmasks produces.
+    missing = "ground truth was not available to this analysis run"
+    (artifacts / "extended-metrics.json").write_text(
+        json.dumps(
+            {
+                **common,
+                "evaluation_for_ground_truth_metrics": "eval_calibrated",
+                "ground_truth": {"not_computed": missing},
+                "normalized_image_bands": {"not_computed": missing},
+                "instances": {"not_computed": "the frozen area tertiles were not supplied"},
+                "selective_risk": {
+                    "upernet_convnextv2_tiny": {
+                        "calibrated": {
+                            "aurc": 0.02,
+                            "coverage_points": 4,
+                            "defined_at": "confidence_bin_boundaries",
+                        },
+                        "uncalibrated": {
+                            "aurc": 0.03,
+                            "coverage_points": 4,
+                            "defined_at": "confidence_bin_boundaries",
+                        },
+                    }
+                },
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    (artifacts / "gallery-manifest.json").write_text(
+        json.dumps(
+            {
+                **common,
+                "evaluation": "eval_calibrated",
+                "rule": {
+                    "aggregate": "mean_over_seeds",
+                    "metric": "image_mean_iou",
+                    "per_model": 1,
+                    "tie_break": "sample_id",
+                },
+                "per_model": {
+                    "upernet_convnextv2_tiny": {
+                        "best": [
+                            {
+                                "sample_id": "v0000",
+                                "mean_iou_over_seeds": 0.5,
+                                "per_seed": {"17": 0.5},
+                            }
+                        ],
+                        "worst": [
+                            {
+                                "sample_id": "v0001",
+                                "mean_iou_over_seeds": 0.5,
+                                "per_seed": {"17": 0.5},
+                            }
+                        ],
+                    }
+                },
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    (artifacts / "formal_run_index.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "drivemetrics-formal-set/v1",
+                "cohort": "locked_validation",
+                "protocol_sha256": protocol_hash,
+                "dataset_manifest_sha256": manifest_hash,
+                "runs": [
+                    {
+                        "run_id": "upernet_convnextv2_tiny-seed-17",
+                        "model": "upernet_convnextv2_tiny",
+                        "seed": 17,
+                        "status": "succeeded",
+                        "final_step": 30000,
+                        "temperature": 1.0,
+                        "checkpoint_sha256": "0" * 64,
+                    }
+                ],
             },
             sort_keys=True,
         ),
