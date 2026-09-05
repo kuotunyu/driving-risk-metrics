@@ -178,6 +178,17 @@ single-byte annotation IDs, so it agreed with a wrong implementation on every on
 of them; and the corroboration rule that replaced the first round of fixes was
 itself replaced once measurement showed what it was really counting.
 
+Instance coverage is published pooled and by class, because 81% of the locked
+cohort's instances are cars and a VRU-priority study must be able to speak about
+persons. The frozen tertile file is identified in the document by its SHA-256, not
+by a path. The set of instance bitmasks a run read is digested and published; it
+is RECORDED, not verified, because no frozen manifest of the bitmasks exists, and
+the document says so rather than implying a check that did not happen. The
+calibrated and uncalibrated selective-risk curves differ only through how
+quantization to 65,536 confidence levels merges ties after a monotonic map; the
+resulting AURC difference is a property of the stored precision, not of
+calibration.
+
 ## Rules that outlive the constants
 
 1. **The locked cohort is spent the moment it influences a decision.** Not only

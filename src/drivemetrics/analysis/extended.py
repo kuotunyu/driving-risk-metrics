@@ -22,6 +22,7 @@ saying what was measured.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -31,6 +32,7 @@ from typing import Any
 import numpy as np
 import numpy.typing as npt
 
+from drivemetrics.artifacts.envelope import canonical_json_bytes
 from drivemetrics.artifacts.formal_set import (
     APPROVED_MODELS,
     APPROVED_SEEDS,
@@ -113,6 +115,16 @@ def _confidence_histogram(
 
 
 def _selective_block(directory: Path, sample_ids: Sequence[str]) -> dict[str, Any]:
+    """Selective risk and its area, from the stored q16 confidence histogram.
+
+    The calibrated and uncalibrated curves differ, but not because calibration
+    changed which pixels are right: temperature is monotonic, so the ORDER of
+    confidences is preserved. What changes is how the quantization to 65,536
+    levels merges ties after the map, and therefore where the curve has points.
+    On the real cohort that moves AURC by about 0.0004. It is a property of the
+    stored precision and must not be read as a calibration effect.
+    """
+
     counts, correct = _confidence_histogram(directory, sample_ids)
     coverage, risk = selective_risk_from_histogram(counts, correct)
     # A model that emitted one confidence for every pixel gives a curve of one
@@ -269,6 +281,57 @@ def _corroborated_instances(
     )
 
 
+def _bitmask_path(instance_root: Path, sample_id: str) -> Path:
+    """The official BDD100K instance-bitmask location for one validation image."""
+
+    return instance_root / "labels" / "ins_seg" / "bitmasks" / "val" / f"{sample_id}.png"
+
+
+def _digest_bitmask_set(instance_root: Path, sample_ids: Sequence[str]) -> dict[str, Any]:
+    """Record which bitmask files this run read, so a later run can prove it read the same.
+
+    The semantic masks are verified file by file against the frozen manifest. No
+    frozen manifest of the instance bitmasks exists, so they cannot be verified —
+    but the set that was read can be NAMED, and that asymmetry belongs in the
+    document rather than behind it. The digest is over the canonical JSON of
+    `[[sample_id, sha256], ...]` in sample-ID order.
+    """
+
+    pairs = [
+        [sample_id, sha256_file(_bitmask_path(instance_root, sample_id))]
+        for sample_id in sorted(sample_ids)
+    ]
+    return {
+        "count": len(pairs),
+        "set_sha256": hashlib.sha256(canonical_json_bytes(pairs)).hexdigest(),
+    }
+
+
+def _new_bucket() -> dict[str, Any]:
+    return {"instance_count": 0, "critical_misses": 0, "coverage_sum": 0.0}
+
+
+def _new_tertiles() -> dict[str, dict[str, Any]]:
+    return {name: _new_bucket() for name in ("small", "medium", "large")}
+
+
+def _add(bucket: dict[str, Any], coverage: Any) -> None:
+    bucket["instance_count"] += 1
+    bucket["critical_misses"] += int(coverage.is_critical_miss)
+    bucket["coverage_sum"] += coverage.correct_fraction
+
+
+def _finalise(bucket: dict[str, Any]) -> dict[str, Any]:
+    """Turn a running sum into a published mean, or `null` when nothing was summed."""
+
+    count = bucket["instance_count"]
+    return {
+        "instance_count": count,
+        "critical_misses": bucket["critical_misses"],
+        "mean_correct_fraction": bucket["coverage_sum"] / count if count else None,
+    }
+
+
 def _instance_block(
     directory: Path,
     sample_ids: Sequence[str],
@@ -281,6 +344,12 @@ def _instance_block(
     The frozen edges are keyed by BDD100K instance category, and everything the
     semantic mask carries is keyed by train ID, so the edges are translated once
     here into the space the comparison actually happens in.
+
+    Coverage is published pooled and BY CLASS. Pooled, the number is mostly about
+    cars — 81% of the real cohort's instances — and a VRU-priority study that can
+    say nothing about persons has not said what it exists to say. Every instance
+    class appears in the block, with zeros where the cohort holds none, so an
+    absent class and a forgotten one never look the same.
     """
 
     edges_document = json.loads(tertiles_path.read_text(encoding="utf-8"))
@@ -290,20 +359,19 @@ def _instance_block(
         if int(category) in INSTANCE_CATEGORY_TO_TRAIN_ID
     }
 
-    by_tertile: dict[str, dict[str, Any]] = {
-        name: {"instance_count": 0, "critical_misses": 0, "coverage_sum": 0.0}
-        for name in ("small", "medium", "large")
+    overall = _new_bucket()
+    by_tertile = _new_tertiles()
+    by_class: dict[str, dict[str, Any]] = {
+        BDD100K_SEMANTIC_CLASS_NAMES[train_id]: {**_new_bucket(), "by_tertile": _new_tertiles()}
+        for _category, train_id in sorted(INSTANCE_CATEGORY_TO_TRAIN_ID.items())
     }
-    instance_count = 0
     without_semantic_pixels = 0
     fractions: list[float] = []
     for sample_id in sample_ids:
         _, record, _ = read_prediction_artifact(directory / f"{sample_id}.json")
         truth = _read_mask(label_paths[sample_id])
         predicted = _dense_prediction(record, truth)
-        bitmask = _read_mask(
-            instance_root / "labels" / "ins_seg" / "bitmasks" / "val" / f"{sample_id}.png"
-        )
+        bitmask = _read_mask(_bitmask_path(instance_root, sample_id))
         categories = bitmask[:, :, 0]
         annotation_ids = (bitmask[:, :, 2] << 8) | bitmask[:, :, 3]
         corroboration = _corroborated_instances(truth, categories, annotation_ids)
@@ -316,27 +384,31 @@ def _instance_block(
             corroboration.classes,
             edges_by_train_id,
         ):
-            instance_count += 1
-            bucket = by_tertile[coverage.area_tertile]
-            bucket["instance_count"] += 1
-            bucket["critical_misses"] += int(coverage.is_critical_miss)
-            bucket["coverage_sum"] += coverage.correct_fraction
+            _add(overall, coverage)
+            _add(by_tertile[coverage.area_tertile], coverage)
+            class_block = by_class[BDD100K_SEMANTIC_CLASS_NAMES[coverage.class_id]]
+            _add(class_block, coverage)
+            _add(class_block["by_tertile"][coverage.area_tertile], coverage)
 
-    for bucket in by_tertile.values():
-        count = bucket.pop("instance_count")
-        coverage_sum = bucket.pop("coverage_sum")
-        bucket["instance_count"] = count
-        bucket["mean_correct_fraction"] = coverage_sum / count if count else None
     return {
-        "tertile_edges_from": str(tertiles_path),
-        "instance_count": instance_count,
+        "tertile_edges_sha256": sha256_file(tertiles_path),
+        "instance_count": overall["instance_count"],
         "excluded_without_semantic_pixels": without_semantic_pixels,
         # How much of an instance the two annotations agreed on, averaged over the
         # scored instances. It is published because the frozen tertile edges were
         # learned over whole instances while coverage is measured over footprints,
         # and a reader placing an area tertile needs to see the size of that gap.
-        "mean_corroborated_fraction": (float(np.mean(fractions)) if fractions else None),
-        "by_tertile": by_tertile,
+        "mean_corroborated_fraction": float(np.mean(fractions)) if fractions else None,
+        "by_tertile": {name: _finalise(bucket) for name, bucket in by_tertile.items()},
+        "by_class": {
+            name: {
+                **_finalise(block),
+                "by_tertile": {
+                    tertile: _finalise(bucket) for tertile, bucket in block["by_tertile"].items()
+                },
+            }
+            for name, block in by_class.items()
+        },
     }
 
 
@@ -419,6 +491,10 @@ def extended_metrics(
             manifest_path, labels_root, sample_ids, str(document["dataset_manifest_sha256"])
         )
 
+    bitmask_digest: dict[str, Any] | None = None
+    if manifest is not None and instance_root is not None:
+        bitmask_digest = _digest_bitmask_set(instance_root, sample_ids)
+
     selective: dict[str, Any] = {}
     bands: dict[str, Any] = {}
     instances: dict[str, Any] = {}
@@ -445,7 +521,7 @@ def extended_metrics(
 
     computed = ["selective_risk"]
     if bands:
-        bands["definition"] = BAND_DEFINITION
+        bands = {"definition": BAND_DEFINITION, "by_model": bands}
         computed.append("normalized_image_bands")
     else:
         bands = {"not_computed": NO_GROUND_TRUTH}
@@ -466,6 +542,7 @@ def extended_metrics(
                 "cohort_manifest_sha256": manifest.manifest_sha256,
                 "split_name": manifest.split_name,
                 "masks_verified": len(label_paths),
+                "instance_bitmasks": bitmask_digest,
             }
             if manifest is not None
             else {"not_computed": NO_GROUND_TRUTH}
