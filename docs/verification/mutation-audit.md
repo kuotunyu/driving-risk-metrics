@@ -242,6 +242,211 @@ row turned out to be checking nothing.
 Every number below comes from one run of `sync_and_mutate.sh`, and the commit
 is stated so a reader can reproduce it.
 
+### At `9d6933f`, run `2026-09-05T05:05:24Z` to `2026-09-05T05:39:56Z` — the release candidate, after the analysis modules were scored for the first time
+
+| | Count | Share |
+| --- | ---: | ---: |
+| Mutants generated | 3,677 | |
+| **Killed by a test** | **3,491** | **94.94%** |
+| Timed out | 28 | |
+| Survived | 158 | 4.30% |
+| — of those, proven equivalent above | 152 | |
+| — of those, still unexplained | 6 | 0.16% |
+
+**The gate is cleared on kills alone, by 181 mutants.** 90% of 3,677 is
+3,310 and the suite kills 3,491. `audit_families.py` reports
+zero contradictions across the whole mutant tree.
+
+### How the number got here: three runs on 2026-09-05
+
+Between `e3ad6fa` and `b2c38ed` the pure core gained `analysis/gallery.py`,
+`analysis/extended.py`, the per-class, calibration and separability blocks of
+`analysis/aggregate.py`, and the classwise ECE, Brier and histogram finalisers in
+`metrics/calibration.py` and `metrics/selective.py` — about 1,280 new mutants,
+none of which had ever been scored. Three full runs followed, each on a commit:
+
+| Commit | Mutants | Killed | Killed % | Timed out | Survived | Documented | Unexplained | Margin |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `b2c38ed` (first score of the new modules) | 3,743 | 3,488 | 93.19% | 24 | 231 | 81 | 150 | 119 |
+| `94d37dc` (after the tests below) | 3,740 | 3,551 | 94.95% | 10 | 179 | 130 | 49 | 185 |
+| `9d6933f` (after one writer for every document) | 3,677 | 3,491 | 94.94% | 28 | 158 | 152 | 6 | 181 |
+
+The first run's score, 93.19%, was lower than `e3ad6fa`'s 95.05% and its
+unexplained survivors tripled, from 50 to 150; 118 of the 150 sat in the three
+analysis modules the run was the first to score. **That is the number to read.**
+A module that had met real data twice and been corrected twice (`docs/protocol.md`,
+"Ground-truth metrics") still carried tests that agreed with a wrong
+implementation on more than a dozen separate points.
+
+### What the survivors at `b2c38ed` found in the tests
+
+Every item below was a survivor at `b2c38ed` and has a test now. The test's RED is
+that survival; its GREEN is the mutant's verdict at `94d37dc`, where every one of
+these was killed.
+
+- **Every model had the same predictions, and so did every seed.** The extended
+  fixture's `prediction_grid` depended on the image alone, so `!= model` for
+  `== model`, and `calibrated[1]` for `calibrated[0]`, both survived. The fixture
+  now adds one top-band error for every model after the first and one
+  person-instance error for that model's seed 42 (`x_extended_metrics__mutmut_87`, `_132`).
+- **Both images had the same mask, byte for byte**, so `file_sha256[2 * position - 1]`
+  read the same digest from the wrong slot. A direct test of
+  `_resolve_label_paths` with two masks that differ by one pixel kills it
+  (`x__resolve_label_paths__mutmut_20`).
+- **No annotation ID had a zero low byte.** `(b2 >> 8) | b3` and `(b3 << 8) | b3`
+  kept every ID distinct; ID 256 collapses to background under both
+  (`x__instance_block__mutmut_43`, `_44`). `<< 9` is injective over every byte
+  pair and is a family, not a gap.
+- **Every corroborated instance had at least two pixels**, so reading its class
+  from the second pixel never raised; a one-pixel person is the instance the study
+  most needs to score (`x__corroborated_instances__mutmut_41`).
+- **The unknown-category instance sat on sky**, so a sentinel colliding with train
+  ID 1 was never corroborated; it sits on sidewalk now (`x__semantic_class_of_category__mutmut_8`).
+- **No curve had exactly one or two points** (`x__selective_block__mutmut_16`, `_17`).
+- **The histogram's `correct +=` could be `=`**; the pooled total is asserted
+  (`x__confidence_histogram__mutmut_27`).
+- **The result objects were never read** — `computed`, `models`, `document_path`
+  of `ExtendedMetricsResult`, and every field of `GalleryResult`.
+- **No output ever went to a directory that did not exist** (`extended_metrics`
+  `_193/_195/_197`, `select_gallery` `_139`).
+- **Gate messages were matched by prefix**, so the separator between two
+  violations could change. The message is now compared whole against the
+  validator's own reasons (`x_extended_metrics__mutmut_22`, `x_select_gallery__mutmut_20`).
+- **The gallery fixture orders images identically for every model**, so `!= model`
+  chose the same sample IDs; the per-seed mIoU values behind them are recomputed
+  from the model's own runs (`x_select_gallery__mutmut_57`).
+- `per_model` was tested at 0 and 2, not at 1 or `True` (`x_select_gallery__mutmut_5`, `_2`).
+- `_ground_truth_support` was tested with the divergent run in the middle; a
+  divergent second run with the message asserted exactly, a divergent first run,
+  and an image holding exactly one pixel of a class are tested now
+  (`x__ground_truth_support__mutmut_17/23/29/40`).
+- `excludes_zero` was computed inline from whatever the bootstrap produced; it is
+  a named helper with boundary tests at zero (`x_aggregate_runs__mutmut_290/294/295`).
+- `seed_count` as `len(runs) / len(models)` gave `3.0` and the contract coerced it.
+  Integer fields are `strict` now (`x_aggregate_runs__mutmut_338`).
+- The ECE validator's `np.asarray(..., dtype=...)` lines RETURN int64 and float64,
+  and that return type is the contract the finalisers divide on; uint8/float32
+  input asserts it (`x__validated_ece__mutmut_3/5/8/10/13/15`); negative positive
+  counts were never tried (`_30`).
+- The Brier score summed float32 input in float32 when the promotion was dropped;
+  nineteen 0.1f values sum differently in the two precisions, and the test checks
+  that they do before asserting (`x_multiclass_brier_score__mutmut_3`, `_5`).
+
+Two guards were removed by simplification: the dead per-run `"definition"` key in
+`_band_block`, and the four-way `None` guard in `_accumulate_calibration`, replaced
+by refusing an empty cohort before anything is read and seeding the sums from the
+first artifact.
+
+### What the survivors at `94d37dc` found — in the audit, not the code
+
+The 49 unexplained survivors at `94d37dc` were mostly the audit's own defects:
+
+- **Twenty-five belonged to existing families and were misfiled.** The predicate for
+  a DROPPED argument compared `np.zeros(n)` against `np.zeros(n, )` — mutmut leaves
+  the comma — and never matched. Fixed; `audit_families.py` confirms every claim.
+- **Six were the three producers' multi-line `write_text` calls**, whose dropped
+  arguments no textual predicate can claim soundly (the changed line is whatever
+  shifted up). Every published document is now written by one function,
+  `artifacts.documents.write_document`, which validates, serialises and writes with
+  the encoding and newline pinned. The write is one site, outside the scored core,
+  and the byte format has its own test.
+- **Four `np.asarray` casts in `selective_risk_from_histogram`** are equivalent one
+  at a time — every consumer is a comparison, an `int(...sum())`, or a `cumsum`
+  with an explicit dtype, and the one dtype-sensitive operator receives an int64
+  operand whenever only one cast is removed. Removing both with boolean input
+  would raise, and mutmut never removes both. Claimed per site, as the `asarray`
+  policy requires, with the boolean-input test pinning that the function accepts them.
+- **Two `np.asarray` casts in `analysis.bootstrap`** take a Python float and a
+  tuple of Python ints; claimed per site.
+- **The only standalone `dtype=np.float64,` line in the scored core** is the
+  `np.array` of Python floats in `_statistic_for`; claimed by that uniqueness, which
+  the falsification check will contradict if a second such line ever appears.
+- `label_paths: dict[str, Path] = {}` -> `None`: every read is guarded by
+  `manifest is not None`, which implies the reassignment ran.
+
+### Timeouts are re-executed, never trusted
+
+mutmut reported 24 timeouts at `b2c38ed` and 10 at `94d37dc`, in consecutive
+blocks inside `extended_metrics` and `select_gallery`. Re-executing each by name
+with `check_kill.sh` gave a verdict for every one: **20 killed and 4 survived**,
+then **8 killed and 2 survived**. Several "timeouts" were mutants such as
+`runs = None` that fail on first use. The two that survived at `94d37dc` were
+exactly the two `audit_families.py` had flagged as contradictions — a timed-out
+mutant carries a non-zero exit code and the scan had read that as a kill. Both
+survived on re-execution, so both families stand; the scan now lists timed-out
+claims apart from contradictions, and the four genuine survivors from the first
+round have tests above.
+
+### Families added on 2026-09-05
+
+Twenty-one families were added to `families.py`, each with its measurement (in
+the project environment: pydantic 2.13.5, numpy 2.4.6, Python 3.11) or its
+reading in the predicate's docstring. The padding rule in `rejected_outright` is
+exempted for `model_dump(mode=` alone, with the measurement that pydantic falls
+back to python mode rather than raising.
+
+| Mutation | Why it cannot change a result | Basis |
+| --- | --- | --- |
+| `encoding="utf-8"` upper-cased | Python codec lookup is case-insensitive. | Measured |
+| `encoding="utf-8"` / `newline="\n"` nulled or dropped anywhere on a one-line call | The parent family, which matched only lines starting with the argument. Linux defaults; the Windows hazard is guarded by `test_artifact_bytes.py`. | Measured |
+| `dtype=` dropped on `np.full`/`np.zeros`/`np.empty`/`np.array`/`np.arange`/`np.cumsum` at the measured pairs, one-line calls only | The parent family's argument for the dropped form; the predicate accepts a drop only when the after-line is the before-line minus that argument (trailing comma normalised). | Measured |
+| `np.zeros(n, dtype=np.int64)` -> float64 at the four band/histogram accumulators | Every published value passes through `int(...)` or an int64 `asarray`; 998 × 921,600 pixels is far below 2^53. By site. | Measured |
+| `predicted_class.astype(np.int64)` -> `astype(None)` into an int64 array | Cast back on assignment. | Measured |
+| `np.asarray(<PIL image>, dtype=np.uint8)` nulled or dropped | RGB and L images convert to uint8. Keyed on the PIL handle. | Measured |
+| `tuple(sorted(runs[0][...]))` -> `runs[1]` | Rejected 2026-09-04 for the unsorted code; the sort at `e3ad6fa` makes the tuple a function of the validator-proven set. | Read |
+| `and` -> `or` after the XOR guard | Both None or both set at that line. | Read |
+| A seed-invariant field read from seed 1 | `pixels`, `defined_at`, `true_rows[0]` after the agreement loop. | Read |
+| `range(1, n)` -> `range(n)` in the agreement loop | Run 0 compared with itself. | Read |
+| `(b2 << 8) \| b3` -> `<< 9` | Injective over every byte pair; equality only. `>> 8` and the misplaced channel are killed. | Measured |
+| Unknown-category sentinel `-1` -> `-2` | Compared only with train IDs 0..18 and 255. `+1` is killed. | Read |
+| `zip(positions, finalised, strict=True)` weakened | Equal length by construction. | Read |
+| `model_dump(mode="json")` -> any other string | Python mode, identical for str/int/dict fields. | Measured |
+| `deep=deep` dropped / `invalid="ignore"` dropped | The removed forms of two existing families. | Measured / Read |
+| `stream.read(chunk_size)` -> `read(None)` | Identical digest. | Measured |
+| `np.asarray(counts\|correct_counts, dtype=np.int64)` in the histogram curve, one at a time | See above. By site. | Read |
+| `np.asarray` of a Python float / a tuple of ints in `bootstrap` | numpy infers float64 / int64. By site. | Read |
+| The one standalone `dtype=np.float64,` line | `np.array` of Python floats in `_statistic_for`; unique in the core. | Read |
+| `label_paths = {}` -> `None` | Every read guarded by `manifest is not None`. | Read |
+
+### Where the 6 unexplained survivors are, at `9d6933f`
+
+| Module | Survivors |
+| --- | ---: |
+| `analysis.gallery` | 16 |
+| `analysis.extended` | 10 |
+| `calibration.service` | 5 |
+
+The count above is over mutants mutmut reported as `survived`. An earlier version
+of `count_equivalent.py` also counted family matches among `timeout` mutants as
+documented equivalents, which understated the unexplained survivors by the number
+of family-claimed timeouts (three at this commit); it counts survivors only now,
+and the timeouts are handled below.
+
+- `calibration.service`, five, all pre-existing: `Image.open(...).convert(None)` in
+  the calibration sampler survives because the fixture images are already RGB — a
+  fixture weakness recorded on 2026-09-04 and still open; and the four dropped
+  `encoding`/`newline` arguments of `calibrate_checkpoint`'s two multi-line
+  `write_text` calls, equivalent on Linux by the same reading as the io family but
+  not claimable by any sound textual predicate, because the changed line is
+  whatever shifted up. The analysis producers escaped this shape by writing
+  through one function; the calibration service still writes its run record and
+  temperature artifact directly and could do the same.
+- `analysis.extended`, one: `label_paths: dict[str, Path] = {}` -> `None`. Every read
+  of the variable is guarded by `manifest is not None`, which implies the
+  reassignment ran, so the initial value is never observed. It stays unexplained
+  by policy: `rejected_outright` refuses every whole-right-hand-side `None`, and
+  that rule is kept rather than carved for one line.
+
+### The 28 timeouts at `9d6933f`, re-executed
+
+Re-executed by name with `check_kill.sh`: **25 killed,
+3 survived.** The survivors are the three mutants the
+falsification scan listed as family-claimed timeouts — `encoding=None`,
+`encoding="UTF-8"` and `runs[1]` in `select_gallery` — each of which is equivalent
+by its family's argument and survived, as an equivalence requires. Counted with
+those, the mutants that neither a test nor a family accounts for at this commit
+number 6, all named above.
+
 ### At `e3ad6fa`, run `2026-09-04T10:04Z` to `10:18Z`
 
 | | Count | Share |
