@@ -48,6 +48,206 @@
 {% endfor %}
 </section>
 
+<section id="runs">
+<h2>The runs behind every number</h2>
+<p>
+Every aggregate on this page is computed from these runs and no others. The
+checkpoint digest identifies the exact weights each row was evaluated from.
+</p>
+<table>
+<thead><tr><th>Run</th><th>Model</th><th>Seed</th><th>Status</th><th>Final step</th><th>Temperature</th><th>Checkpoint SHA-256</th></tr></thead>
+<tbody>
+{% for run in runs %}
+<tr>
+<td><code>{{ run.run_id }}</code></td>
+<td>{{ run.model }}</td>
+<td>{{ run.seed }}</td>
+<td>{{ run.status }}</td>
+<td>{{ run.final_step }}</td>
+<td>{{ run.temperature }}</td>
+<td><code>{{ run.checkpoint_sha256 }}</code></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</section>
+
+<section id="per-class">
+<h2>Per-class scores, with the support they rest on</h2>
+<p>
+A class is marked <strong>thin</strong> when it appears in fewer than
+{{ thin_class_image_count }} images of the cohort. The mark states a count, not a
+judgement: a score computed over a handful of images is reported, and how little it
+rests on is reported beside it.
+</p>
+<table>
+<thead><tr><th>Class</th><th>Labelled pixels</th><th>Images</th>{% for model in per_class.models %}<th>{{ model }} IoU</th><th>{{ model }} recall</th>{% endfor %}</tr></thead>
+<tbody>
+{% for row in per_class.rows %}
+<tr>
+<td>{{ row.name }}{% if row.thin %} <em>thin</em>{% endif %}</td>
+<td>{{ row.support_pixels }}</td>
+<td>{{ row.images_with_class }}</td>
+{% for score in row.scores %}<td>{{ score.iou }}</td><td>{{ score.recall }}</td>{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</section>
+
+<section id="calibration">
+<h2>Calibration, pooled and per seed</h2>
+<p>
+Temperature scaling does not always help. The pooled value is given beside every
+seed so that a model whose calibration error rose can be seen to have risen in each
+run rather than on average.
+</p>
+{% for row in calibration %}
+<h3>{{ row.model }}</h3>
+<p>
+Temperature scaling {{ row.direction }} the expected calibration error, from
+{{ row.uncalibrated.ece }} to {{ row.calibrated.ece }}; the Brier score moved from
+{{ row.uncalibrated.brier }} to {{ row.calibrated.brier }}.
+</p>
+<table>
+<thead><tr><th>Seed</th><th>Uncalibrated ECE</th><th>Calibrated ECE</th></tr></thead>
+<tbody>
+{% for seed in row.per_seed %}
+<tr><td>{{ seed.seed }}</td><td>{{ seed.uncalibrated_ece }}</td><td>{{ seed.calibrated_ece }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endfor %}
+</section>
+
+<section id="risk-profiles">
+<h2>Risk-weighted cost under each profile</h2>
+<p>
+A cost-risk figure means nothing without the profile that weighted it, so each is
+published beside the class identifiers it treats as critical.
+</p>
+<table>
+<thead><tr><th>Profile</th><th>Critical class IDs</th><th>Sensitivity</th><th>Model</th><th>Cost risk</th></tr></thead>
+<tbody>
+{% for profile in risk_profiles %}{% for entry in profile.cost_risk %}
+<tr>
+<td>{{ profile.name }}</td>
+<td>{{ profile.critical_class_ids | join(", ") }}</td>
+<td>{{ profile.sensitivity }}</td>
+<td>{{ entry.model }}</td>
+<td>{{ entry.value }}</td>
+</tr>
+{% endfor %}{% endfor %}
+</tbody>
+</table>
+</section>
+
+<section id="bands">
+<h2>Accuracy by normalized image band</h2>
+{% if bands.not_computed %}
+<p>Not computed: {{ bands.not_computed }}.</p>
+{% else %}
+<p>{{ bands.definition }}.</p>
+<table>
+<thead><tr><th>Model</th><th>Band</th><th>Pixel accuracy</th><th>Pixels</th></tr></thead>
+<tbody>
+{% for row in bands.rows %}{% for band in row.bands %}
+<tr><td>{{ row.model }}</td><td>{{ band.band }}</td><td>{{ band.pixel_accuracy }}</td><td>{{ band.pixels }}</td></tr>
+{% endfor %}{% endfor %}
+</tbody>
+</table>
+{% endif %}
+</section>
+
+<section id="instances">
+<h2>Instance coverage, by size and by class</h2>
+<p>
+Every instance carries equal weight, so a distant pedestrian counts as much as a
+nearby bus. Coverage is measured over the footprint that the semantic and instance
+annotations corroborate; the mean corroborated fraction below says how much of each
+instance that footprint was. An instance is a critical miss when less than half of
+its footprint is classified correctly.
+</p>
+{% if ground_truth.not_computed %}
+<p>Ground truth: not computed. {{ ground_truth.not_computed }}.</p>
+{% else %}
+<p>
+Ground truth: {{ ground_truth.masks_verified }} masks verified against the frozen
+manifest, over the <code>{{ ground_truth.split_name }}</code> split.
+</p>
+{% endif %}
+{% if instances.not_computed %}
+<p>Instance coverage: not computed. {{ instances.not_computed }}.</p>
+{% endif %}
+{% for row in instances.rows %}
+<h3>{{ row.model }}</h3>
+<p>
+{{ row.instance_count }} instances scored, {{ row.excluded_without_semantic_pixels }}
+excluded for having no corroborated pixel, mean corroborated fraction
+{{ row.mean_corroborated_fraction }}, tertile edges
+<code>{{ row.tertile_edges_sha256 }}</code>.
+</p>
+<table>
+<thead><tr><th>Class</th><th>Tertile</th><th>Instances</th><th>Critical misses</th><th>Mean correct fraction</th></tr></thead>
+<tbody>
+{% for tertile in row.by_tertile %}
+<tr><td><em>all classes</em></td><td>{{ tertile.tertile }}</td><td>{{ tertile.instance_count }}</td><td>{{ tertile.critical_misses }}</td><td>{{ tertile.mean_correct_fraction }}</td></tr>
+{% endfor %}
+{% for entry in row.by_class %}{% for tertile in entry.by_tertile %}
+<tr><td>{{ entry.class_name }}</td><td>{{ tertile.tertile }}</td><td>{{ tertile.instance_count }}</td><td>{{ tertile.critical_misses }}</td><td>{{ tertile.mean_correct_fraction }}</td></tr>
+{% endfor %}{% endfor %}
+</tbody>
+</table>
+{% endfor %}
+</section>
+
+<section id="selective-risk">
+<h2>Selective risk</h2>
+<p>
+Each curve is evaluated at confidence-bin boundaries rather than continuously, so
+the area below is the area under a quantized curve. It is comparable across the
+models on this page and not with a figure computed another way.
+</p>
+<table>
+<thead><tr><th>Model</th><th>Uncalibrated AURC</th><th>Calibrated AURC</th><th>Coverage points</th><th>Defined at</th></tr></thead>
+<tbody>
+{% for row in selective_risk %}
+<tr>
+<td>{{ row.model }}</td>
+<td>{{ row.uncalibrated.aurc }}</td>
+<td>{{ row.calibrated.aurc }}</td>
+<td>{{ row.uncalibrated.coverage_points }} / {{ row.calibrated.coverage_points }}</td>
+<td><code>{{ row.calibrated.defined_at }}</code></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</section>
+
+<section id="gallery">
+<h2>Best and worst samples</h2>
+<p>
+Selected by {{ gallery.rule.metric }} aggregated as {{ gallery.rule.aggregate }} over
+the <code>{{ gallery.evaluation }}</code> pass, {{ gallery.rule.per_model }} per model
+per end, ties broken by {{ gallery.rule.tie_break }}. This release redistributes no
+dataset images, so the samples are named rather than shown.
+</p>
+{% for row in gallery.rows %}
+<h3>{{ row.model }}</h3>
+<table>
+<thead><tr><th>End</th><th>Sample ID</th><th>Mean IoU over seeds</th>{% for seed in row.seeds %}<th>seed {{ seed }}</th>{% endfor %}</tr></thead>
+<tbody>
+{% for entry in row.best %}
+<tr><td>best</td><td><code>{{ entry.sample_id }}</code></td><td>{{ entry.mean_iou_over_seeds }}</td>{% for seed in row.seeds %}<td>{{ entry.per_seed[seed] }}</td>{% endfor %}</tr>
+{% endfor %}
+{% for entry in row.worst %}
+<tr><td>worst</td><td><code>{{ entry.sample_id }}</code></td><td>{{ entry.mean_iou_over_seeds }}</td>{% for seed in row.seeds %}<td>{{ entry.per_seed[seed] }}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endfor %}
+</section>
+
 <section id="rankings">
 <h2>Ranking comparison</h2>
 <p>

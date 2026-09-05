@@ -261,6 +261,38 @@ def test_nine_runs_flow_from_training_to_the_published_report(
     assert metrics["seed_count"] == 3 and metrics["sample_count"] == 2
     assert set(metrics["metrics"]) == set(APPROVED_MODEL_NAMES)
 
+    # The report reads six documents. The gallery and the extended metrics are produced
+    # by their own commands, and the index is the one the aggregate consumed.
+    analysis = tmp_path / "analysis"
+    shutil.copyfile(indexed["index_path"], analysis / "formal_run_index.json")
+    invoke(
+        [
+            "gallery",
+            "--index",
+            indexed["index_path"],
+            "--output",
+            str(analysis / "gallery-manifest.json"),
+        ]
+    )
+    invoke(
+        [
+            "extended-metrics",
+            "--index",
+            indexed["index_path"],
+            "--output",
+            str(analysis / "extended-metrics.json"),
+            "--manifest",
+            str(paths["locked_validation"]),
+            "--labels-root",
+            str(paths["data_root"] / "labels/sem_seg/masks/val"),
+        ]
+    )
+    extended = json.loads((analysis / "extended-metrics.json").read_text(encoding="utf-8"))
+    # The synthetic root has no instance bitmasks and no frozen tertiles, so the
+    # instance block is stated as not computed rather than published empty.
+    assert extended["instances"] == {"not_computed": "the frozen area tertiles were not supplied"}
+    assert set(extended["normalized_image_bands"]["by_model"]) == set(APPROVED_MODEL_NAMES)
+
     claims = tmp_path / "claims.yaml"
     claims.write_text(
         yaml.safe_dump(

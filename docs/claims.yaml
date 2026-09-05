@@ -27,6 +27,33 @@ claims:
   artifact_path: docs/evidence/bdd100k_semseg_v1/metrics.json
   metric_path: /metrics
   status: verified
+- claim_id: p1.metrics.convnextv2
+  text: UperNet-ConvNeXtV2-Tiny scores 0.6320100232208011 mean IoU, 0.8105162716623479 critical-class
+    recall and 0.9387763736063249 pixel accuracy on the locked cohort.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/metrics.json
+  metric_path: /metrics/upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.metrics.segformer
+  text: SegFormer-B2 scores 0.6219827462429768 mean IoU, 0.7872117542228393 critical-class recall and
+    0.9385890837416806 pixel accuracy on the locked cohort.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/metrics.json
+  metric_path: /metrics/segformer_b2
+  status: verified
+- claim_id: p1.metrics.dinov2
+  text: UperNet-DINOv2-Small scores 0.47424706184502113 mean IoU, 0.520379600009604 critical-class recall
+    and 0.9141344038041649 pixel accuracy on the locked cohort.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/evidence/bdd100k_semseg_v1/metrics.json
+  metric_path: /metrics/upernet_dinov2_small
+  status: verified
 - claim_id: p1.critical-recall.locked
   text: Recall over the vulnerable-road-user critical classes is 0.8105162716623479 for UperNet-ConvNeXtV2-Tiny,
     0.7872117542228393 for SegFormer-B2, 0.520379600009604 for UperNet-DINOv2-Small.
