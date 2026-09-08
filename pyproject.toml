@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=80", "wheel>=0.45"]
+requires = ["setuptools==84.0.0", "wheel==0.45.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "driving-risk-metrics"
-version = "1.0.0"
+version = "1.0.2"
 description = "Safety-aware evaluation for road-scene semantic segmentation"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
@@ -49,6 +49,8 @@ report = [
 [dependency-groups]
 dev = [
     "build>=1.2,<2",
+    "setuptools==84.0.0",
+    "wheel==0.45.1",
     "hypothesis>=6.130,<7",
     "mypy>=1.15,<2",
     "mutmut>=3.3,<4",
