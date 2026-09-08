@@ -204,8 +204,70 @@ clone helper passed four local fixture-clone tests, including explicit P2
 arguments and propagation of verifier exit 42 without a success message; its
 dependency commands were replaced at the external UV boundary for those tests.
 Full staged verification, committed-source build evidence and the real P1
-clone are separate gates and must be recorded before claiming local completion.
+clone were checked separately, as recorded below.
 
 These are v1.0.2 engineering corrections. The historical
 [`clean-clone.md`](clean-clone.md) remains evidence for the releases it names;
 it is not retroactively changed into proof of reproducible older artifacts.
+
+### Committed-source verification on 2026-09-09
+
+The measured source is local checkpoint
+`f226ef8d7975b17000fae608683c5e21006f1868`, with commit epoch `1788889459`.
+Its precommit gate ran on a fresh Linux clone with the candidate patch applied
+to the index. The resulting Git tree
+`f6f0b4f0080676a5c99401dae9929292eccf8347` and SHA-256 of all nine changed files
+matched the reviewed Windows candidate exactly before the gate. All eight
+stages passed: 1,170 tests in each round, 3,991 statements and 1,128 branches
+at 100%, plus schema contracts and document links.
+
+After that checkpoint, the actual workspace-only clean-clone helper cloned the
+local candidate branch with the real P1 package and dependencies. It removed
+only the new clone's origin, recorded HEAD and LF checkout, checked the lock,
+built both distributions and passed the full eight-stage gate again: 1,170
+tests in each round, 100% statement and branch coverage. Its final import
+resolved to the new clone's `src/drivemetrics/__init__.py`. The actual helper
+exit was zero, and its full untruncated log was retained outside the repository.
+
+The two-build proof used Ubuntu-bench/WSL2 on Linux ext4, CPython 3.11.15,
+uv 0.11.18, setuptools 84.0.0, wheel 0.45.1 and build 1.6.0. The lock SHA-256 was
+`dc8126e683d8ebdb31eb2d9e46e94e3524953a1084aec9629df83a8dfa57f0fc`.
+Both independent fresh source clones resolved to the measured commit and
+started clean, without a remote. They used one separately frozen build-tool
+environment, with the helper's import path bound to each clone's own `src`.
+Each had its own build and output directories. The effective build commands
+were the following; `BUILD_PYTHON` names that frozen environment's interpreter:
+
+```bash
+uv lock --check
+export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+export PYTHONPATH="$PWD/src"
+"$BUILD_PYTHON" -m drivemetrics.release backend
+"$BUILD_PYTHON" -m build --no-isolation --outdir dist
+"$BUILD_PYTHON" -m drivemetrics.release normalize-sdist --dist-dir dist --epoch "$SOURCE_DATE_EPOCH"
+"$BUILD_PYTHON" -m drivemetrics.release verify --dist-dir dist --tag v1.0.2
+(cd dist && sha256sum -c SHA256SUMS)
+```
+
+Both builds produced the same names and hashes:
+
+| File | SHA-256 in both builds |
+| --- | --- |
+| `driving_risk_metrics-1.0.2-py3-none-any.whl` | `4261460698e3a187391c08a5b2ed3e989485b957f9b3808dda299f7c1da212e4` |
+| `driving_risk_metrics-1.0.2.tar.gz` | `a4253b1daadbfe665e2e453b8e75a7305319b96d439c880670293546a6dc4f68` |
+| `SHA256SUMS` | `73fa00bb4e6b1bd8b6247c64df7562357d4508ddec348c7391ab5a3125228bec` |
+
+Both portable checksum checks passed. Each wheel was installed without dependency
+resolution into a fresh virtual environment; isolated Python imports confirmed
+installed metadata and runtime version 1.0.2 and a module path inside that
+environment. Rebuilding a wheel from the normalized sdist produced the same
+wheel SHA-256; reinstalling and importing it also passed. Independent review
+matched the archive payloads to the source commit and found no unresolved
+issues. Full logs, actual per-command exits, both raw and normalized artifacts
+and the verified source/destination copy receipts remain outside the repository.
+
+These hashes belong to the explicitly named checkpoint and epoch. This evidence
+does not claim identical archives across different operating systems or build
+inputs. Later documentation checkpoints and the eventual authorized public tag
+must retain their own current-commit build verification; a local check does not
+establish a future remote Release run or download result.
