@@ -28,24 +28,31 @@ jobs:
           enable-cache: true
 
       - name: Sync locked development environment
-        run: uv sync --frozen --all-groups --extra train
+        run: |
+          uv lock --check
+          uv sync --frozen --all-groups --extra train
+          uv run --frozen python -m drivemetrics.release backend
 
       - name: Run the deterministic verification gate on the tagged commit
         run: uv run --frozen python -m drivemetrics.dev verify
 
-      - name: Build wheel and source distribution
-        run: uv build
+      - name: Pin the build timestamp to the tagged commit
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
 
-      - name: Record checksums
-        run: |
-          cd dist
-          sha256sum * > SHA256SUMS
-          cat SHA256SUMS
+      - name: Build wheel and source distribution
+        run: uv run --frozen python -m build --no-isolation --outdir dist
+
+      - name: Normalize demonstrated source-archive timestamp variation
+        run: uv run --frozen python -m drivemetrics.release normalize-sdist --dist-dir dist --epoch "$SOURCE_DATE_EPOCH"
+
+      - name: Verify release identities and record portable checksums
+        run: uv run --frozen python -m drivemetrics.release verify --dist-dir dist --tag "$GITHUB_REF_NAME"
 
       - name: Create the GitHub release for this tag with the built assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
-          gh release create "$GITHUB_REF_NAME" dist/*
+          gh release create "$GITHUB_REF_NAME" dist/*.whl dist/*.tar.gz dist/SHA256SUMS
+          --verify-tag
           --title "driving-risk-metrics $GITHUB_REF_NAME"
           --notes-file "docs/release-notes/$GITHUB_REF_NAME.md"

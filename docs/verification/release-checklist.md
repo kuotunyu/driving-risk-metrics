@@ -1,6 +1,6 @@
-# Release checklist for `v1.0.0`
+# Release checklist for `v1.0.2`
 
-This is the order of operations for turning a verified `rebuild/v1` commit into a
+This is the order of operations for turning a verified `main` commit into a
 public tagged release. Every box is a gate: an unchecked box stops the release,
 and nothing below it is attempted. Evidence for each box is recorded in the
 private handoff and, where the box says so, in a file under this directory.
@@ -20,7 +20,7 @@ not at all.
       `driving-risk audit-claims` are complete (P1-17), and every claim marked
       `verified` is `observed` or `derived`.
 - [ ] The private handoff matches the resolved repository path, the branch, HEAD
-      and a clean working tree. Zero remotes exist until section 6.
+      and a clean working tree. Existing public releases and tags are preserved.
 
 ## 1. Every-phase gate, run once more on the release candidate
 
@@ -65,7 +65,7 @@ uv run --frozen mutmut results
 ```powershell
 uv run --frozen driving-risk audit-claims --claims docs/claims.yaml
 uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/validate_claims.py `
-  --claims docs/claims.yaml --document README.md --document README.en.md --document docs/release-notes/v1.0.0.md
+  --claims docs/claims.yaml --document README.md --document README.en.md --document docs/release-notes/v1.0.2.md
 ```
 
 - [ ] The registry audit exits 0.
@@ -115,11 +115,16 @@ git diff --check
 
 ```powershell
 $clone = Join-Path $env:TEMP ("drm-clean-" + (Get-Date -Format yyyyMMddHHmmss))
-git clone --quiet --branch rebuild/v1 . $clone
+git clone --quiet --no-local --branch main . $clone
 Set-Location $clone
 git rev-parse HEAD
 uv sync --frozen --all-groups --extra train
-uv build
+uv lock --check
+$env:SOURCE_DATE_EPOCH = git log -1 --format=%ct
+uv run --frozen python -m drivemetrics.release backend
+uv run --frozen python -m build --no-isolation
+uv run --frozen python -m drivemetrics.release normalize-sdist --dist-dir dist --epoch $env:SOURCE_DATE_EPOCH
+uv run --frozen python -m drivemetrics.release verify --dist-dir dist --tag v1.0.2
 uv run --frozen python -m drivemetrics.dev verify
 uv run --frozen driving-risk --help
 ```
@@ -132,32 +137,75 @@ uv run --frozen driving-risk --help
       claims audit passes there.
 - [ ] The exact commit, the commands and their outputs are written to
       `clean-clone.md`.
-- [ ] Only after this box: `git branch -M main`.
+- [ ] The workspace-only `clean_clone.sh REPO [BRANCH] [PACKAGE]` is tested with
+      the intended local source. `REPO` is required; defaults are `main` and
+      `drivemetrics`. P2 must pass its own repository, branch and `bevcalib`.
+      Keep complete output and the actual command exit, including failed runs.
 
 ## 6. Public repository, CI and Pages `[GitHub UI]`
 
-Prepared by the agent, executed by a human. Stop here for explicit
-authorization; creating the remote, pushing, publishing Pages and tagging are
-never done on an agent's own judgement.
+P1 already has its public repository, CI and Pages. The next push and annotated
+tag require this release's explicit human authorization `推`. Local verification
+does not authorize either operation, and the existing tags are never moved.
 
 - [ ] Repository description, topics, social preview, Pages source, release
       notes and the artifact allowlist are drafted in the handoff.
-- [ ] The human creates the repository and authorizes the push of `main`.
+- [ ] The human authorizes the push of the verified `main` candidate.
 - [ ] Remote CI passes on the release commit. Pages builds from the committed
       evidence only: no restricted media, no credentials, no backend.
 
 ## 7. Tag and verify
 
 ```powershell
-git tag -a v1.0.0 -m "driving-risk-metrics v1.0.0"
-git push origin v1.0.0
+git tag -a v1.0.2 -m "driving-risk-metrics v1.0.2"
+git push origin v1.0.2
 ```
 
 - [ ] The annotated tag points at the commit remote CI passed on.
-- [ ] Release assets carry the `SHA256SUMS` the Release workflow computed for them,
-      and a download of each asset matches that sum. A local build is not the
-      reference: the archives carry build timestamps and are not byte-identical
-      across builds (see [`clean-clone.md`](clean-clone.md)).
+- [ ] Before publishing, build the same committed source in two independent
+      clean directories with Python 3.11, uv 0.11.18, the same lock and commit
+      epoch. Both `uv lock --check` and `drivemetrics.release backend` pass;
+      setuptools 84.0.0 and wheel 0.45.1 come from the frozen environment.
+- [ ] In each directory, run `python -m build --no-isolation`, then
+      `drivemetrics.release normalize-sdist --dist-dir dist --epoch EPOCH` and
+      `drivemetrics.release verify --dist-dir dist --tag v1.0.2` through
+      `uv run --frozen`. Record the actual source commit, epoch, runtime,
+      commands and matching wheel/sdist SHA-256 values below.
+- [ ] Install each wheel into a fresh environment. Installed metadata and
+      `drivemetrics.__version__` identify 1.0.2, with imports resolved outside
+      the source checkout. Build a wheel from the normalized sdist and verify
+      that it installs and imports with the same identity.
+- [ ] `SHA256SUMS` contains only the wheel and sdist basenames, with LF endings.
+      Check it from each distribution directory using `sha256sum -c SHA256SUMS`.
+      The workflow uploads exactly `*.whl`, `*.tar.gz` and `SHA256SUMS`, and uses
+      `gh release create --verify-tag` so a missing remote tag is not created.
+- [ ] After the authorized publication, download the assets and verify their
+      portable checksums. Record the actual remote run and tag; local evidence
+      does not prove that a future remote job succeeded.
 - [ ] A public clean clone of the tag installs and passes `verify`.
 - [ ] The handoff status becomes `released`, with the public URL, the tag and
       the commit, and the handoff itself is still in no Git index anywhere.
+
+### v1.0.2 local preparation evidence
+
+The initial Python 3.11.15 candidate probe built twice at one fixed commit epoch:
+the wheels matched, but the source archives differed. Archive inspection found
+no file-payload changes; variation was confined to the gzip timestamp and TAR
+member/PAX `mtime` fields, including generated metadata and directories. The
+normalizer changes those timestamps and the gzip filename header only. Tests
+preserve file bytes, names, order, mode, owner/group and non-time PAX fields and
+check idempotence. This probe used an uncommitted candidate; it is diagnosis,
+not the same-commit release proof required above.
+
+Focused release checks passed 29 tests with 100% statement and branch coverage
+on the new helper. They reject tag, installed/runtime, filename, wheel metadata
+and canonical sdist metadata mismatches before writing checksums. The shared
+clone helper passed four local fixture-clone tests, including explicit P2
+arguments and propagation of verifier exit 42 without a success message; its
+dependency commands were replaced at the external UV boundary for those tests.
+Full staged verification, committed-source build evidence and the real P1
+clone are separate gates and must be recorded before claiming local completion.
+
+These are v1.0.2 engineering corrections. The historical
+[`clean-clone.md`](clean-clone.md) remains evidence for the releases it names;
+it is not retroactively changed into proof of reproducible older artifacts.
