@@ -58,11 +58,11 @@ evaluation, with 998 of 998 evaluation artifacts on both passes.
 | `upernet_dinov2_small-seed-42` | upernet_dinov2_small | 42 | succeeded | 30000 | 2.1442234879672153 | `def1fec93265fbdf018a3c3b6fa81d8a10bf3f5a54147d7eea08e30a962d5c29` |
 | `upernet_dinov2_small-seed-73` | upernet_dinov2_small | 73 | succeeded | 30000 | 2.168452384729197 | `1f6ac669714f39d5798037775c95d5469ce5ab338ee32e74b8cd0e3e93ca4585` |
 
-Two readings across runs matter more than any single row. The nine checkpoint
-digests are all distinct, which is what three seeds are for and what a cached or
-copied checkpoint would have broken. Within each model the three temperatures agree
-closely, so the over-confidence each model needs corrected is a property of the
-architecture and the protocol rather than an accident of one run.
+The nine checkpoint digests are distinct: the runs did not produce identical
+checkpoint files. This alone does not establish statistical independence. Within
+each model, the three fitted temperatures are close under this protocol. That
+describes consistency across these runs, rather than proving an intrinsic property
+of the architecture or a benefit on the locked cohort.
 
 **Two training commits appear across the nine runs, and this is stated rather than
 smoothed over.** Runs 01 to 03 were produced at commit `67cbeee`; runs 04 to 09 at

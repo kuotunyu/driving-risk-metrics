@@ -19,8 +19,9 @@
 
 > SegFormer-B2 減去 UperNet-ConvNeXtV2-Tiny 的 critical-class recall 配對差為 -0.023304517439508565，bootstrap 區間從 -0.03998178645924999 到 -0.008046430169669789，不含零。 <!-- claim: p1.interval.critical-recall.segformer-minus-convnextv2 -->
 
-只看 mean IoU 的讀者會認為這兩個模型可以互相替換。但在煞車決策所依賴的那些類別上，
-它們並不能。
+mean IoU 差值的區間包含零，critical-class recall 差值的區間則不包含零。
+前者不能證明模型等效或可以互換；兩個區間的差異也不等於直接檢驗了兩種指標的差異。
+這裡比較的是語意分割指標，沒有測試煞車決策或實車安全。
 
 問題不在排名。三個模型的順序在三個指標下完全相同，而且這件事會和「出現反轉」一樣
 直白地被報告出來：
@@ -84,13 +85,12 @@ instance coverage 是在語意標註與 instance 標註互相佐證的 footprint
 > 溫度縮放降低了 UperNet-DINOv2-Small 在 locked cohort 上的 expected calibration error，從 0.005448051902032049 降到 0.003985369701553616。 <!-- claim: p1.calibration.dinov2.ece -->
 > 溫度縮放反而提高了 SegFormer-B2 在 locked cohort 上的 expected calibration error，從 0.0028840449773854925 升到 0.0035196866015977167。 <!-- claim: p1.calibration.segformer.ece -->
 
-這不是某個 seed 運氣不好。三個 seed 都往同一個方向移動，這也是為什麼這裡發布逐 seed
-的數值而不只是平均：
+這三次執行都往同一個方向移動；逐 seed 數值讓這項一致性可見：
 
 > SegFormer-B2 的每一個 seed 在溫度縮放後都朝同一方向移動：校準後為 0.003590665043061051、 0.0034857099631801494、 0.0034826847985519496，校準前為 0.0028459279224686924、 0.002904871031420072、 0.0029013359782677135。 <!-- claim: p1.calibration.segformer.ece-per-seed -->
 
-一個本來就接近校準的模型，可能被在別處擬合的修正弄得更差；只發布 seed 平均的研究
-無法呈現這件事。
+在本實驗中，原本 ECE 已低的模型經 calibration cohort 擬合的溫度縮放後，
+locked cohort 的 ECE 反而增加。逐 seed 數值補充了平均值，不能據此推論所有模型或資料集。
 
 ## 樣本稀薄的類別會被標示，不會被藏起來
 
