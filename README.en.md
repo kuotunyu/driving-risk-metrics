@@ -21,8 +21,11 @@ The same comparison on recall over the vulnerable-road-user classes **excludes z
 
 > The paired difference in critical-class recall between SegFormer-B2 and UperNet-ConvNeXtV2-Tiny is -0.023304517439508565, and its bootstrap interval from -0.03998178645924999 to -0.008046430169669789 excludes zero. <!-- claim: p1.interval.critical-recall.segformer-minus-convnextv2 -->
 
-A reader who ranks by mean IoU alone would conclude the two models are
-interchangeable. On the classes that a braking decision depends on, they are not.
+The interval for the mean IoU difference includes zero, while the interval for
+the critical-class recall difference excludes zero. The former does not establish
+equivalence or interchangeability; comparing these intervals is also not a direct
+test of a difference between the metrics. These are segmentation measurements,
+not tests of braking decisions or real-world safety.
 
 Ranking is not the issue here. The order of the three models is the same under all
 three metrics, and that is reported as plainly as a reversal would have been:
@@ -91,13 +94,14 @@ third:
 > Temperature scaling lowered the expected calibration error of UperNet-DINOv2-Small on the locked cohort, from 0.005448051902032049 to 0.003985369701553616. <!-- claim: p1.calibration.dinov2.ece -->
 > Temperature scaling raised the expected calibration error of SegFormer-B2 on the locked cohort, from 0.0028840449773854925 to 0.0035196866015977167. <!-- claim: p1.calibration.segformer.ece -->
 
-That is not one unlucky seed. Every seed moved the same way, which is why the
-per-seed values are published rather than the mean alone:
+All three executions moved in the same direction. The per-seed values make this
+consistency visible:
 
 > Every SegFormer-B2 seed moved the same way after temperature scaling: calibrated 0.003590665043061051, 0.0034857099631801494, 0.0034826847985519496 against uncalibrated 0.0028459279224686924, 0.002904871031420072, 0.0029013359782677135. <!-- claim: p1.calibration.segformer.ece-per-seed -->
 
-A model that was already close to calibrated can be made worse by a correction
-fitted elsewhere, and a study that published only the seed mean could not show it.
+In this experiment, temperature scaling fitted on the calibration cohort increased
+locked-cohort ECE for a model whose ECE was already low. The per-seed values
+complement the mean; this observation does not generalize to all models or datasets.
 
 ## Thin classes are labelled, not hidden
 
