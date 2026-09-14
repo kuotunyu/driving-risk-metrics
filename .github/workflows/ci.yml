@@ -12,22 +12,85 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CUDA_VISIBLE_DEVICES: ""
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
+      OPENBLAS_NUM_THREADS: "1"
+      NUMEXPR_NUM_THREADS: "1"
     steps:
       - name: Check out repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
 
       - name: Install uv and Python 3.11
         uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
         with:
           version: "0.11.18"
-          python-version: "3.11"
+          python-version: "3.11.15"
           enable-cache: true
 
       - name: Sync locked development environment
         run: uv sync --frozen --all-groups --extra train
 
       - name: Run deterministic verification gate
-        run: uv run python -m drivemetrics.dev verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ci-logs
+          sampler_pid=""
+          sample_clock() {
+            printf '%s\t' "$(date --utc +%Y-%m-%dT%H:%M:%S.%NZ)"
+            cut -d ' ' -f 1 /proc/uptime
+          }
+          finish() {
+            status=$?
+            trap - EXIT
+            if [[ -n "$sampler_pid" ]]; then
+              kill "$sampler_pid" 2>/dev/null || true
+              wait "$sampler_pid" 2>/dev/null || true
+            fi
+            sample_clock >> ci-logs/clock.tsv
+            printf '%s\n' "$status" > ci-logs/exit-code.txt
+            exit "$status"
+          }
+          trap finish EXIT
+          printf 'realtime_utc\tuptime_seconds\n' > ci-logs/clock.tsv
+          sample_clock >> ci-logs/clock.tsv
+          (while sleep 5; do sample_clock; done) >> ci-logs/clock.tsv &
+          sampler_pid=$!
+          {
+            printf 'source_sha='
+            git rev-parse HEAD
+            sha256sum uv.lock
+            uv --version
+            uv run --frozen python -VV
+            uv run --frozen python -c 'import platform; print(platform.platform())'
+          } > ci-logs/provenance.txt 2>&1
+          set +e
+          uv run --frozen python -m drivemetrics.dev verify 2>&1 | tee ci-logs/verify.log
+          pipeline_status=("${PIPESTATUS[@]}")
+          set -e
+          # Preserve the gate failure; also fail if capturing its log failed.
+          status=${pipeline_status[0]}
+          if [[ "$status" -eq 0 ]]; then status=${pipeline_status[1]}; fi
+          exit "$status"
 
       - name: Build wheel and source distribution
-        run: uv build
+        run: uv build --frozen
+
+      - name: Upload verification diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: verification-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            ci-logs/provenance.txt
+            ci-logs/clock.tsv
+            ci-logs/verify.log
+            ci-logs/exit-code.txt
