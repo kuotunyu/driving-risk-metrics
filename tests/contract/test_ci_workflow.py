@@ -2,6 +2,7 @@
 
 import os
 import re
+import shlex
 import shutil
 import subprocess
 from pathlib import Path
@@ -14,6 +15,24 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def workflow():
     return yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))
+
+
+def test_ci_build_uses_locked_backend_without_isolated_dependency_resolution():
+    build = next(
+        step
+        for step in workflow()["jobs"]["verify"]["steps"]
+        if step["name"] == "Build wheel and source distribution"
+    )
+    # uv build does not accept --frozen; run the locked build frontend instead.
+    assert shlex.split(build["run"]) == [
+        "uv",
+        "run",
+        "--frozen",
+        "python",
+        "-m",
+        "build",
+        "--no-isolation",
+    ]
 
 
 def test_ci_pins_reviewed_source_runtime_and_safe_failure_artifacts():
