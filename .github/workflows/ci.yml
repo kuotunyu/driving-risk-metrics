@@ -80,7 +80,7 @@ jobs:
           exit "$status"
 
       - name: Build wheel and source distribution
-        run: uv build --frozen
+        run: uv run --frozen python -m build --no-isolation
 
       - name: Upload verification diagnostics
         if: always()
