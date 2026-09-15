@@ -13,8 +13,9 @@ artifacts, credentials, and private progress handoffs outside this Git repositor
 2. For every behavior change, add one focused test first and observe the intended
    failure before writing production code.
 3. Use Python 3.11 and the committed uv lock. Run
-   `uv sync --frozen --all-groups --extra train` for the development environment.
-   The training extra is required by the coverage gate, because the Torch
+   `uv sync --frozen --all-groups --extra train --extra report` for the development
+   environment. The training and report extras are required by the coverage gate,
+   because the Torch
    training and evaluation backends are exercised against the real framework
    rather than against fakes.
 4. Run `uv run python -m drivemetrics.dev verify` before a local checkpoint.

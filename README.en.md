@@ -1,15 +1,15 @@
 # driving-risk-metrics
 
-**Does a higher mIoU mean a safer segmentation model? On this cohort it does not.**
+**Which vulnerable-road-user segmentation failures does mIoU leave out?**
 
 [繁體中文](README.md)
 
 Three contemporary semantic segmentation models were trained on BDD100K under one
 frozen protocol, three seeds each, and evaluated once on a locked 998-image cohort
 that was never used for training, checkpoint selection, temperature fitting or
-sample selection. The headline metric and the safety metric disagree about whether
-the top two models differ, and the disagreement is the result this repository exists
-to report.
+sample selection. All three metrics give the same model order, while their paired
+bootstrap intervals provide different strength of evidence for separating the top
+two. This repository also reports instance-level failures hidden by pixel averages.
 
 ## The finding
 
@@ -33,22 +33,33 @@ three metrics, and that is reported as plainly as a reversal would have been:
 > Ranking the three models by critical_recall produces the same order as ranking them by miou: no reversal is observed. <!-- claim: p1.ranking.critical-recall.no-reversal -->
 > Ranking the three models by pixel_accuracy produces the same order as ranking them by miou: no reversal is observed. <!-- claim: p1.ranking.pixel-accuracy.no-reversal -->
 
-What changes between metrics is not the order but whether the top two can be
-separated at all.
+What changes between metrics is not the order but how strongly this cohort's
+bootstrap interval supports separating the top two.
 
 ![Paired differences with bootstrap intervals, drawn from rankings.json](docs/figures/paired-differences.svg)
 
 ## Headline results
 
-Averaged over three seeds on the locked cohort. Numbers appear at full precision
-throughout this page; a rounded copy would be a second number for one quantity, and
-this project refuses to publish one.
+Averaged over three seeds on the locked cohort. The headline table uses three decimal
+places and an explicit marker that makes the claims validator recompute each displayed
+value from its artifact. The exact values remain available immediately below.
+
+| Model | mean IoU | critical-class recall | pixel accuracy |
+| --- | --- | --- | --- |
+| UperNet-ConvNeXtV2-Tiny <!-- claim: p1.metrics.convnextv2; rounded: 3; fields: miou,critical_recall,pixel_accuracy --> | 0.632 | 0.811 | 0.939 |
+| SegFormer-B2 <!-- claim: p1.metrics.segformer; rounded: 3; fields: miou,critical_recall,pixel_accuracy --> | 0.622 | 0.787 | 0.939 |
+| UperNet-DINOv2-Small <!-- claim: p1.metrics.dinov2; rounded: 3; fields: miou,critical_recall,pixel_accuracy --> | 0.474 | 0.520 | 0.914 |
+
+<details>
+<summary>Full precision and evidence trace</summary>
 
 | Model | mean IoU | critical-class recall | pixel accuracy |
 | --- | --- | --- | --- |
 | UperNet-ConvNeXtV2-Tiny <!-- claim: p1.metrics.convnextv2 --> | 0.6320100232208011 | 0.8105162716623479 | 0.9387763736063249 |
 | SegFormer-B2 <!-- claim: p1.metrics.segformer --> | 0.6219827462429768 | 0.7872117542228393 | 0.9385890837416806 |
 | UperNet-DINOv2-Small <!-- claim: p1.metrics.dinov2 --> | 0.47424706184502113 | 0.520379600009604 | 0.9141344038041649 |
+
+</details>
 
 > Every paired interval is a two-stage paired bootstrap over summed confusions at 0.95 confidence, using 5000 resamples from seed 20260831. <!-- claim: p1.interval.method -->
 
@@ -59,8 +70,11 @@ scores every annotated instance with equal weight, and calls an instance a
 **critical miss** when less than half of it is classified correctly. Instances are
 grouped into size tertiles learned from the training split alone.
 
-Read that way, the best model on this cohort fails almost completely on the small
-end of exactly the classes the study protects:
+These results cover only smallest-tertile instances in the locked cohort whose
+semantic and instance annotations corroborate each other. The 462 person instances
+support a more stable within-cohort description; rider and motorcycle have only 17
+and 14 instances, so their extreme failures merit inspection but cannot estimate a
+failure rate for other data or deployment conditions:
 
 > UperNet-ConvNeXtV2-Tiny recovers less than half the pixels of 306 of the 462 smallest-tertile person instances. <!-- claim: p1.instances.convnextv2.person-small -->
 > UperNet-ConvNeXtV2-Tiny recovers less than half the pixels of every one of the 17 smallest-tertile rider instances. <!-- claim: p1.instances.convnextv2.rider-small -->
@@ -71,8 +85,9 @@ Against cars, the same model on the same instances:
 > UperNet-ConvNeXtV2-Tiny recovers less than half the pixels of 822 of the 3749 smallest-tertile car instances. <!-- claim: p1.instances.convnextv2.car-small -->
 > Across all classes UperNet-ConvNeXtV2-Tiny misses more than half the pixels of 1399 of the 4514 smallest-tertile instances. <!-- claim: p1.instances.convnextv2.small-overall -->
 
-A model that recovers roughly four out of five small cars and roughly one out of
-three small pedestrians has a mean IoU that says none of this.
+This contrast shows that one model's overall pixel average does not describe how
+failures are distributed across classes and instance sizes. It is not a measurement
+of real-world risk or safety.
 
 ![Critical misses on the smallest-tertile instances by class, drawn from extended-metrics.json](docs/figures/small-tertile-critical-misses.svg)
 
@@ -120,7 +135,7 @@ These bands are normalized image rows. They are not depth and not metric distanc
 
 ## How every number on this page is checked
 
-Each result sentence above carries a `<!-- claim: ... -->` marker. The claim names an
+Each result sentence above carries a `&lt;!-- claim: ... --&gt;` marker. The claim names an
 artifact under [`docs/evidence/bdd100k_semseg_v1/`](docs/evidence/bdd100k_semseg_v1),
 a JSON pointer inside it, and the protocol and dataset manifest hashes the artifact
 must carry. Two independent checks enforce it:
@@ -152,7 +167,7 @@ Supporting records:
 ## Reproducing this
 
 ```bash
-uv sync --frozen --all-groups --extra train
+uv sync --frozen --all-groups --extra train --extra report
 uv run --frozen python -m drivemetrics.dev verify
 uv run --frozen driving-risk --help
 ```
