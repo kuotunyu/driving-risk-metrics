@@ -20,9 +20,11 @@ claim ID, an artifact path and a JSON pointer, and read the same value there.
 
 A result sentence is one line of Markdown carrying exactly these parts:
 
-1. The number, verbatim from the artifact. Not rounded, not converted to a
-   percentage, not reformatted. If the artifact holds `0.947`, the sentence
-   says `0.947`; a `94.7%` needs its own `derived` claim.
+1. The number, verbatim from the artifact. A compact display may instead use
+   `<!-- claim: <claim_id>; rounded: <decimal_places>; fields: <key,...> -->`;
+   the validator then requires canonical fixed-decimal values in that field order,
+   each read from the named scalar below the claim pointer. Precision is bounded
+   to 0 through 9. Keep the exact artifact values nearby for inspection.
 2. A marker on the same line naming the claim: `<!-- claim: <claim_id> -->`.
    The marker is invisible when rendered and is what binds the sentence to the
    registry. A table row is a line; one marker per claim on that row.
@@ -110,7 +112,7 @@ invent a claim ID, or run a job to produce one.
 | --- | --- |
 | What binds a sentence to its evidence | `<!-- claim: <id> -->` on the same line |
 | Which claims may be stated | `status: verified` only |
-| How a number is written | Verbatim from the artifact, no rounding |
+| How a number is written | Verbatim, or with an explicit validated `rounded` marker |
 | Which evidence types must be named in the sentence | `synthetic`, `illustrative` |
 | Where the trace is kept | Validator output, pasted into the private handoff |
 | Request and artifact disagree | Stop and report both; write neither |

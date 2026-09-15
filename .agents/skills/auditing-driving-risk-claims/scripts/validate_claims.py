@@ -24,6 +24,7 @@ import argparse
 import json
 import re
 import sys
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -38,7 +39,13 @@ from drivemetrics.analysis.claims import (
     text_numbers,
 )
 
-MARKER = re.compile(r"<!--\s*claim:\s*([a-z0-9][a-z0-9._-]*)\s*-->")
+MARKER = re.compile(
+    r"<!--\s*claim:\s*([a-z0-9][a-z0-9._-]*)"
+    r"(?:\s*;\s*rounded:\s*([0-9])\s*;\s*fields:\s*"
+    r"([a-z][a-z0-9_]*(?:\s*,\s*[a-z][a-z0-9_]*)*))?\s*-->"
+)
+CLAIM_COMMENT = re.compile(r"<!--\s*claim:")
+NUMBER_TOKEN = re.compile(r"(?<![\w.])[-+]?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][-+]?\d+)?%?")
 #: Words that mark a sentence as stating a result. A line that contains one of
 #: these and a number is a claim, whether or not the author thought of it as one.
 METRIC_TERM = re.compile(
@@ -61,12 +68,37 @@ def load_registry(claims_path: Path) -> dict[str, ClaimV1]:
     return {claim.claim_id: claim for claim in registry.claims}
 
 
+def rounded_scalar(
+    claim: ClaimV1, field: str, repository_root: Path
+) -> tuple[Decimal | None, str | None]:
+    """Read one named scalar below a claim pointer without flattening containers."""
+
+    pointer = f"{claim.metric_path}/{field}"
+    try:
+        current: Any = json.loads(
+            (repository_root / claim.artifact_path).read_text(encoding="utf-8")
+        )
+        for raw_token in pointer.removeprefix("/").split("/"):
+            token = raw_token.replace("~1", "/").replace("~0", "~")
+            current = current[int(token)] if isinstance(current, list) else current[token]
+    except (OSError, ValueError, KeyError, IndexError, TypeError) as error:
+        return None, f"could not read {pointer}: {error}"
+    if isinstance(current, bool) or not isinstance(current, (int, float)):
+        return None, f"{pointer} must resolve to one finite numeric scalar"
+    number = Decimal(str(current))
+    if not number.is_finite():
+        return None, f"{pointer} must resolve to one finite numeric scalar"
+    return number, None
+
+
 def check_statement(
     source: str,
     claim_id: str,
     text: str,
     registry: dict[str, ClaimV1],
     repository_root: Path,
+    rounding_decimal_places: int | None = None,
+    rounded_fields: tuple[str, ...] = (),
 ) -> tuple[list[str], dict[str, Any] | None]:
     """Trace one statement to its claim and compare the numbers it states."""
 
@@ -102,16 +134,40 @@ def check_statement(
         "metric_path": claim.metric_path,
         "numbers": [str(number) for number in stated],
     }
+    if rounding_decimal_places is not None:
+        trace["rounding_decimal_places"] = rounding_decimal_places
+        trace["rounded_fields"] = list(rounded_fields)
     try:
         held = metric_numbers(claim, repository_root)
     except (OSError, ValueError, LookupError) as error:
         violations.append(f"{source} {claim_id}: metric could not be read from {where}: {error}")
     else:
         held_text = ", ".join(sorted(str(number) for number in held)) or "no number"
-        for number in stated:
-            if number not in held:
+        if rounding_decimal_places is None:
+            for number in stated:
+                if number not in held:
+                    violations.append(
+                        f"{source} {claim_id}: statement says {number} but {where} holds {held_text}"
+                    )
+        else:
+            quantum = Decimal(1).scaleb(-rounding_decimal_places)
+            expected: list[str] = []
+            for field in rounded_fields:
+                rounded_number, scalar_error = rounded_scalar(claim, field, repository_root)
+                if scalar_error is not None or rounded_number is None:
+                    violations.append(
+                        f"{source} {claim_id}: rounded field {field!r} {scalar_error}"
+                    )
+                    continue
+                expected.append(f"{rounded_number.quantize(quantum):.{rounding_decimal_places}f}")
+            actual = NUMBER_TOKEN.findall(text)
+            if actual != expected:
+                expected_text = ", ".join(expected) or "no number"
+                actual_text = ", ".join(actual) or "no number"
                 violations.append(
-                    f"{source} {claim_id}: statement says {number} but {where} holds {held_text}"
+                    f"{source} {claim_id}: canonical fixed-decimal values {actual_text} do "
+                    f"not match ordered fields {', '.join(rounded_fields)} from {where} at "
+                    f"{rounding_decimal_places} decimal places: {expected_text}"
                 )
     trace["verdict"] = "pass" if not violations else "fail"
     return violations, trace
@@ -169,11 +225,25 @@ def audit_document(
             continue
 
         source = f"{document_path.name}:{line_number}"
-        claim_ids = MARKER.findall(raw)
+        claim_markers = MARKER.findall(raw)
         text = MARKER.sub("", raw)
-        if claim_ids:
-            for claim_id in claim_ids:
-                found, trace = check_statement(source, claim_id, text, registry, repository_root)
+        if CLAIM_COMMENT.search(text):
+            violations.append(
+                f"{source}: invalid claim marker; rounded precision must be 0 through 9 "
+                "and requires an ordered fields list"
+            )
+            continue
+        if claim_markers:
+            for claim_id, rounded, fields in claim_markers:
+                found, trace = check_statement(
+                    source,
+                    claim_id,
+                    text,
+                    registry,
+                    repository_root,
+                    int(rounded) if rounded else None,
+                    tuple(field.strip() for field in fields.split(",")) if fields else (),
+                )
                 violations.extend(found)
                 if trace is not None:
                     traces.append(trace)
