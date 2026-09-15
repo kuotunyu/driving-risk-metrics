@@ -1,13 +1,13 @@
 # driving-risk-metrics
 
-**mIoU 比較高，就代表這個分割模型比較安全嗎？在這個 cohort 上，答案是否定的。**
+**只看 mIoU，會漏掉哪些與易受傷害用路人相關的分割失敗？**
 
 [English](README.en.md)
 
 三個當代語意分割模型在 BDD100K 上以同一份凍結協定訓練，各跑三個 seed，最後在一組
 998 張影像的 locked cohort 上評估一次。這組 cohort 從未用於訓練、checkpoint 選擇、
-溫度校準或樣本挑選。主流指標與安全指標對「前兩名模型是否有差異」給出相反的答案，
-而這個矛盾正是這個 repository 要報告的結果。
+溫度校準或樣本挑選。三項指標的模型順序相同，但配對 bootstrap 對前兩名能否區分
+提供不同強度的證據；本 repository 也呈現像素平均容易遮蔽的 instance 層級失敗。
 
 ## 發現
 
@@ -29,20 +29,31 @@ mean IoU 差值的區間包含零，critical-class recall 差值的區間則不�
 > 以 critical_recall 為三個模型排名，順序與以 miou 排名完全相同：未觀察到反轉。 <!-- claim: p1.ranking.critical-recall.no-reversal -->
 > 以 pixel_accuracy 為三個模型排名，順序與以 miou 排名完全相同：未觀察到反轉。 <!-- claim: p1.ranking.pixel-accuracy.no-reversal -->
 
-換指標改變的不是順序，而是前兩名到底能不能被區分開來。
+換指標改變的不是順序，而是這個 cohort 的 bootstrap 區間對區分前兩名提供多強的證據。
 
 ![配對差與 bootstrap 區間，由 rankings.json 繪製](docs/figures/paired-differences.svg)
 
 ## 主要結果
 
-三個 seed 平均，在 locked cohort 上量測。本頁所有數字都以完整精度呈現：四捨五入後的
-副本等於為同一個量產生第二個數字，這個專案拒絕發布那種東西。
+三個 seed 平均，在 locked cohort 上量測。主表顯示到小數點後三位，並以明確標記讓
+claims validator 從原始 artifact 重算顯示值；下方保留可逐位核對的完整精度。
+
+| 模型 | mean IoU | critical-class recall | pixel accuracy |
+| --- | --- | --- | --- |
+| UperNet-ConvNeXtV2-Tiny <!-- claim: p1.metrics.convnextv2; rounded: 3; fields: miou,critical_recall,pixel_accuracy --> | 0.632 | 0.811 | 0.939 |
+| SegFormer-B2 <!-- claim: p1.metrics.segformer; rounded: 3; fields: miou,critical_recall,pixel_accuracy --> | 0.622 | 0.787 | 0.939 |
+| UperNet-DINOv2-Small <!-- claim: p1.metrics.dinov2; rounded: 3; fields: miou,critical_recall,pixel_accuracy --> | 0.474 | 0.520 | 0.914 |
+
+<details>
+<summary>完整精度與 evidence trace</summary>
 
 | 模型 | mean IoU | critical-class recall | pixel accuracy |
 | --- | --- | --- | --- |
 | UperNet-ConvNeXtV2-Tiny <!-- claim: p1.metrics.convnextv2 --> | 0.6320100232208011 | 0.8105162716623479 | 0.9387763736063249 |
 | SegFormer-B2 <!-- claim: p1.metrics.segformer --> | 0.6219827462429768 | 0.7872117542228393 | 0.9385890837416806 |
 | UperNet-DINOv2-Small <!-- claim: p1.metrics.dinov2 --> | 0.47424706184502113 | 0.520379600009604 | 0.9141344038041649 |
+
+</details>
 
 > 每一個配對區間都是對加總後的 confusion 做兩階段配對 bootstrap，信心水準 0.95，重抽 5000 次，seed 為 20260831。 <!-- claim: p1.interval.method -->
 
@@ -52,8 +63,9 @@ mean IoU 差值的區間包含零，critical-class recall 差值的區間則不�
 評分每一個標註 instance，並在正確分類的比例低於一半時，將該 instance 記為
 **critical miss**。instance 依面積分成三個 tertile，切點只從 training split 學習。
 
-這樣讀下去，這個 cohort 上表現最好的模型，在研究要保護的那些類別的小尺寸端幾乎
-全面失守：
+這些結果只描述 locked cohort 中，語意與 instance 標註能互相佐證的最小 tertile
+instance。person 有 462 個樣本可支撐較穩定的 cohort 內描述；rider 與 motorcycle
+分別只有 17 與 14 個，極端失敗值得檢查，但不足以估計其他資料或部署條件的失敗率：
 
 > UperNet-ConvNeXtV2-Tiny 在 462 個最小 tertile 的 person instance 中，有 306 個連一半像素都沒有正確分類。 <!-- claim: p1.instances.convnextv2.person-small -->
 > UperNet-ConvNeXtV2-Tiny 在全部 17 個最小 tertile 的 rider instance 上，都沒有正確分類到一半像素。 <!-- claim: p1.instances.convnextv2.rider-small -->
@@ -64,8 +76,8 @@ mean IoU 差值的區間包含零，critical-class recall 差值的區間則不�
 > UperNet-ConvNeXtV2-Tiny 在 3749 個最小 tertile 的 car instance 中，有 822 個連一半像素都沒有正確分類。 <!-- claim: p1.instances.convnextv2.car-small -->
 > 跨所有類別，UperNet-ConvNeXtV2-Tiny 在 4514 個最小 tertile 的 instance 中，有 1399 個超過一半像素分類錯誤。 <!-- claim: p1.instances.convnextv2.small-overall -->
 
-一個模型能救回大約五分之四的小型車、卻只能救回大約三分之一的小型行人，而它的
-mean IoU 對這件事隻字未提。
+這個對比顯示，同一模型的整體像素平均不能交代各類別、各 instance 尺寸的失敗分布；
+它不是實車風險或安全性的量測。
 
 ![各類別在最小 tertile 上的 critical miss，由 extended-metrics.json 繪製](docs/figures/small-tertile-critical-misses.svg)
 
@@ -108,7 +120,7 @@ locked cohort 的 ECE 反而增加。逐 seed 數值補充了平均值，不能�
 
 ## 本頁每一個數字如何被檢查
 
-上面每一個結果句都帶著 `<!-- claim: ... -->` 標記。該 claim 指名
+上面每一個結果句都帶著 `&lt;!-- claim: ... --&gt;` 標記。該 claim 指名
 [`docs/evidence/bdd100k_semseg_v1/`](docs/evidence/bdd100k_semseg_v1) 底下的一個
 artifact、其中的一個 JSON pointer，以及該 artifact 必須帶有的 protocol 與 dataset
 manifest 雜湊。兩道獨立檢查強制執行這件事：
@@ -138,7 +150,7 @@ uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/valid
 ## 重現方式
 
 ```bash
-uv sync --frozen --all-groups --extra train
+uv sync --frozen --all-groups --extra train --extra report
 uv run --frozen python -m drivemetrics.dev verify
 uv run --frozen driving-risk --help
 ```
