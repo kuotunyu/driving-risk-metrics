@@ -346,6 +346,165 @@ def test_a_fully_marked_document_is_accepted(workspace: dict[str, Any]) -> None:
     assert statement["metric_path"] == MIOU_POINTER
 
 
+def add_rounded_fixture(workspace: dict[str, Any], values: dict[str, Any]) -> None:
+    artifact = json.loads(workspace["artifact"].read_text(encoding="utf-8"))
+    artifact["metrics"]["rounded"] = values
+    workspace["artifact"].write_text(json.dumps(artifact), encoding="utf-8")
+    write_registry(
+        workspace["claims"],
+        [
+            *DEFAULT_CLAIMS,
+            claim(
+                "rounded-headline",
+                "A compact headline backed by exact metrics.",
+                "/metrics/rounded",
+            ),
+        ],
+    )
+
+
+def rounded_marker(*, precision: str = "3") -> str:
+    return f"<!-- claim: rounded-headline; rounded: {precision}; fields: miou,pixel_accuracy -->"
+
+
+def test_a_declared_rounded_statement_is_checked_by_ordered_metric_key(
+    workspace: dict[str, Any],
+) -> None:
+    """Readable display precision must remain mechanically tied to exact evidence."""
+
+    add_rounded_fixture(workspace, {"miou": 0.7124, "pixel_accuracy": 0.9406})
+    document = write_document(
+        workspace["root"],
+        "README.md",
+        f"| SegFormer-B2 | 0.712 | 0.941 | {rounded_marker()}\n",
+    )
+
+    result = run_validator(workspace, documents=(document,))
+
+    assert result.returncode == 0, result.stderr
+    [statement] = json.loads(result.stdout)["statements"]
+    assert statement["rounding_decimal_places"] == 3
+
+
+@pytest.mark.parametrize(
+    ("display", "reason"),
+    [
+        ("0.941 | 0.712", "ordered fields"),
+        ("0.712% | 0.941", "canonical fixed-decimal"),
+        ("0.7120 | 0.941", "canonical fixed-decimal"),
+        ("7.12e-1 | 0.941", "canonical fixed-decimal"),
+    ],
+)
+def test_a_declared_rounded_statement_rejects_swapped_or_noncanonical_values(
+    workspace: dict[str, Any],
+    display: str,
+    reason: str,
+) -> None:
+    """Columns and fixed-decimal spelling are part of the audited statement."""
+
+    add_rounded_fixture(workspace, {"miou": 0.7124, "pixel_accuracy": 0.9406})
+    document = write_document(
+        workspace["root"],
+        "README.md",
+        f"| SegFormer-B2 | {display} | {rounded_marker()}\n",
+    )
+
+    result = run_validator(workspace, documents=(document,))
+
+    assert result.returncode == 1
+    assert reason in result.stderr
+
+
+def test_a_declared_rounded_statement_preserves_duplicate_metric_values(
+    workspace: dict[str, Any],
+) -> None:
+    """Two fields with equal values still require two displayed cells."""
+
+    add_rounded_fixture(workspace, {"miou": 0.5001, "pixel_accuracy": 0.5002})
+    document = write_document(
+        workspace["root"],
+        "README.md",
+        f"| SegFormer-B2 | 0.500 | {rounded_marker()}\n",
+    )
+
+    result = run_validator(workspace, documents=(document,))
+
+    assert result.returncode == 1
+    assert "ordered fields" in result.stderr
+
+
+@pytest.mark.parametrize("precision", ["10", "-1"])
+def test_a_declared_rounded_statement_rejects_out_of_bounds_precision(
+    workspace: dict[str, Any], precision: str
+) -> None:
+    """The marker supports a small, explicit fixed-decimal range only."""
+
+    add_rounded_fixture(workspace, {"miou": 0.7124, "pixel_accuracy": 0.9406})
+    document = write_document(
+        workspace["root"],
+        "README.md",
+        f"| SegFormer-B2 | 0.712 | 0.941 | {rounded_marker(precision=precision)}\n",
+    )
+
+    result = run_validator(workspace, documents=(document,))
+
+    assert result.returncode == 1
+    assert "invalid claim marker" in result.stderr
+
+
+def test_a_malformed_rounded_marker_fails_without_a_known_metric_word(
+    workspace: dict[str, Any],
+) -> None:
+    """A malformed marker must never disappear through the unmarked-term heuristic."""
+
+    document = write_document(
+        workspace["root"],
+        "README.md",
+        "| score | 0.712 | <!-- claim: result-row; rounded: 10; fields: score -->\n",
+    )
+
+    result = run_validator(workspace, documents=(document,))
+
+    assert result.returncode == 1
+    assert "invalid claim marker" in result.stderr
+
+
+def test_a_malformed_marker_cannot_hide_beside_a_valid_marker(
+    workspace: dict[str, Any],
+) -> None:
+    """Every claim-like comment on a marked line must parse, including later ones."""
+
+    document = write_document(
+        workspace["root"],
+        "README.md",
+        "0.712 mIoU. <!-- claim: segformer-b2-miou --> "
+        "<!-- claim: missing; rounded: x; fields: score -->\n",
+    )
+
+    result = run_validator(workspace, documents=(document,))
+
+    assert result.returncode == 1
+    assert "invalid claim marker" in result.stderr
+
+
+def test_a_rounded_field_must_resolve_to_a_numeric_scalar(
+    workspace: dict[str, Any],
+) -> None:
+    """A one-number container is still not the scalar contract declared by the marker."""
+
+    add_rounded_fixture(workspace, {"miou": {"nested": 0.7124}, "pixel_accuracy": 0.9406})
+    document = write_document(
+        workspace["root"],
+        "README.md",
+        f"| SegFormer-B2 | 0.712 | 0.941 | {rounded_marker()}\n",
+    )
+
+    result = run_validator(workspace, documents=(document,))
+
+    assert result.returncode == 1
+    assert "must resolve to one finite numeric scalar" in result.stderr
+
+
 def test_fenced_code_blocks_are_not_audited(workspace: dict[str, Any]) -> None:
     """Commands and JSON excerpts mention metrics and numbers without claiming anything."""
 

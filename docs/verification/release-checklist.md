@@ -118,7 +118,7 @@ $clone = Join-Path $env:TEMP ("drm-clean-" + (Get-Date -Format yyyyMMddHHmmss))
 git clone --quiet --no-local --branch main . $clone
 Set-Location $clone
 git rev-parse HEAD
-uv sync --frozen --all-groups --extra train
+uv sync --frozen --all-groups --extra train --extra report
 uv lock --check
 $env:SOURCE_DATE_EPOCH = git log -1 --format=%ct
 uv run --frozen python -m drivemetrics.release backend
