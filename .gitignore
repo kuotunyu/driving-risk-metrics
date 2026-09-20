@@ -44,3 +44,6 @@ runs/
 
 !docs/assets/
 /site/
+
+# local agent working agreement (kept on disk, not published)
+/AGENTS.md
