@@ -6,6 +6,7 @@ import typer
 
 from drivemetrics.cli import (
     aggregate,
+    allseed,
     calibrate,
     data,
     evaluate,
@@ -36,3 +37,4 @@ app.command("report")(report.report_command)
 app.command("figures")(figures.figures_command)
 app.command("audit-claims")(report.audit_claims_command)
 app.add_typer(resolution.app, name="resolution-sweep")
+app.add_typer(allseed.app, name="allseed")
