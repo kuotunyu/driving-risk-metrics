@@ -2,22 +2,51 @@
 
 **只看 mIoU，會漏掉哪些與易受傷害用路人相關的分割失敗？**
 
-[English](README.en.md)
+[English](README.en.md) · [線上報告](https://kuotunyu.github.io/driving-risk-metrics/) · [Release v1.0.2](https://github.com/kuotunyu/driving-risk-metrics/releases/tag/v1.0.2)
+
+自駕感知安全三案作品集之一，另外兩案是 [bev-calibration-lab](https://github.com/kuotunyu/bev-calibration-lab)（[網站](https://kuotunyu.github.io/bev-calibration-lab/)），在 nuScenes 上研究相機/LiDAR calibration fault；以及 [perception-error-to-aeb](https://github.com/kuotunyu/perception-error-to-aeb)（[網站](https://kuotunyu.github.io/perception-error-to-aeb/)），在 nuPlan 上把感知誤差送進固定的 AEB policy。
+三案使用不同資料集與研究設定，不代表已驗證同一套模型從感知驅動 AEB。
 
 三個當代語意分割模型在 BDD100K 上以同一份凍結協定訓練，各跑三個 seed，最後在一組
 998 張影像的 locked cohort 上評估一次。這組 cohort 從未用於訓練、checkpoint 選擇、
 溫度校準或樣本挑選。三項指標的模型順序相同，但配對 bootstrap 對前兩名能否區分
 提供不同強度的證據；本 repository 也呈現像素平均容易遮蔽的 instance 層級失敗。
 
+## 重點
+
+- 前兩名模型的 mean IoU，SegFormer-B2 減去 UperNet-ConvNeXtV2-Tiny 的配對差為 -0.010，配對 bootstrap 區間為 -0.022 到 0.002，包含零。 <!-- claim: p1.interval.miou.segformer-minus-convnextv2; rounded: 3; fields: estimate,low,high -->
+- 同樣兩個模型，改看涵蓋易受傷害用路人類別的 critical-class recall，配對差為 -0.023，區間為 -0.040 到 -0.008，不含零。 <!-- claim: p1.interval.critical-recall.segformer-minus-convnextv2; rounded: 3; fields: estimate,low,high -->
+- UperNet-ConvNeXtV2-Tiny 在 462 個最小 tertile 的 person instance 中，有 306 個連一半像素都沒有正確分類。 <!-- claim: p1.instances.convnextv2.person-small -->
+- 同一個模型在全部 17 個最小 tertile 的 rider instance 上，都沒有正確分類到一半像素。 <!-- claim: p1.instances.convnextv2.rider-small -->
+- 同一個模型在 3749 個最小 tertile 的 car instance 中，有 822 個連一半像素都沒有正確分類。 <!-- claim: p1.instances.convnextv2.car-small -->
+
+instance 計數來自每個模型的單一訓練 seed（seed 17，三個核准 seed 中的第一個，經溫度縮放；
+溫度縮放不會改變預測類別），不是跨 seed 平均，也沒有區間。這是
+[`docs/protocol.md`](docs/protocol.md) 跨 seed 平均規則的例外。rider 與 motorcycle 的最小
+tertile instance 太少，極端失敗值得檢查，但不足以估計失敗率；person 的樣本可支撐較穩定的
+cohort 內描述。
+
+以像素平均的分數可能看起來不錯，但這個 cohort 中多數最小 tertile 的 person 與全部最小
+tertile 的 rider 都是 critical miss。下圖列出三個模型在每一個 instance 類別上的結果：car
+是數量最多的類別，也是唯一多數最小 tertile instance 被正確找回的類別，所以這種失敗不只發生
+在易受傷害用路人身上。另一個專案 perception-error-to-aeb 研究注入的物件層級感知誤差（例如
+dropout、定位誤差與延遲）如何影響 nuPlan 上固定的 AEB policy；它沒有使用這裡的分割結果。
+
+![各類別在最小 tertile 上的 critical miss，每個模型各取一個訓練 seed，由 extended-metrics.json 繪製](docs/figures/small-tertile-critical-misses.svg)
+
 ## 發現
 
-前兩名模型的配對 bootstrap 區間在 mean IoU 上**包含零**：
+前兩名模型的配對 bootstrap 區間在 mean IoU 上**包含零**；同樣兩個模型，改看行人與騎士等
+易受傷害用路人類別的 recall，區間**不含零**。
+
+<details>
+<summary>完整精度陳述</summary>
 
 > SegFormer-B2 減去 UperNet-ConvNeXtV2-Tiny 的 mean IoU 配對差為 -0.010027276977824351，bootstrap 區間從 -0.02224922437284147 到 0.0023369779504553204，包含零。 <!-- claim: p1.interval.miou.segformer-minus-convnextv2 -->
 
-同樣兩個模型，改看行人與騎士等易受傷害用路人類別的 recall，區間**不含零**：
-
 > SegFormer-B2 減去 UperNet-ConvNeXtV2-Tiny 的 critical-class recall 配對差為 -0.023304517439508565，bootstrap 區間從 -0.03998178645924999 到 -0.008046430169669789，不含零。 <!-- claim: p1.interval.critical-recall.segformer-minus-convnextv2 -->
+
+</details>
 
 mean IoU 差值的區間包含零，critical-class recall 差值的區間則不包含零。
 前者不能證明模型等效或可以互換；兩個區間的差異也不等於直接檢驗了兩種指標的差異。
@@ -63,6 +92,9 @@ claims validator 從原始 artifact 重算顯示值；下方保留可逐位核�
 評分每一個標註 instance，並在正確分類的比例低於一半時，將該 instance 記為
 **critical miss**。instance 依面積分成三個 tertile，切點只從 training split 學習。
 
+本節每一個 instance 計數都來自各模型經溫度縮放後的 seed 17，不是跨 seed 平均，也沒有區間。
+各類別的圖在[重點](#重點)一節。
+
 這些結果只描述 locked cohort 中，語意與 instance 標註能互相佐證的最小 tertile
 instance。person 有 462 個樣本可支撐較穩定的 cohort 內描述；rider 與 motorcycle
 分別只有 17 與 14 個，極端失敗值得檢查，但不足以估計其他資料或部署條件的失敗率：
@@ -78,8 +110,6 @@ instance。person 有 462 個樣本可支撐較穩定的 cohort 內描述；ride
 
 這個對比顯示，同一模型的整體像素平均不能交代各類別、各 instance 尺寸的失敗分布；
 它不是實車風險或安全性的量測。
-
-![各類別在最小 tertile 上的 critical miss，由 extended-metrics.json 繪製](docs/figures/small-tertile-critical-misses.svg)
 
 instance coverage 是在語意標註與 instance 標註互相佐證的 footprint 上量測，而不是在
 原始 bitmask 上。兩種標註在物體邊界會不一致，若在只有其中一方主張的像素上評分，
@@ -120,7 +150,7 @@ locked cohort 的 ECE 反而增加。逐 seed 數值補充了平均值，不能�
 
 ## 本頁每一個數字如何被檢查
 
-上面每一個結果句都帶著 `&lt;!-- claim: ... --&gt;` 標記。該 claim 指名
+上面每一個結果句都帶著 <code>&lt;!-- claim: ... --&gt;</code> 標記。該 claim 指名
 [`docs/evidence/bdd100k_semseg_v1/`](docs/evidence/bdd100k_semseg_v1) 底下的一個
 artifact、其中的一個 JSON pointer，以及該 artifact 必須帶有的 protocol 與 dataset
 manifest 雜湊。兩道獨立檢查強制執行這件事：
@@ -143,16 +173,44 @@ uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/valid
 證據同時在一般測試執行中自我檢查：任何一個已發布數字在任何被追蹤的 artifact 中被
 改動，測試套件就會失敗。
 
-延伸紀錄：
+研究紀錄：
 
 - [`docs/protocol.md`](docs/protocol.md)：凍結協定與其修訂。
 - [`docs/experiment-card.md`](docs/experiment-card.md)：九次執行、雜湊與方法沿革。
 - [`docs/model-card.md`](docs/model-card.md)：三個架構與其允許用途。
 - [`docs/dataset-card.md`](docs/dataset-card.md)：BDD100K 來源、授權與凍結切分。
+
+工程與發布紀錄：
+
 - [`docs/verification/analysis-reproduction.md`](docs/verification/analysis-reproduction.md)：分析的三次獨立執行，以及哪些部分一致。
 - [`docs/verification/mutation-audit.md`](docs/verification/mutation-audit.md)：純核心的 mutation 分數與每一個存活 mutant 的處置。
+- [`docs/release-notes/`](docs/release-notes)：每一個版本改了什麼。
 
 ## 重現方式
+
+需要 uv 0.11.x：`pyproject.toml` 要求 `>=0.11.18,<0.12`，所以 uv 0.12 以後的版本會拒絕執行，
+CI 使用 0.11.18。可用 `pipx install uv==0.11.18` 或指定版本的安裝程式安裝
+（[install.sh](https://astral.sh/uv/0.11.18/install.sh)；Windows 用
+[install.ps1](https://astral.sh/uv/0.11.18/install.ps1)）。
+
+### 檢查每一個已發布數字（只用 CPU，不需資料集，不需 GPU）
+
+以下就是 Pages workflow 在發布報告前執行的指令：
+
+```bash
+uv sync --frozen --all-groups
+uv run --frozen driving-risk audit-claims --claims docs/claims.yaml
+uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/validate_claims.py \
+  --claims docs/claims.yaml --repo-root . --document README.md --document README.en.md \
+  --document docs/release-notes/v1.0.0.md --document docs/release-notes/v1.0.1.md \
+  --document docs/release-notes/v1.0.2.md
+uv run --frozen driving-risk report --claims docs/claims.yaml --artifacts-dir docs/evidence/bdd100k_semseg_v1 --output-dir site
+```
+
+在一份全新複本、沒有 GPU 的 Windows 電腦上，sync 之後的三道指令不到十秒就跑完。
+第一次 sync 會下載鎖定的套件，所需時間取決於網路。
+
+### 完整開發檢查
 
 ```bash
 uv sync --frozen --all-groups --extra train --extra report
@@ -164,6 +222,8 @@ uv run --frozen driving-risk --help
 lint、型別檢查、完整測試套件、第一方程式碼的 100% statement 與 branch 覆蓋率、
 schema 契約、文件連結。沒有任何覆蓋率豁免，沒有 `pragma: no cover`，也沒有被排除的
 第一方路徑。
+
+### 正式流程（需要 BDD100K 與 GPU）
 
 正式流程，依順序：
 
