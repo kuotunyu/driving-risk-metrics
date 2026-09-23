@@ -14,6 +14,7 @@ from drivemetrics.cli import (
     gallery,
     index,
     report,
+    resolution,
     train,
 )
 
@@ -34,3 +35,4 @@ app.command("extended-metrics")(extended.extended_metrics_command)
 app.command("report")(report.report_command)
 app.command("figures")(figures.figures_command)
 app.command("audit-claims")(report.audit_claims_command)
+app.add_typer(resolution.app, name="resolution-sweep")
