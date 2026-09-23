@@ -128,12 +128,17 @@ manifest 雜湊。兩道獨立檢查強制執行這件事：
 ```bash
 uv run --frozen driving-risk audit-claims --claims docs/claims.yaml
 uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/validate_claims.py \
-  --claims docs/claims.yaml --repo-root . --document README.md --document README.en.md --document docs/release-notes/v1.0.0.md
+  --claims docs/claims.yaml --repo-root . --document README.md --document README.en.md \
+  --document docs/release-notes/v1.0.0.md --document docs/release-notes/v1.0.1.md \
+  --document docs/release-notes/v1.0.2.md
 ```
 
-第一道證明 registry 中每一條 claim 都能從自己的 artifact 重現。第二道讀這兩份文件、
+第一道證明 registry 中每一條 claim 都能從自己的 artifact 重現。第二道讀這些文件、
 追溯每一個帶標記的句子，並且**回報任何同時出現指標名稱與數字卻沒有標記的行**。
 沒有人能追溯的數字，正是這個專案存在要防止的失敗，所以它會讓建置失敗，而不是被發布。
+同一道檢查也在測試套件中執行
+（[`tests/contract/test_published_documents.py`](tests/contract/test_published_documents.py)），
+所以加入無法追溯數字的 pull request 會在合併前就讓 CI 失敗。
 
 證據同時在一般測試執行中自我檢查：任何一個已發布數字在任何被追蹤的 artifact 中被
 改動，測試套件就會失敗。

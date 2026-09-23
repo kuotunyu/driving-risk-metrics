@@ -143,14 +143,18 @@ must carry. Two independent checks enforce it:
 ```bash
 uv run --frozen driving-risk audit-claims --claims docs/claims.yaml
 uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/validate_claims.py \
-  --claims docs/claims.yaml --repo-root . --document README.md --document README.en.md --document docs/release-notes/v1.0.0.md
+  --claims docs/claims.yaml --repo-root . --document README.md --document README.en.md \
+  --document docs/release-notes/v1.0.0.md --document docs/release-notes/v1.0.1.md \
+  --document docs/release-notes/v1.0.2.md
 ```
 
 The first proves every registry claim reproduces from its own artifact. The second
 reads these documents, traces every marked sentence, and **reports any line that
 states a metric and a number without a marker**. A number nobody can trace is the
 failure this project exists to prevent, so an untraceable one fails the build rather
-than shipping.
+than shipping. The same check runs inside the test suite
+([`tests/contract/test_published_documents.py`](tests/contract/test_published_documents.py)),
+so a pull request that adds an untraced number fails CI before it can merge.
 
 The evidence is also self-checking inside the ordinary test run: a change to any
 published number, in any tracked artifact, fails the test suite.
