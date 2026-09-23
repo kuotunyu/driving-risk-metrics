@@ -211,6 +211,11 @@ figure img {
   max-width: 100%;
   height: auto;
 }
+/* A wide, short figure keeps a legible size on a phone and scrolls sideways
+   instead of shrinking its labels to a few pixels. */
+.figure-scroll img {
+  min-width: 36rem;
+}
 details > summary {
   margin: 0 0 0.75rem;
   padding-bottom: 0.4rem;
@@ -254,20 +259,25 @@ summary > h2 {
 {% if headlines.counts %}
 <p>
 Instance counts come from one training seed per model (seed {{ instance_seed }}, the first
-approved seed, after temperature scaling); they are not averaged over seeds and carry no
-interval.
+of the {{ approved_seed_count }} approved seeds, after temperature scaling, which does not
+change the predicted class); they are not averaged over seeds and carry no interval. This
+is an exception to the mean-over-seeds rule in
+<a href="https://github.com/kuotunyu/driving-risk-metrics/blob/main/docs/protocol.md">docs/protocol.md</a>.
+Rider and motorcycle have too few smallest-tertile instances to estimate a failure rate;
+the person counts support a more stable within-cohort description.
 </p>
 {% endif %}
 <p>
 Every result describes the <code>{{ provenance.cohort }}</code> cohort,
 {{ provenance.sample_count }} evaluated samples, {{ provenance.seed_count }} seeds per model.
 Intervals come from the {{ provenance.interval_method }}. The protocol and dataset manifest
-hashes are under <a href="#provenance">What these numbers describe</a>.
+hashes are under <a href="#provenance">What these numbers describe</a>, collapsed further
+down; the link opens it.
 </p>
 <p class="lede">
 Generated from the committed evidence of
 <a href="https://github.com/kuotunyu/driving-risk-metrics">driving-risk-metrics</a>.
-Every number below is bound to a verified claim and its artifact.
+Every number on this page is bound to a verified claim and its artifact.
 </p>
 </section>
 
@@ -275,8 +285,8 @@ Every number below is bound to a verified claim and its artifact.
 <h2>Key figures</h2>
 {% for figure in curated %}
 <figure>
-<figcaption>{{ figure.caption }}</figcaption>
-<a href="{{ figure.src }}"><img src="{{ figure.src }}" width="{{ figure.width }}" height="{{ figure.height }}" alt="{{ figure.alt }}"></a>
+<figcaption>{{ figure.caption }}{% if figure.scroll and headlines.intervals %} The same values are listed as text at the top of the page.{% endif %}</figcaption>
+{% if figure.scroll %}<div class="scroll figure-scroll">{% endif %}<a href="{{ figure.src }}"><img src="{{ figure.src }}" width="{{ figure.width }}" height="{{ figure.height }}" alt="{{ figure.alt }}"></a>{% if figure.scroll %}</div>{% endif %}
 </figure>
 {% else %}
 <p>{{ not_drawn }}</p>
@@ -593,5 +603,17 @@ cohort, not a success criterion.
 {% endfor %}
 </ul>
 </section>
+<script>
+// A link to a collapsed section opens it, so the reader lands on its content.
+function openTargetDetails() {
+  var target = location.hash ? document.getElementById(location.hash.slice(1)) : null;
+  var details = target ? target.querySelector("details") : null;
+  if (details) {
+    details.open = true;
+  }
+}
+window.addEventListener("hashchange", openTargetDetails);
+openTargetDetails();
+</script>
 </body>
 </html>

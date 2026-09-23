@@ -110,3 +110,22 @@ def test_the_headline_table_rounds_the_released_metrics(report: ReportResult) ->
     for key, (_, values) in zip(keys, cells, strict=True):
         expected = [metrics[key][name] for name in ("miou", "critical_recall", "pixel_accuracy")]
         assert values == [(str(value), rounded(value)) for value in expected]
+
+
+def test_the_curated_captions_read_in_the_published_orientation(report: ReportResult) -> None:
+    """The captions name the pair as the figures and the README do: left minus right."""
+
+    page = report.index_path.read_text(encoding="utf-8")
+    body = re.search(r'<section id="key-figures">(.*?)</section>', page, re.DOTALL)
+
+    assert body is not None
+    captions = [
+        " ".join(caption.split())
+        for caption in re.findall(r"<figcaption>(.*?)</figcaption>", body.group(1), re.DOTALL)
+    ]
+    pair = "SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny"
+    assert pair in captions[0]
+    assert pair in captions[2]
+    assert "SegFormer-B2 minus ConvNeXtV2-Tiny" in (FIGURES / "headline-top-two.svg").read_text(
+        encoding="utf-8"
+    )
