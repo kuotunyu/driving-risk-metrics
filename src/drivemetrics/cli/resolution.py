@@ -1,4 +1,4 @@
-"""Post-release resolution sweep commands: parity gate, sweep and pre-registered analysis.
+"""Post-release resolution sweep commands: parity gate, sweep, analysis and report evidence.
 
 The analysis is pre-registered in ``docs/posthoc/resolution-v1/analysis-plan.md``
 and runs on the calibration split only. The commands hold no logic of their
@@ -15,6 +15,7 @@ import typer
 from drivemetrics.cli._output import run
 from drivemetrics.cli.evaluate import sample_progress_printer
 from drivemetrics.evaluation.backends import TorchEvaluationBackend
+from drivemetrics.posthoc.evidence import write_resolution_evidence
 from drivemetrics.posthoc.resolution import (
     DEFAULT_ARMS,
     DEFAULT_PARITY_IMAGES,
@@ -26,6 +27,7 @@ from drivemetrics.posthoc.statistics import analyse_sweep
 PARITY_SERVICE = formal_parity
 SWEEP_SERVICE = resolution_sweep
 ANALYSE_SERVICE = analyse_sweep
+EVIDENCE_SERVICE = write_resolution_evidence
 BACKEND_FACTORY = TorchEvaluationBackend
 
 app = typer.Typer(
@@ -33,7 +35,7 @@ app = typer.Typer(
     no_args_is_help=True,
     help=(
         "Post-release resolution sweep on the calibration split: parity gate, "
-        "resumable sweep, pre-registered analysis."
+        "resumable sweep, pre-registered analysis, claim-auditable report evidence."
     ),
 )
 
@@ -202,6 +204,33 @@ def analyse_command(
             "command": "resolution-sweep analyse",
             "summary_path": str(result.summary_path),
             "categories": result.categories,
+            "overall": result.overall,
+        }
+
+    run(operation)
+
+
+@app.command("evidence")
+def evidence_command(
+    summary: Annotated[
+        Path,
+        typer.Option(
+            "--summary",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="The summary.json written by `resolution-sweep analyse`.",
+        ),
+    ],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+) -> None:
+    """Derive the flat, claim-auditable evidence the published report cites (no recomputation)."""
+
+    def operation() -> dict[str, Any]:
+        result = EVIDENCE_SERVICE(summary, output)
+        return {
+            "command": "resolution-sweep evidence",
+            "evidence_path": str(result.evidence_path),
             "overall": result.overall,
         }
 

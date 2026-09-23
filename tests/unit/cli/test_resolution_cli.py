@@ -56,15 +56,15 @@ def test_the_root_help_lists_the_resolution_sweep_group() -> None:
     assert "resolution-sweep" in result.output
 
 
-def test_the_group_offers_parity_run_and_analyse() -> None:
+def test_the_group_offers_parity_run_analyse_and_evidence() -> None:
     result = runner.invoke(app, ["resolution-sweep", "--help"])
 
     assert result.exit_code == 0
-    for command in ("parity", "run", "analyse"):
+    for command in ("parity", "run", "analyse", "evidence"):
         assert command in result.output
 
 
-@pytest.mark.parametrize("command", ["parity", "run", "analyse"])
+@pytest.mark.parametrize("command", ["parity", "run", "analyse", "evidence"])
 def test_every_subcommand_requires_its_options(command: str) -> None:
     result = runner.invoke(app, ["resolution-sweep", command])
 
@@ -254,3 +254,32 @@ def test_a_refusing_service_exits_nonzero_with_a_diagnostic(
 
     assert result.exit_code == 1
     assert "the sweep is incomplete" in result.stderr
+
+
+def test_evidence_derives_the_report_evidence_from_a_summary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import drivemetrics.cli.resolution as resolution_cli
+
+    calls: dict[str, Any] = {}
+
+    def derive(summary: Path, output: Path) -> Any:
+        calls["args"] = (summary, output)
+        return SimpleNamespace(evidence_path=output, overall="B")
+
+    monkeypatch.setattr(resolution_cli, "EVIDENCE_SERVICE", derive)
+    summary = touch(tmp_path / "summary.json")
+    output = tmp_path / "evidence" / "resolution-evidence.json"
+
+    result = runner.invoke(
+        app,
+        ["resolution-sweep", "evidence", "--summary", str(summary), "--output", str(output)],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert calls["args"] == (summary, output)
+    assert json.loads(result.stdout) == {
+        "command": "resolution-sweep evidence",
+        "evidence_path": str(output),
+        "overall": "B",
+    }
