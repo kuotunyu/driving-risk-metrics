@@ -19,7 +19,12 @@ from xml.sax.saxutils import escape
 
 from drivemetrics.report.builder import load_json_object
 
-FIGURE_NAMES: tuple[str, ...] = ("paired-differences", "small-tertile-critical-misses")
+FIGURE_NAMES: tuple[str, ...] = (
+    "paired-differences",
+    "small-tertile-critical-misses",
+    "headline-top-two",
+    "miou-gap-by-class",
+)
 INTERVAL_METRICS: tuple[str, ...] = ("miou", "critical_recall")
 METRIC_LABELS: dict[str, str] = {"miou": "mean IoU", "critical_recall": "critical-class recall"}
 #: How the approved models are named on a figure. Any other name passes through.
@@ -43,11 +48,24 @@ GROUP_GAP = 10
 TOP = 48
 BOTTOM = 44
 FONT = 'font-family="Helvetica, Arial, sans-serif" font-size="12"'
+#: Left edge of the header on figures whose title is too long for the label column.
+HEADER_X = 8
+#: Row pitch of the per-class figure, which draws one bar per class.
+CLASS_ROW_HEIGHT = 20
+#: First bar row of the per-class figure, below its two subtitle lines and legend.
+CLASS_ROWS_TOP = 84
+#: The risk profile whose critical classes are highlighted on the per-class figure.
+CRITICAL_PROFILE = "vru_priority"
+CRITICAL_FILL = "#c0392b"
+OTHER_FILL = "#7f8c8d"
+TOTAL_FILL = "#1f3a5f"
+#: A decomposition whose bars do not add up to the published difference is refused.
+SUM_TOLERANCE = 1e-12
 
 
 @dataclass(frozen=True)
 class FiguresResult:
-    """Where the two figures were written."""
+    """Where the evidence figures were written."""
 
     figure_paths: tuple[Path, ...]
 
@@ -85,12 +103,12 @@ def _px(value: float, x_min: float, x_max: float) -> float:
     return LABEL_WIDTH + (value - x_min) / (x_max - x_min) * (WIDTH - LABEL_WIDTH - MARGIN_RIGHT)
 
 
-def _open(height: int, title: str) -> str:
+def _open(height: int, title: str, title_x: int = LABEL_WIDTH) -> str:
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{height}" '
         f'viewBox="0 0 {WIDTH} {height}" role="img" aria-label="{escape(title)}">\n'
         f'<rect width="{WIDTH}" height="{height}" fill="#ffffff"/>\n'
-        f'<text x="{LABEL_WIDTH}" y="20" {FONT} font-weight="bold">{escape(title)}</text>\n'
+        f'<text x="{title_x}" y="20" {FONT} font-weight="bold">{escape(title)}</text>\n'
     )
 
 
@@ -106,6 +124,31 @@ def _axis(y: float, x_min: float, x_max: float, step: float) -> str:
             f'<text x="{x:.2f}" y="{y + 18:.2f}" {FONT} text-anchor="middle">{tick + 0.0:g}</text>\n'
         )
     return "".join(parts)
+
+
+def _zero_line(x: float, y1: int, y2: int) -> str:
+    return (
+        f'<line class="zero" x1="{x:.2f}" y1="{y1}" x2="{x:.2f}" '
+        f'y2="{y2}" stroke="#999999" stroke-dasharray="4 3"/>\n'
+    )
+
+
+def _interval_row(label: str, entry: dict[str, Any], y: float, x_min: float, x_max: float) -> str:
+    """Draw one interval with its estimate, filled when the interval excludes zero."""
+
+    kind = "excludes-zero" if bool(entry["excludes_zero"]) else "includes-zero"
+    fill = "#1f3a5f" if kind == "excludes-zero" else "#ffffff"
+    return (
+        f'<g class="row {kind}">\n'
+        f'<text x="{LABEL_WIDTH - 8}" y="{y + 4:.2f}" {FONT} text-anchor="end">'
+        f"{escape(label)}</text>\n"
+        f'<line x1="{_px(float(entry["low"]), x_min, x_max):.2f}" y1="{y:.2f}" '
+        f'x2="{_px(float(entry["high"]), x_min, x_max):.2f}" y2="{y:.2f}" '
+        'stroke="#1f3a5f" stroke-width="2"/>\n'
+        f'<circle cx="{_px(float(entry["estimate"]), x_min, x_max):.2f}" cy="{y:.2f}" '
+        f'r="4.5" fill="{fill}" stroke="#1f3a5f" stroke-width="2"/>\n'
+        "</g>\n"
+    )
 
 
 def paired_difference_svg(rankings: dict[str, Any]) -> str:
@@ -125,12 +168,8 @@ def paired_difference_svg(rankings: dict[str, Any]) -> str:
         _open(height, "Paired differences with bootstrap intervals"),
         f'<text x="{LABEL_WIDTH}" y="36" {FONT} fill="#555555">'
         "filled: interval excludes zero; hollow: interval includes zero</text>\n",
+        _zero_line(_px(0.0, x_min, x_max), TOP, TOP + ROW_HEIGHT * len(rows)),
     ]
-    zero = _px(0.0, x_min, x_max)
-    parts.append(
-        f'<line class="zero" x1="{zero:.2f}" y1="{TOP}" x2="{zero:.2f}" '
-        f'y2="{TOP + ROW_HEIGHT * len(rows)}" stroke="#999999" stroke-dasharray="4 3"/>\n'
-    )
     for position, (metric, entry) in enumerate(rows):
         y = TOP + ROW_HEIGHT * position + ROW_HEIGHT / 2
         if entry is None:
@@ -140,20 +179,69 @@ def paired_difference_svg(rankings: dict[str, Any]) -> str:
             )
             continue
         label = f"{display_name(str(entry['left']))} minus {display_name(str(entry['right']))}"
-        kind = "excludes-zero" if bool(entry["excludes_zero"]) else "includes-zero"
-        fill = "#1f3a5f" if kind == "excludes-zero" else "#ffffff"
-        parts.append(
-            f'<g class="row {kind}">\n'
-            f'<text x="{LABEL_WIDTH - 8}" y="{y + 4:.2f}" {FONT} text-anchor="end">'
-            f"{escape(label)}</text>\n"
-            f'<line x1="{_px(float(entry["low"]), x_min, x_max):.2f}" y1="{y:.2f}" '
-            f'x2="{_px(float(entry["high"]), x_min, x_max):.2f}" y2="{y:.2f}" '
-            'stroke="#1f3a5f" stroke-width="2"/>\n'
-            f'<circle cx="{_px(float(entry["estimate"]), x_min, x_max):.2f}" cy="{y:.2f}" '
-            f'r="4.5" fill="{fill}" stroke="#1f3a5f" stroke-width="2"/>\n'
-            "</g>\n"
-        )
+        parts.append(_interval_row(label, entry, y, x_min, x_max))
     parts.append(_axis(TOP + ROW_HEIGHT * len(rows) + 8, x_min, x_max, step))
+    parts.append("</svg>\n")
+    return "".join(parts)
+
+
+def top_two_intervals(rankings: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Return, per interval metric, the one comparison between the top two models.
+
+    The top two are the first two models of the baseline order. Entries are matched
+    by model names, never by their position in the list, and keep their own
+    left-minus-right orientation, which is the sign the claims publish. Every
+    metric must compare the pair in the same orientation, so one title can name it.
+    """
+
+    top_two = {str(model) for model in rankings["comparisons"][0]["baseline_order"][:2]}
+    selected: dict[str, dict[str, Any]] = {}
+    for metric in INTERVAL_METRICS:
+        matches = [
+            entry
+            for entry in rankings["separability"][metric]
+            if {str(entry["left"]), str(entry["right"])} == top_two
+        ]
+        if len(matches) != 1:
+            raise ValueError(
+                f"expected one {metric} interval between {sorted(top_two)}, found {len(matches)}"
+            )
+        selected[metric] = dict(matches[0])
+    orientations = {(str(entry["left"]), str(entry["right"])) for entry in selected.values()}
+    if len(orientations) != 1:
+        raise ValueError(f"the top-two intervals disagree on orientation: {sorted(orientations)}")
+    return selected
+
+
+def headline_top_two_svg(rankings: dict[str, Any]) -> str:
+    """Draw the top two models' intervals on an axis that covers only them and zero.
+
+    The all-pairs figure must also fit the comparisons against the weakest model, which
+    squeezes the headline pair into a few pixels beside zero; this figure zooms in on it.
+    """
+
+    entries = top_two_intervals(rankings)
+    first = entries[INTERVAL_METRICS[0]]
+    left, right = display_name(str(first["left"])), display_name(str(first["right"]))
+    x_min, x_max, step = _scale(
+        min(float(entry["low"]) for entry in entries.values()),
+        max(float(entry["high"]) for entry in entries.values()),
+    )
+    rows_bottom = TOP + ROW_HEIGHT * len(INTERVAL_METRICS)
+    parts = [
+        _open(
+            rows_bottom + BOTTOM,
+            f"Paired differences between the top two models, {left} minus {right}",
+            HEADER_X,
+        ),
+        f'<text x="{HEADER_X}" y="36" {FONT} fill="#555555">'
+        "filled: interval excludes zero; hollow: interval includes zero</text>\n",
+        _zero_line(_px(0.0, x_min, x_max), TOP, rows_bottom),
+    ]
+    for position, metric in enumerate(INTERVAL_METRICS):
+        y = TOP + ROW_HEIGHT * position + ROW_HEIGHT / 2
+        parts.append(_interval_row(METRIC_LABELS[metric], entries[metric], y, x_min, x_max))
+    parts.append(_axis(rows_bottom + 8, x_min, x_max, step))
     parts.append("</svg>\n")
     return "".join(parts)
 
@@ -228,15 +316,114 @@ def small_tertile_miss_svg(extended: dict[str, Any], model_order: Sequence[str])
     return "".join(parts)
 
 
+def miou_gap_by_class_svg(metrics: dict[str, Any], left: str, right: str) -> str:
+    """Split the mean IoU difference between two models into one bar per class.
+
+    Mean IoU weighs every class equally, so a class contributes its IoU difference
+    divided by the number of classes and the bars add up to the mean IoU difference;
+    a decomposition that does not add up is refused. The critical classes of the
+    vulnerable-road-user profile are highlighted and combined into one row, so the
+    reader does not have to add bars by eye. The values are seed-averaged point
+    estimates: no per-class interval exists, so none is drawn.
+    """
+
+    per_class = metrics["per_class"]
+    names = [str(name) for name in per_class["class_names"]]
+    critical = {
+        int(index) for index in metrics["risk_profiles"][CRITICAL_PROFILE]["critical_class_ids"]
+    }
+    bars = sorted(
+        ((float(a) - float(b)) / len(names), index, name)
+        for index, (name, a, b) in enumerate(
+            zip(
+                names,
+                per_class["by_model"][left]["iou"],
+                per_class["by_model"][right]["iou"],
+                strict=True,
+            )
+        )
+    )
+    critical_sum = math.fsum(value for value, index, _ in bars if index in critical)
+    other_sum = math.fsum(value for value, index, _ in bars if index not in critical)
+    total = float(metrics["metrics"][left]["miou"]) - float(metrics["metrics"][right]["miou"])
+    if abs(critical_sum + other_sum - total) > SUM_TOLERANCE:
+        raise ValueError(
+            f"per-class contributions sum to {critical_sum + other_sum!r}, "
+            f"but the mean IoU difference is {total!r}"
+        )
+    combined = (
+        ("critical classes, combined", critical_sum, CRITICAL_FILL),
+        ("other classes, combined", other_sum, OTHER_FILL),
+        ("mean IoU difference", total, TOTAL_FILL),
+    )
+    values = [value for value, _, _ in bars] + [value for _, value, _ in combined]
+    x_min, x_max, step = _scale(min(values), max(values))
+    zero = _px(0.0, x_min, x_max)
+
+    def bar(css: str, label: str, value: float, fill: str, y_top: float) -> str:
+        end = _px(value, x_min, x_max)
+        return (
+            f'<text x="{LABEL_WIDTH - 8}" y="{y_top + 14:.2f}" {FONT} text-anchor="end">'
+            f"{escape(label)}</text>\n"
+            f'<rect class="{css}" x="{min(zero, end):.2f}" y="{y_top + 4:.2f}" '
+            f'width="{abs(end - zero):.2f}" height="{CLASS_ROW_HEIGHT - 8}" fill="{fill}"/>\n'
+        )
+
+    separator = CLASS_ROWS_TOP + CLASS_ROW_HEIGHT * len(bars) + 5
+    rows_bottom = separator + 5 + CLASS_ROW_HEIGHT * len(combined)
+    title = (
+        "Per-class contribution to the mean IoU difference, "
+        f"{display_name(left)} minus {display_name(right)}"
+    )
+    parts = [
+        _open(rows_bottom + 8 + BOTTOM, title, HEADER_X),
+        f'<text x="{HEADER_X}" y="36" {FONT} fill="#555555">each bar: the class IoU '
+        "difference divided by the number of classes; the bars sum to the mean IoU "
+        "difference</text>\n",
+        f'<text x="{HEADER_X}" y="52" {FONT} fill="#555555">seed-averaged point estimates '
+        "from metrics.json; no per-class interval was computed</text>\n",
+        f'<rect x="{HEADER_X}" y="59" width="10" height="10" fill="{CRITICAL_FILL}"/>\n'
+        f'<text x="{HEADER_X + 14}" y="68" {FONT}>critical classes (vulnerable road users)'
+        "</text>\n",
+        f'<rect x="{HEADER_X + 292}" y="59" width="10" height="10" fill="{OTHER_FILL}"/>\n'
+        f'<text x="{HEADER_X + 306}" y="68" {FONT}>other classes</text>\n',
+        _zero_line(zero, CLASS_ROWS_TOP, rows_bottom),
+    ]
+    for row, (value, index, name) in enumerate(bars):
+        highlighted = index in critical
+        parts.append(
+            bar(
+                "bar critical" if highlighted else "bar",
+                name,
+                value,
+                CRITICAL_FILL if highlighted else OTHER_FILL,
+                CLASS_ROWS_TOP + CLASS_ROW_HEIGHT * row,
+            )
+        )
+    parts.append(
+        f'<line x1="{HEADER_X}" y1="{separator}" x2="{WIDTH - MARGIN_RIGHT}" y2="{separator}" '
+        'stroke="#cccccc"/>\n'
+    )
+    for row, (label, value, fill) in enumerate(combined):
+        parts.append(bar("combined", label, value, fill, separator + 5 + CLASS_ROW_HEIGHT * row))
+    parts.append(_axis(rows_bottom + 8, x_min, x_max, step))
+    parts.append("</svg>\n")
+    return "".join(parts)
+
+
 def write_figures(artifacts_dir: Path, output_dir: Path) -> FiguresResult:
-    """Draw both figures from the committed documents and write them as LF-terminated SVG."""
+    """Draw every evidence figure from the committed documents as LF-terminated SVG."""
 
     rankings = load_json_object(artifacts_dir / "rankings.json")
     extended = load_json_object(artifacts_dir / "extended-metrics.json")
+    metrics = load_json_object(artifacts_dir / "metrics.json")
     order = [str(model) for model in rankings["comparisons"][0]["baseline_order"]]
+    miou = top_two_intervals(rankings)["miou"]
     drawn = {
         "paired-differences": paired_difference_svg(rankings),
         "small-tertile-critical-misses": small_tertile_miss_svg(extended, order),
+        "headline-top-two": headline_top_two_svg(rankings),
+        "miou-gap-by-class": miou_gap_by_class_svg(metrics, str(miou["left"]), str(miou["right"])),
     }
     output_dir.mkdir(parents=True, exist_ok=True)
     paths: list[Path] = []
