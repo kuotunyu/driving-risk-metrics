@@ -127,14 +127,16 @@ only_mutate = [
     "src/drivemetrics/protocol/*",
 ]
 also_copy = ["configs", "schemas", "docs"]
-# Two test files are excluded because they read source that mutmut rewrites or
+# Three test paths are excluded because they read source that mutmut rewrites or
 # does not copy, so their verdicts inside the sandbox describe the sandbox
-# rather than the project: the skill contracts read .agents/, and the
+# rather than the project: the skill contracts read .agents/, the
+# published-documents contract reads the READMEs, .agents/ and .github/, and the
 # artifact-bytes contract scans src/ for writers, which the mutant tree
 # deliberately alters.
 pytest_add_cli_args = [
     "-p", "no:cacheprovider", "-x", "-q",
     "--ignore=tests/contract/skills",
+    "--ignore=tests/contract/test_published_documents.py",
     "--ignore=tests/contract/test_artifact_bytes.py",
 ]
 pytest_add_cli_args_test_selection = ["tests/unit", "tests/integration", "tests/contract"]
