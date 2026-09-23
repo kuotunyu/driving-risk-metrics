@@ -33,6 +33,11 @@ tertile 的 rider 都是 critical miss。下圖列出三個模型在每一個 in
 
 ![各類別在最小 tertile 上的 critical miss，每個模型各取一個訓練 seed，由 extended-metrics.json 繪製](docs/figures/small-tertile-critical-misses.svg)
 
+這些小尺寸 miss 有多少是推論時把輸入縮小造成的？一份在 calibration split 上預先登記的發布後分析，
+不重新訓練、直接用原生解析度推論：三個模型中有兩個只救回一小部分小尺寸 person，多數仍然漏判，
+而且三個模型的大尺寸 person 都變差。見[解析度分析結果](docs/posthoc/resolution-v1/results.md)。
+那是不同的影像，數字不能與本頁直接比較。
+
 ## 發現
 
 前兩名模型的配對 bootstrap 區間在 mean IoU 上**包含零**；同樣兩個模型，改看行人與騎士等

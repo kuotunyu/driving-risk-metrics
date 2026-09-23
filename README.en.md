@@ -39,6 +39,12 @@ users.
 
 ![Critical misses on the smallest-tertile instances by class, one training seed per model, drawn from extended-metrics.json](docs/figures/small-tertile-critical-misses.svg)
 
+How much of this comes from downscaling the input at inference? A pre-registered post-release
+analysis on the calibration split re-ran inference at native resolution without retraining: two
+of the three models recover a small share of the small people, most are still missed, and all
+three miss more large people. See [the resolution analysis](docs/posthoc/resolution-v1/results.md).
+It uses different images, so its numbers are not comparable with this page.
+
 ## The finding
 
 The paired bootstrap interval for the two best models **includes zero on mean IoU**, while
