@@ -183,3 +183,18 @@ def test_invalid_draw_settings_are_refused() -> None:
         draws.draw_two_stage(0, LEVEL)
     with pytest.raises(ValueError):
         draws.draw_two_stage(4, LEVEL, resamples=0)
+
+
+def test_many_statistics_share_one_weighted_sum_and_agree_with_one_at_a_time() -> None:
+    components = integer_components(3, 20, 4)
+    replay = draws.draw_two_stage(20, LEVEL, resamples=60, seed=2)
+    statistics = {
+        "ratio": ratio_statistic,
+        "first": lambda summed: summed[:, 0],
+    }
+
+    many = draws.run_replicates_many(replay, components, statistics)
+
+    assert set(many) == {"ratio", "first"}
+    for name, statistic in statistics.items():
+        assert np.array_equal(many[name], draws.run_replicates(replay, components, statistic))

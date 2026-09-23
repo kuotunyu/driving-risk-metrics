@@ -22,6 +22,8 @@ import numpy as np
 import pytest
 from PIL import Image
 
+from drivemetrics.analysis.aggregate import aggregate_runs
+from drivemetrics.analysis.extended import extended_metrics
 from drivemetrics.artifacts.predictions import PredictionRecord, write_prediction_artifact
 from drivemetrics.data.manifest import build_paired_manifest, save_manifest
 from drivemetrics.metrics.calibration import (
@@ -282,3 +284,30 @@ def study_tools() -> SimpleNamespace:
         TRUTH=TRUTH,
         VALID=VALID,
     )
+
+
+@pytest.fixture
+def released(tmp_path: Path, study: Any) -> tuple[Path, Any]:
+    """The study's released evidence, written by the released aggregate and extended code."""
+
+    evidence = tmp_path / "evidence"
+    aggregate_runs(study.index_path, evidence, resamples=200)
+    extended_metrics(
+        study.index_path,
+        evidence / "extended-metrics.json",
+        manifest_path=study.manifest_path,
+        labels_root=study.labels_root,
+        instance_root=study.instance_root,
+        tertiles_path=study.tertiles_path,
+    )
+    from drivemetrics.posthoc import allseed, allseed_statistics
+
+    allseed.extract_all_seeds(
+        study.index_path,
+        study.manifest_path,
+        study.labels_root,
+        study.instance_root,
+        study.tertiles_path,
+        tmp_path / "extract",
+    )
+    return evidence, allseed_statistics.load_extraction(tmp_path / "extract")

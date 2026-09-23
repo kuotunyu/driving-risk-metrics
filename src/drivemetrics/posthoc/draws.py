@@ -13,7 +13,7 @@ are the released ones. The tests pin the equality bit for bit.
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
 import numpy as np
@@ -96,13 +96,27 @@ def run_replicates(
 ) -> Float64Array:
     """Each resample's per-run statistic, summed exactly as the released function sums."""
 
+    return run_replicates_many(draws, components, {"statistic": statistic})["statistic"]
+
+
+def run_replicates_many(
+    draws: TwoStageDraws,
+    components: Float64Array,
+    statistics: Mapping[str, Callable[[Float64Array], Float64Array]],
+) -> dict[str, Float64Array]:
+    """Several statistics of the same summed components, computing each resample's sum once."""
+
     if components.ndim != 3 or components.shape[1] != draws.image_weights.shape[1]:
         raise ValueError("components must be run by image by component, over the drawn images")
     run_count = components.shape[0]
-    replicates = np.empty((draws.image_weights.shape[0], run_count), dtype=np.float64)
+    replicates = {
+        name: np.empty((draws.image_weights.shape[0], run_count), dtype=np.float64)
+        for name in statistics
+    }
     for index, image_weights in enumerate(draws.image_weights):
         summed = np.sum(components * image_weights[None, :, None], axis=1)
-        replicates[index] = _checked_run_values(statistic(summed), run_count)
+        for name, statistic in statistics.items():
+            replicates[name][index] = _checked_run_values(statistic(summed), run_count)
     return replicates
 
 
