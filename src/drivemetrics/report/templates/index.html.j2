@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>driving-risk-metrics evidence report</title>
+<title>driving-risk-metrics: safety-oriented segmentation evaluation (BDD100K)</title>
+<meta name="description" content="Which vulnerable-road-user segmentation failures does mIoU leave out? Paired bootstrap intervals, critical-class recall and instance-level misses on the {{ provenance.cohort }} cohort, {{ provenance.sample_count }} samples, {{ provenance.seed_count }} seeds per model.">
+<meta property="og:title" content="driving-risk-metrics: safety-oriented segmentation evaluation (BDD100K)">
+<meta property="og:description" content="Which vulnerable-road-user segmentation failures does mIoU leave out? Paired bootstrap intervals, critical-class recall and instance-level misses on the {{ provenance.cohort }} cohort, {{ provenance.sample_count }} samples, {{ provenance.seed_count }} seeds per model.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kuotunyu.github.io/driving-risk-metrics/">
 <style>
 :root {
   --ink: #16202c;
@@ -171,42 +176,125 @@ figcaption {
 .lede a {
   color: var(--accent);
 }
+a {
+  color: var(--accent);
+}
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  max-width: 60rem;
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.links a {
+  color: var(--accent);
+}
+.question {
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.findings {
+  max-width: 46rem;
+  margin: 0 0 1rem;
+  padding-left: 1.1rem;
+}
+.findings li {
+  margin-bottom: 0.4rem;
+}
+figure img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+details > summary {
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--rule);
+  cursor: pointer;
+}
+summary > h2 {
+  display: inline;
+  font-size: 1.3rem;
+}
 </style>
 </head>
 <body>
 <h1>Safety-aware segmentation evidence</h1>
+<nav class="links" aria-label="Project links">
+<a href="https://github.com/kuotunyu/driving-risk-metrics">Repository</a>
+<span>README:
+<a href="https://github.com/kuotunyu/driving-risk-metrics/blob/main/README.en.md">English</a> /
+<a href="https://github.com/kuotunyu/driving-risk-metrics/blob/main/README.md" lang="zh-Hant">繁體中文</a></span>
+<a href="https://github.com/kuotunyu/driving-risk-metrics/releases/tag/v{{ version }}">Release v{{ version }}</a>
+<span>Related:
+<a href="https://github.com/kuotunyu/bev-calibration-lab">bev-calibration-lab</a>,
+<a href="https://github.com/kuotunyu/perception-error-to-aeb">perception-error-to-aeb</a></span>
+</nav>
+
+<section id="summary">
+<p class="question">Which vulnerable-road-user segmentation failures does mIoU leave out?</p>
+{% if headlines.intervals or headlines.counts %}
+<ul class="findings">
+{% for interval in headlines.intervals %}
+<li>{{ interval.label }}, {{ interval.left }} minus {{ interval.right }}:
+<span title="{{ interval.estimate.full }}">{{ interval.estimate.text }}</span>, paired bootstrap interval
+<span title="{{ interval.low.full }}">{{ interval.low.text }}</span> to
+<span title="{{ interval.high.full }}">{{ interval.high.text }}</span>, which {{ interval.verdict }}.</li>
+{% endfor %}
+{% for count in headlines.counts %}
+<li>{{ count }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+{% if headlines.counts %}
+<p>
+Instance counts come from one training seed per model (seed {{ instance_seed }}, the first
+approved seed, after temperature scaling); they are not averaged over seeds and carry no
+interval.
+</p>
+{% endif %}
+<p>
+Every result describes the <code>{{ provenance.cohort }}</code> cohort,
+{{ provenance.sample_count }} evaluated samples, {{ provenance.seed_count }} seeds per model.
+Intervals come from the {{ provenance.interval_method }}. The protocol and dataset manifest
+hashes are under <a href="#provenance">What these numbers describe</a>.
+</p>
 <p class="lede">
 Generated from the committed evidence of
 <a href="https://github.com/kuotunyu/driving-risk-metrics">driving-risk-metrics</a>.
 Every number below is bound to a verified claim and its artifact.
-繁體中文說明在
-<a href="https://github.com/kuotunyu/driving-risk-metrics#readme">repository 首頁</a>。
 </p>
-
-<section id="provenance">
-<h2>What these numbers describe</h2>
-<dl>
-<dt>Cohort</dt><dd>{{ provenance.cohort }}</dd>
-<dt>Evaluated samples</dt><dd>{{ provenance.sample_count }}</dd>
-<dt>Seeds per model</dt><dd>{{ provenance.seed_count }}</dd>
-<dt>Interval method</dt><dd>{{ provenance.interval_method }}</dd>
-<dt>Protocol hash</dt><dd><code>{{ provenance.protocol_hash }}</code></dd>
-<dt>Dataset manifest hash</dt><dd><code>{{ provenance.dataset_manifest_hash }}</code></dd>
-</dl>
 </section>
 
-<section id="claims">
-<h2>Verified claims</h2>
+<section id="key-figures">
+<h2>Key figures</h2>
+{% for figure in curated %}
+<figure>
+<figcaption>{{ figure.caption }}</figcaption>
+<a href="{{ figure.src }}"><img src="{{ figure.src }}" width="{{ figure.width }}" height="{{ figure.height }}" alt="{{ figure.alt }}"></a>
+</figure>
+{% else %}
+<p>{{ not_drawn }}</p>
+{% endfor %}
+</section>
+
+<section id="headline">
+<h2>Headline results</h2>
+<p>
+Each value is the mean over {{ provenance.seed_count }} seeds, rounded to three decimals;
+the full value is in the cell's tooltip.
+</p>
 <div class="scroll">
 <table>
-<thead><tr><th>Claim</th><th>Evidence type</th><th>Artifact</th></tr></thead>
+<thead><tr><th>Model</th>{% for column in headline_table.columns %}<th>{{ column }}</th>{% endfor %}</tr></thead>
 <tbody>
-{% for claim in claims %}
-<tr>
-<td>{{ claim.text }}</td>
-<td>{{ claim.evidence_type }}</td>
-<td><code>{{ claim.artifact_path }}{{ claim.metric_path }}</code></td>
-</tr>
+{% for row in headline_table.rows %}
+<tr><td>{{ row.model }}</td>{% for value in row.cells %}<td title="{{ value.full }}">{{ value.text }}</td>{% endfor %}</tr>
 {% endfor %}
 </tbody>
 </table>
@@ -217,10 +305,7 @@ Every number below is bound to a verified claim and its artifact.
 <h2>Results</h2>
 {% for figure in figures %}
 <figure>
-<figcaption>
-{{ figure.name }} on the {{ provenance.cohort }} cohort, {{ provenance.sample_count }} samples,
-{{ provenance.seed_count }} seeds per model, intervals from {{ provenance.interval_method }}.
-</figcaption>
+<figcaption>{{ figure.caption }}</figcaption>
 {{ figure.html | safe }}
 </figure>
 {% endfor %}
@@ -464,6 +549,40 @@ cohort, not a success criterion.
 </tbody>
 </table>
 </div>
+</section>
+
+<section id="provenance">
+<details>
+<summary><h2>What these numbers describe</h2></summary>
+<dl>
+<dt>Cohort</dt><dd>{{ provenance.cohort }}</dd>
+<dt>Evaluated samples</dt><dd>{{ provenance.sample_count }}</dd>
+<dt>Seeds per model</dt><dd>{{ provenance.seed_count }}</dd>
+<dt>Interval method</dt><dd>{{ provenance.interval_method }}</dd>
+<dt>Protocol hash</dt><dd><code>{{ provenance.protocol_hash }}</code></dd>
+<dt>Dataset manifest hash</dt><dd><code>{{ provenance.dataset_manifest_hash }}</code></dd>
+</dl>
+</details>
+</section>
+
+<section id="claims">
+<details>
+<summary><h2>Verified claims</h2></summary>
+<div class="scroll">
+<table>
+<thead><tr><th>Claim</th><th>Evidence type</th><th>Artifact</th></tr></thead>
+<tbody>
+{% for claim in claims %}
+<tr>
+<td>{{ claim.text }}</td>
+<td>{{ claim.evidence_type }}</td>
+<td><code>{{ claim.artifact_path }}{{ claim.metric_path }}</code></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
 </section>
 
 <section id="limitations">

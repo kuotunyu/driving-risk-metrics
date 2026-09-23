@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import json
+import re
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
+from xml.etree import ElementTree
 
-from drivemetrics.analysis.claims import audit_claims, verified_claims
+from drivemetrics import __version__
+from drivemetrics.analysis.claims import ClaimV1, audit_claims, claim_value, verified_claims
+from drivemetrics.artifacts.formal_set import APPROVED_SEEDS
 from drivemetrics.report.figures import bar_figure, interval_figure
 
 REPORT_INPUTS: tuple[str, ...] = (
@@ -42,14 +48,72 @@ LIMITATIONS: tuple[str, ...] = (
     " hypothesis tests and are not a substitute for effect sizes.",
 )
 
+#: How the page names each approved model: the names the claims and the README use.
+#: The committed SVG figures keep their own shorter labels, which are frozen bytes.
+MODEL_NAMES: dict[str, str] = {
+    "segformer_b2": "SegFormer-B2",
+    "upernet_convnextv2_tiny": "UperNet-ConvNeXtV2-Tiny",
+    "upernet_dinov2_small": "UperNet-DINOv2-Small",
+}
+#: How the page names each metric, in the order the headline table lists them.
+METRIC_LABELS: dict[str, str] = {
+    "miou": "mean IoU",
+    "critical_recall": "critical-class recall",
+    "pixel_accuracy": "pixel accuracy",
+}
+
+#: The paired intervals the page opens with, as (claim, metric). They are the
+#: intervals the README's "At a glance" list quotes, rounded the same way.
+HEADLINE_INTERVAL_CLAIMS: tuple[tuple[str, str], ...] = (
+    ("p1.interval.miou.segformer-minus-convnextv2", "miou"),
+    ("p1.interval.critical-recall.segformer-minus-convnextv2", "critical_recall"),
+)
+#: The instance counts the page opens with, quoted as their verified claim text.
+HEADLINE_COUNT_CLAIMS: tuple[str, ...] = (
+    "p1.instances.convnextv2.person-small",
+    "p1.instances.convnextv2.rider-small",
+    "p1.instances.convnextv2.car-small",
+)
+#: Every displayed rounding uses the claims validator's rule, so a value on this page
+#: reads exactly as the same value in the README.
+DISPLAY_QUANTUM = Decimal("0.001")
+
+#: The evidence figures the page opens with, in reading order, each with the text a
+#: screen reader announces. All are drawn from the evidence by ``svg.write_figures``.
+CURATED_FIGURES: tuple[tuple[str, str], ...] = (
+    (
+        "headline-top-two",
+        "Top two models: paired differences with bootstrap intervals on mean IoU and"
+        " critical-class recall, drawn from rankings.json",
+    ),
+    (
+        "small-tertile-critical-misses",
+        "Critical misses on the smallest-tertile instances by class, one training seed per"
+        " model, drawn from extended-metrics.json",
+    ),
+    (
+        "miou-gap-by-class",
+        "Per-class contribution to the mean IoU difference between the top two models,"
+        " critical classes highlighted, drawn from metrics.json",
+    ),
+)
+CURATED_FIGURE_DIR = "figures-svg"
+NOT_DRAWN = (
+    "The curated figures are not drawn: they need the instance coverage and the paired"
+    " intervals between the top two models, and this analysis run did not publish both."
+)
+
+_INTERVAL_KEY = re.compile(r"(?P<left>\S+) minus (?P<right>\S+) \((?P<metric>[^)]+)\)")
+
 
 @dataclass(frozen=True)
 class ReportResult:
-    """Where the published page and its machine-readable figures were written."""
+    """Where the published page, its machine-readable figures and its SVGs were written."""
 
     index_path: Path
     figure_paths: tuple[Path, ...]
     claim_count: int
+    svg_paths: tuple[Path, ...] = ()
 
 
 def load_json_object(path: Path) -> dict[str, Any]:
@@ -59,6 +123,176 @@ def load_json_object(path: Path) -> dict[str, Any]:
     if not isinstance(document, dict):
         raise TypeError(f"report input must be a JSON object: {path}")
     return document
+
+
+def model_name(model: str) -> str:
+    """Return the page name of a model, or the model's own name when it has none."""
+
+    return MODEL_NAMES.get(model, model)
+
+
+def metric_label(metric: str) -> str:
+    """Return the page name of a metric, or the metric's own name when it has none."""
+
+    return METRIC_LABELS.get(metric, metric)
+
+
+def _leading(label: str) -> str:
+    """Capitalise only the first letter, so "mean IoU" leads a sentence as "Mean IoU"."""
+
+    return label[:1].upper() + label[1:]
+
+
+def display_value(value: float) -> dict[str, str]:
+    """Return a value rounded to three decimals beside the full value it was rounded from."""
+
+    return {
+        "text": f"{Decimal(str(value)).quantize(DISPLAY_QUANTUM):.3f}",
+        "full": str(value),
+    }
+
+
+def _model_order(rankings: dict[str, Any], models: Iterable[str]) -> tuple[list[str], str]:
+    """Return the models best first under the baseline metric, and how they were ordered.
+
+    Without a ranking there is no best, so the models are listed by name.
+    """
+
+    comparisons = rankings["comparisons"]
+    if comparisons:
+        return (
+            [str(model) for model in comparisons[0]["baseline_order"]],
+            f"ordered by {metric_label(str(rankings['baseline_metric']))}, best first",
+        )
+    return sorted(models), "ordered by name"
+
+
+def _interval_label(key: str) -> str:
+    """Rename the models and the metric in an interval key such as ``a minus b (miou)``."""
+
+    match = _INTERVAL_KEY.fullmatch(key)
+    if match is None:
+        return key
+    return (
+        f"{model_name(match['left'])} minus {model_name(match['right'])}"
+        f" ({metric_label(match['metric'])})"
+    )
+
+
+def _headline_view(claims: Iterable[ClaimV1], repository_root: Path) -> dict[str, list[Any]]:
+    """Return the opening statements whose claims this registry has verified.
+
+    An interval is stated from the values its claim points at, rounded to three
+    decimals, and says whether it excludes zero because the artifact says so. A
+    count is quoted as its claim text. A claim this registry does not hold, or has
+    not verified, is left out rather than stated without its evidence.
+    """
+
+    by_id = {claim.claim_id: claim for claim in claims}
+    intervals: list[dict[str, Any]] = []
+    for claim_id, metric in HEADLINE_INTERVAL_CLAIMS:
+        if claim_id not in by_id:
+            continue
+        entry: Any = claim_value(by_id[claim_id], repository_root)
+        label = metric_label(metric)
+        intervals.append(
+            {
+                "label": _leading(label),
+                "left": model_name(str(entry["left"])),
+                "right": model_name(str(entry["right"])),
+                "estimate": display_value(entry["estimate"]),
+                "low": display_value(entry["low"]),
+                "high": display_value(entry["high"]),
+                "verdict": "excludes zero" if bool(entry["excludes_zero"]) else "includes zero",
+            }
+        )
+    counts = [by_id[claim_id].text for claim_id in HEADLINE_COUNT_CLAIMS if claim_id in by_id]
+    return {"intervals": intervals, "counts": counts}
+
+
+def _headline_table(
+    metric_table: Mapping[str, Mapping[str, float]], order: list[str]
+) -> dict[str, Any]:
+    """Return every model's metrics rounded to three decimals, best model first."""
+
+    positions = {name: index for index, name in enumerate(METRIC_LABELS)}
+    names = sorted(
+        {name for scores in metric_table.values() for name in scores},
+        key=lambda name: (positions.get(name, len(positions)), name),
+    )
+    return {
+        "columns": [metric_label(name) for name in names],
+        "rows": [
+            {
+                "model": model_name(model),
+                "cells": [display_value(metric_table[model][name]) for name in names],
+            }
+            for model in order
+        ],
+    }
+
+
+def _curated_view(
+    artifacts_dir: Path,
+    output_dir: Path,
+    *,
+    metrics: dict[str, Any],
+    rankings: dict[str, Any],
+    extended: dict[str, Any],
+) -> tuple[list[dict[str, str]], tuple[Path, ...]]:
+    """Draw the evidence SVGs beside the page when the evidence supports every one.
+
+    The figures need the instance coverage and the paired intervals between the top
+    two models. When either is missing none is drawn and the page says so, rather
+    than failing or publishing a figure of nothing.
+    """
+
+    supported = (
+        "not_computed" not in extended["instances"]
+        and "separability" in rankings
+        and bool(rankings["comparisons"])
+    )
+    if not supported:
+        return [], ()
+
+    # Imported here because the SVG module reads its inputs through this module.
+    from drivemetrics.report import svg
+
+    written = svg.write_figures(artifacts_dir, output_dir / CURATED_FIGURE_DIR)
+    first, second = (
+        model_name(str(model)) for model in rankings["comparisons"][0]["baseline_order"][:2]
+    )
+    captions = {
+        "headline-top-two": (
+            f"Paired differences between the top two models, {first} and {second}, on mean"
+            " IoU and critical-class recall, with intervals from the"
+            f" {metrics['interval_method']}. A filled marker means the interval excludes zero."
+        ),
+        "small-tertile-critical-misses": (
+            "The share of each class's smallest-tertile instances that each model critically"
+            " misses, labelled with the exact counts. Instance counts come from one training"
+            f" seed per model (seed {APPROVED_SEEDS[0]}); this chart draws no interval."
+        ),
+        "miou-gap-by-class": (
+            f"The mean IoU difference between {first} and {second}, split into one"
+            " contribution per class, with the vulnerable-road-user classes highlighted."
+            " Seed-averaged point estimates from metrics.json; no per-class interval is drawn."
+        ),
+    }
+    figures: list[dict[str, str]] = []
+    for name, alt in CURATED_FIGURES:
+        path = output_dir / CURATED_FIGURE_DIR / f"{name}.svg"
+        root = ElementTree.fromstring(path.read_text(encoding="utf-8"))
+        figures.append(
+            {
+                "src": f"{CURATED_FIGURE_DIR}/{name}.svg",
+                "alt": alt,
+                "caption": captions[name],
+                "width": root.attrib["width"],
+                "height": root.attrib["height"],
+            }
+        )
+    return figures, written.figure_paths
 
 
 def _figure_html(name: str, figure: dict[str, Any], *, include_library: bool) -> str:
@@ -292,8 +526,10 @@ def build_report(
     rendering a number that cannot be traced to its artifact is exactly the
     failure this project exists to prevent. Only claims marked verified reach the
     page, every claim is shown beside its evidence type, and the cohort, seed
-    count, interval method, and artifact hashes are stated once at the top so no
-    chart can be read out of context.
+    count and interval method are stated at the top so no chart can be read out of
+    context. The page then leads with the findings and the evidence figures; the
+    protocol and dataset manifest hashes and the full claims table follow the
+    detailed results, collapsed but complete.
     """
 
     violations = audit_claims(claims_path, repository_root)
@@ -303,18 +539,38 @@ def build_report(
     documents = {name: load_json_object(artifacts_dir / f"{name}.json") for name in REPORT_INPUTS}
     claims = verified_claims(claims_path)
     metrics = documents["metrics"]
+    rankings = documents["rankings"]
+    extended = documents["extended-metrics"]
     metric_table: dict[str, dict[str, float]] = metrics["metrics"]
     metric_names = sorted({name for scores in metric_table.values() for name in scores})
+    order, order_note = _model_order(rankings, metric_table)
+    category_order = [model_name(model) for model in order]
 
-    figures: dict[str, dict[str, Any]] = {
-        name: bar_figure(
-            name, name, {model: scores[name] for model, scores in metric_table.items()}
+    figures: dict[str, dict[str, Any]] = {}
+    captions: dict[str, str] = {}
+    for name in metric_names:
+        label = metric_label(name)
+        figure = bar_figure(
+            f"{_leading(label)} by model",
+            label,
+            {model_name(model): scores[name] for model, scores in metric_table.items()},
         )
-        for name in metric_names
-    }
+        figure["layout"]["xaxis"].update(categoryorder="array", categoryarray=category_order)
+        figures[name] = figure
+        captions[name] = (
+            f"{_leading(label)} of each model on the {metrics['cohort']} cohort,"
+            f" {metrics['sample_count']} samples, the mean over {metrics['seed_count']} seeds;"
+            f" models {order_note}. Each bar is a point estimate and this chart draws no"
+            " interval."
+        )
     figures["paired-differences"] = interval_figure(
         "Paired differences with 95 percent intervals",
-        documents["intervals"]["intervals"],
+        {_interval_label(key): entry for key, entry in documents["intervals"]["intervals"].items()},
+    )
+    captions["paired-differences"] = (
+        f"Every paired difference in intervals.json on the {metrics['cohort']} cohort,"
+        f" {metrics['sample_count']} samples, {metrics['seed_count']} seeds per model, with its"
+        f" interval from the {metrics['interval_method']}."
     )
 
     figure_dir = output_dir / "figures"
@@ -332,9 +588,13 @@ def build_report(
         rendered.append(
             {
                 "name": name,
+                "caption": captions[name],
                 "html": _figure_html(name, figures[name], include_library=position == 0),
             }
         )
+    curated, svg_paths = _curated_view(
+        artifacts_dir, output_dir, metrics=metrics, rankings=rankings, extended=extended
+    )
 
     from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -343,12 +603,17 @@ def build_report(
         autoescape=select_autoescape(default=True, default_for_string=True),
         keep_trailing_newline=True,
     )
-    extended = documents["extended-metrics"]
     page = environment.get_template("index.html.j2").render(
+        version=__version__,
+        headlines=_headline_view(claims, repository_root),
+        instance_seed=APPROVED_SEEDS[0],
+        curated=curated,
+        not_drawn=NOT_DRAWN,
+        headline_table=_headline_table(metric_table, order),
         claims=claims,
         provenance=metrics,
         figures=rendered,
-        rankings=documents["rankings"],
+        rankings=rankings,
         runs=_run_view(documents["formal_run_index"]),
         per_class=_per_class_view(metrics),
         calibration=_calibration_view(metrics),
@@ -371,4 +636,5 @@ def build_report(
         index_path=index_path,
         figure_paths=tuple(figure_paths),
         claim_count=len(claims),
+        svg_paths=svg_paths,
     )
