@@ -80,7 +80,8 @@ What changes between these metrics is not the order but how strongly this cohort
 bootstrap interval supports separating the top two.
 
 The project's question in [`docs/protocol.md`](docs/protocol.md) also covers
-calibration, and there the mean IoU order of the top two mostly does not hold.
+confidence-based metrics such as calibration and selective risk, and on these the
+mean IoU order of the top two mostly does not hold.
 Selective risk (AURC) and the Brier score favour SegFormer-B2 over
 UperNet-ConvNeXtV2-Tiny with or without temperature scaling, the calibrated Brier
 score only marginally; ECE favours SegFormer-B2 before temperature scaling and
@@ -158,14 +159,14 @@ attribute an annotation artefact to the model:
 ## Calibration does not always help
 
 Temperature scaling is fitted on a held-out calibration split and applied to the
-locked cohort. It lowered the calibration error of two models and raised it for the
-third. The expected calibration error (ECE) here is classwise: for each class, pixels
+locked cohort. The expected calibration error (ECE) here is classwise: for each class, pixels
 are grouped by their predicted probability for that class into fifteen equal-width
 bins; each bin contributes the gap between its mean predicted probability and how
 often the class actually occurs in it, weighted by the bin's share of pixels; and the
 per-class errors are averaged over all nineteen classes. It is not comparable in size
 with the top-label ECE usually reported. [`docs/protocol.md`](docs/protocol.md) gives
-the full definition.
+the full definition. Temperature scaling lowered this error for two models and raised
+it for the third:
 
 > Temperature scaling lowered the expected calibration error of UperNet-ConvNeXtV2-Tiny on the locked cohort, from 0.004609387187919981 to 0.0032855195799122. <!-- claim: p1.calibration.convnextv2.ece -->
 > Temperature scaling lowered the expected calibration error of UperNet-DINOv2-Small on the locked cohort, from 0.005448051902032049 to 0.003985369701553616. <!-- claim: p1.calibration.dinov2.ece -->
@@ -316,8 +317,9 @@ output the claims cite.
   evaluation tools. They are not a safety argument and not a substitute for one.
 - **Risk-weighted cost as an independent measure.** Under the `balanced` profile it
   equals one minus pixel accuracy. Under the `vru_priority` profile it still tracks
-  pixel error, because critical-class pixels are rare. It counts false negatives
-  only and has no pairwise confusion costs.
+  pixel error, because critical-class pixels are rare, and under the
+  `drivable_boundary` profile it orders the three models as pixel error does. It
+  counts false negatives only and has no pairwise confusion costs.
 - **Conclusions about DINOv2 or self-supervised pretraining.** The DINOv2 backbone
   was built at the library's default geometry, so its position-embedding table did
   not match the checkpoint's in shape; the loader skipped it, and it was trained from

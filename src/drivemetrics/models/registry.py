@@ -1,18 +1,24 @@
 """The exactly three approved segmentation architectures and one construction policy.
 
-All three are contemporary and each represents a different pretraining paradigm,
-because pretraining is one of the strongest influences on how confident a model
-is, and confidence is what half the metrics in this study measure.
+All three are contemporary and each was chosen to represent a different
+pretraining paradigm, because pretraining is one of the strongest influences on
+how confident a model is, and confidence is what half the metrics in this study
+measure.
 
 - ``segformer_b2``: supervised hierarchical transformer with an all-MLP decoder.
 - ``upernet_convnextv2_tiny``: a modern convolutional backbone pretrained with
-  fully convolutional masked autoencoding, under a pyramid pooling decoder.
+  fully convolutional masked autoencoding and then fine-tuned on ImageNet-1k,
+  under a pyramid pooling decoder.
 - ``upernet_dinov2_small``: a self-supervised foundation-model vision
-  transformer backbone, under the same decoder.
+  transformer backbone, under the same decoder. As built here its
+  position-embedding table does not match the checkpoint's in shape, so that
+  table starts from random initialisation (see ``_load_backbone_weights``).
 
-Two share the UPerNet decoder on purpose. Holding the decoder fixed isolates the
-backbone and its pretraining, while SegFormer varies the decoder as well, so the
-comparison has both a controlled and an unconstrained axis.
+Two share the UPerNet decoder on purpose. Holding the decoder fixed removes it as
+a difference between those two, while SegFormer varies the decoder as well, so
+the comparison has both a controlled and an unconstrained axis. It does not
+isolate pretraining: the two backbones also differ in architecture, and the
+DINOv2 backbone does not receive every pretrained tensor.
 
 Every backbone is initialized from image-classification or self-supervised
 weights only, never from a checkpoint already trained for segmentation. Starting
