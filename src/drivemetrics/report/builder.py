@@ -98,6 +98,9 @@ CURATED_FIGURES: tuple[tuple[str, str], ...] = (
     ),
 )
 CURATED_FIGURE_DIR = "figures-svg"
+#: Wide, short figures whose labels would shrink below legibility on a phone; their
+#: card scrolls sideways instead.
+SCROLLED_FIGURES = frozenset({"headline-top-two"})
 NOT_DRAWN = (
     "The curated figures are not drawn: they need the instance coverage and the paired"
     " intervals between the top two models, and this analysis run did not publish both."
@@ -239,7 +242,7 @@ def _curated_view(
     metrics: dict[str, Any],
     rankings: dict[str, Any],
     extended: dict[str, Any],
-) -> tuple[list[dict[str, str]], tuple[Path, ...]]:
+) -> tuple[list[dict[str, Any]], tuple[Path, ...]]:
     """Draw the evidence SVGs beside the page when the evidence supports every one.
 
     The figures need the instance coverage and the paired intervals between the top
@@ -259,12 +262,13 @@ def _curated_view(
     from drivemetrics.report import svg
 
     written = svg.write_figures(artifacts_dir, output_dir / CURATED_FIGURE_DIR)
-    first, second = (
-        model_name(str(model)) for model in rankings["comparisons"][0]["baseline_order"][:2]
-    )
+    # Name the pair in the orientation the figures plot, so a caption never reverses
+    # the sign of the difference drawn beneath it.
+    pair = svg.top_two_intervals(rankings)["miou"]
+    left, right = model_name(str(pair["left"])), model_name(str(pair["right"]))
     captions = {
         "headline-top-two": (
-            f"Paired differences between the top two models, {first} and {second}, on mean"
+            f"Paired differences between the top two models, {left} minus {right}, on mean"
             " IoU and critical-class recall, with intervals from the"
             f" {metrics['interval_method']}. A filled marker means the interval excludes zero."
         ),
@@ -274,12 +278,12 @@ def _curated_view(
             f" seed per model (seed {APPROVED_SEEDS[0]}); this chart draws no interval."
         ),
         "miou-gap-by-class": (
-            f"The mean IoU difference between {first} and {second}, split into one"
+            f"The mean IoU difference, {left} minus {right}, split into one"
             " contribution per class, with the vulnerable-road-user classes highlighted."
             " Seed-averaged point estimates from metrics.json; no per-class interval is drawn."
         ),
     }
-    figures: list[dict[str, str]] = []
+    figures: list[dict[str, Any]] = []
     for name, alt in CURATED_FIGURES:
         path = output_dir / CURATED_FIGURE_DIR / f"{name}.svg"
         root = ElementTree.fromstring(path.read_text(encoding="utf-8"))
@@ -290,6 +294,7 @@ def _curated_view(
                 "caption": captions[name],
                 "width": root.attrib["width"],
                 "height": root.attrib["height"],
+                "scroll": name in SCROLLED_FIGURES,
             }
         )
     return figures, written.figure_paths
@@ -607,6 +612,7 @@ def build_report(
         version=__version__,
         headlines=_headline_view(claims, repository_root),
         instance_seed=APPROVED_SEEDS[0],
+        approved_seed_count=len(APPROVED_SEEDS),
         curated=curated,
         not_drawn=NOT_DRAWN,
         headline_table=_headline_table(metric_table, order),

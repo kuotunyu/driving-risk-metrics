@@ -1095,3 +1095,74 @@ def test_rankings_without_intervals_draw_no_curated_figure(tmp_path: Path) -> No
 
     assert result.svg_paths == ()
     assert load_builder_module().NOT_DRAWN in section_body(page, "key-figures")
+
+
+def test_curated_captions_name_the_pair_in_the_orientation_the_figures_plot(
+    tmp_path: Path,
+) -> None:
+    """A caption that lists the pair against the plotted sign reverses the finding."""
+
+    def flipped(entry: dict[str, Any]) -> dict[str, Any]:
+        return {
+            **entry,
+            "left": entry["right"],
+            "right": entry["left"],
+            "estimate": -entry["estimate"],
+            "low": -entry["high"],
+            "high": -entry["low"],
+        }
+
+    separability: Any = RANKINGS["separability"]
+    rankings = {
+        **RANKINGS,
+        "separability": {
+            metric: [flipped(entry) for entry in entries]
+            for metric, entries in separability.items()
+        },
+    }
+    page = build(tmp_path, rankings=rankings).index_path.read_text(encoding="utf-8")
+    captions = [
+        " ".join(caption.split()) for caption, _ in figure_blocks(section_body(page, "key-figures"))
+    ]
+
+    pair = "UperNet-DINOv2-Small minus UperNet-ConvNeXtV2-Tiny"
+    assert pair in captions[0]
+    assert pair in captions[2]
+    assert "UperNet-ConvNeXtV2-Tiny minus" not in " ".join(captions)
+
+
+def test_the_seed_note_carries_the_readme_caveats(tmp_path: Path) -> None:
+    """The lede states the counts, so it must also state what they cannot support."""
+
+    page = build(tmp_path, claims=headline_claims()).index_path.read_text(encoding="utf-8")
+    summary = " ".join(section_body(page, "summary").split())
+
+    assert "after temperature scaling, which does not change the predicted class" in summary
+    assert "This is an exception to the mean-over-seeds rule in" in summary
+    assert "Rider and motorcycle have too few smallest-tertile instances" in summary
+    assert "Every number on this page is bound to a verified claim" in summary
+    captions = figure_blocks(section_body(page, "key-figures"))
+    assert captions[0][0].endswith("The same values are listed as text at the top of the page.")
+
+
+def test_only_the_wide_headline_figure_scrolls_sideways(tmp_path: Path) -> None:
+    """On a phone the short top-two figure scrolls rather than shrinking its labels."""
+
+    body = section_body(build(tmp_path).index_path.read_text(encoding="utf-8"), "key-figures")
+
+    assert re.findall(r'<div class="scroll figure-scroll"><a href="([^"]+)">', body) == [
+        "figures-svg/headline-top-two.svg"
+    ]
+    # Without the headline claims the lede lists no values, so the caption does not
+    # point the reader at them.
+    assert "listed as text" not in body
+
+
+def test_a_link_to_a_collapsed_section_opens_it(tmp_path: Path) -> None:
+    """The summary links to the provenance, which is collapsed; the link must open it."""
+
+    page = build(tmp_path).index_path.read_text(encoding="utf-8")
+
+    assert '<a href="#provenance">' in section_body(page, "summary")
+    assert 'window.addEventListener("hashchange", openTargetDetails);' in page
+    assert page.index("openTargetDetails();") > page.index('<section id="provenance">')
