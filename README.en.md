@@ -2,7 +2,10 @@
 
 **Which vulnerable-road-user segmentation failures does mIoU leave out?**
 
-[繁體中文](README.md)
+[繁體中文](README.md) · [Live report](https://kuotunyu.github.io/driving-risk-metrics/) · [Release v1.0.2](https://github.com/kuotunyu/driving-risk-metrics/releases/tag/v1.0.2)
+
+Part of a three-project autonomous-driving perception-safety portfolio with [bev-calibration-lab](https://github.com/kuotunyu/bev-calibration-lab) ([site](https://kuotunyu.github.io/bev-calibration-lab/)), camera–LiDAR calibration faults on nuScenes, and [perception-error-to-aeb](https://github.com/kuotunyu/perception-error-to-aeb) ([site](https://kuotunyu.github.io/perception-error-to-aeb/)), perception errors fed into a fixed AEB policy on nuPlan.
+The projects use different datasets and study settings and do not form a validated perception-to-AEB pipeline.
 
 Three contemporary semantic segmentation models were trained on BDD100K under one
 frozen protocol, three seeds each, and evaluated once on a locked 998-image cohort
@@ -11,15 +14,44 @@ sample selection. All three metrics give the same model order, while their paire
 bootstrap intervals provide different strength of evidence for separating the top
 two. This repository also reports instance-level failures hidden by pixel averages.
 
+## At a glance
+
+- Top two models on mean IoU, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny: -0.010, paired bootstrap interval -0.022 to 0.002, which includes zero. <!-- claim: p1.interval.miou.segformer-minus-convnextv2; rounded: 3; fields: estimate,low,high -->
+- The same two models on critical-class recall, which covers the vulnerable-road-user classes: -0.023, interval -0.040 to -0.008, which excludes zero. <!-- claim: p1.interval.critical-recall.segformer-minus-convnextv2; rounded: 3; fields: estimate,low,high -->
+- UperNet-ConvNeXtV2-Tiny recovers less than half the pixels of 306 of the 462 smallest-tertile person instances. <!-- claim: p1.instances.convnextv2.person-small -->
+- The same model recovers less than half the pixels of every one of the 17 smallest-tertile rider instances. <!-- claim: p1.instances.convnextv2.rider-small -->
+- The same model recovers less than half the pixels of 822 of the 3749 smallest-tertile car instances. <!-- claim: p1.instances.convnextv2.car-small -->
+
+Instance counts come from one training seed per model (seed 17, the first of the three
+approved seeds, after temperature scaling, which does not change the predicted class);
+they are not averaged over seeds and carry no interval. This is an exception to the
+mean-over-seeds rule in [`docs/protocol.md`](docs/protocol.md). Rider and motorcycle have
+too few smallest-tertile instances to estimate a failure rate; the person counts support
+a more stable within-cohort description.
+
+A pixel-averaged score can look healthy while most of the smallest pedestrians and every
+smallest rider in this cohort are critically missed. The figure shows every instance class
+for all three models: car, by far the most frequent, is the only class in which most
+smallest-tertile instances are recovered, so the failure is not unique to vulnerable road
+users. The separate perception-error-to-aeb project studies how injected object-level
+perception errors, such as dropout, localization error and latency, affect a fixed AEB
+policy on nuPlan; it does not use these segmentation results.
+
+![Critical misses on the smallest-tertile instances by class, one training seed per model, drawn from extended-metrics.json](docs/figures/small-tertile-critical-misses.svg)
+
 ## The finding
 
-The paired bootstrap interval for the two best models **includes zero on mean IoU**:
+The paired bootstrap interval for the two best models **includes zero on mean IoU**, while
+the same comparison on recall over the vulnerable-road-user classes **excludes zero**.
+
+<details>
+<summary>Full-precision statements</summary>
 
 > The paired difference in mean IoU between SegFormer-B2 and UperNet-ConvNeXtV2-Tiny is -0.010027276977824351, and its bootstrap interval from -0.02224922437284147 to 0.0023369779504553204 includes zero. <!-- claim: p1.interval.miou.segformer-minus-convnextv2 -->
 
-The same comparison on recall over the vulnerable-road-user classes **excludes zero**:
-
 > The paired difference in critical-class recall between SegFormer-B2 and UperNet-ConvNeXtV2-Tiny is -0.023304517439508565, and its bootstrap interval from -0.03998178645924999 to -0.008046430169669789 excludes zero. <!-- claim: p1.interval.critical-recall.segformer-minus-convnextv2 -->
+
+</details>
 
 The interval for the mean IoU difference includes zero, while the interval for
 the critical-class recall difference excludes zero. The former does not establish
@@ -70,6 +102,10 @@ scores every annotated instance with equal weight, and calls an instance a
 **critical miss** when less than half of it is classified correctly. Instances are
 grouped into size tertiles learned from the training split alone.
 
+Every instance count in this section comes from seed 17 of each model after temperature
+scaling, not from a mean over seeds, and carries no interval. The per-class figure is under
+[At a glance](#at-a-glance).
+
 These results cover only smallest-tertile instances in the locked cohort whose
 semantic and instance annotations corroborate each other. The 462 person instances
 support a more stable within-cohort description; rider and motorcycle have only 17
@@ -88,8 +124,6 @@ Against cars, the same model on the same instances:
 This contrast shows that one model's overall pixel average does not describe how
 failures are distributed across classes and instance sizes. It is not a measurement
 of real-world risk or safety.
-
-![Critical misses on the smallest-tertile instances by class, drawn from extended-metrics.json](docs/figures/small-tertile-critical-misses.svg)
 
 Instance coverage is measured over the footprint that the semantic and instance
 annotations corroborate, not over the raw bitmask, because the two annotations
@@ -135,7 +169,7 @@ These bands are normalized image rows. They are not depth and not metric distanc
 
 ## How every number on this page is checked
 
-Each result sentence above carries a `&lt;!-- claim: ... --&gt;` marker. The claim names an
+Each result sentence above carries a <code>&lt;!-- claim: ... --&gt;</code> marker. The claim names an
 artifact under [`docs/evidence/bdd100k_semseg_v1/`](docs/evidence/bdd100k_semseg_v1),
 a JSON pointer inside it, and the protocol and dataset manifest hashes the artifact
 must carry. Two independent checks enforce it:
@@ -159,16 +193,45 @@ so a pull request that adds an untraced number fails CI before it can merge.
 The evidence is also self-checking inside the ordinary test run: a change to any
 published number, in any tracked artifact, fails the test suite.
 
-Supporting records:
+Research record:
 
 - [`docs/protocol.md`](docs/protocol.md) — the frozen protocol and its revisions.
 - [`docs/experiment-card.md`](docs/experiment-card.md) — the nine runs, their hashes and the method history.
 - [`docs/model-card.md`](docs/model-card.md) — the three architectures and their permitted use.
 - [`docs/dataset-card.md`](docs/dataset-card.md) — BDD100K provenance, licence and the frozen splits.
+
+Engineering and release records:
+
 - [`docs/verification/analysis-reproduction.md`](docs/verification/analysis-reproduction.md) — three independent executions of the analysis, and what agreed.
 - [`docs/verification/mutation-audit.md`](docs/verification/mutation-audit.md) — the mutation score of the pure core and every surviving mutant's disposition.
+- [`docs/release-notes/`](docs/release-notes) — what each release changed.
 
 ## Reproducing this
+
+Requires uv 0.11.x: `pyproject.toml` requires `>=0.11.18,<0.12`, so uv 0.12 and later
+refuse to run, and CI uses 0.11.18. Install it with `pipx install uv==0.11.18` or the
+versioned installer ([install.sh](https://astral.sh/uv/0.11.18/install.sh), or
+[install.ps1](https://astral.sh/uv/0.11.18/install.ps1) on Windows).
+
+### Check every published number (CPU only, no dataset, no GPU)
+
+These are the commands the Pages workflow runs before it publishes the report:
+
+```bash
+uv sync --frozen --all-groups
+uv run --frozen driving-risk audit-claims --claims docs/claims.yaml
+uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/validate_claims.py \
+  --claims docs/claims.yaml --repo-root . --document README.md --document README.en.md \
+  --document docs/release-notes/v1.0.0.md --document docs/release-notes/v1.0.1.md \
+  --document docs/release-notes/v1.0.2.md
+uv run --frozen driving-risk report --claims docs/claims.yaml --artifacts-dir docs/evidence/bdd100k_semseg_v1 --output-dir site
+```
+
+In a fresh copy on a Windows machine without a GPU, the three commands after the sync took
+under ten seconds. The first sync downloads the locked packages, so its time depends on the
+network.
+
+### Full development gate
 
 ```bash
 uv sync --frozen --all-groups --extra train --extra report
@@ -181,6 +244,8 @@ private-file guard, format check, lint, type check, the full test suite, 100 per
 statement and branch coverage on first-party code, schema contracts, and
 documentation links. There are no coverage exemptions, no `pragma: no cover`
 comments and no omitted first-party paths.
+
+### Formal pipeline (needs BDD100K and a GPU)
 
 The formal pipeline, in order:
 
