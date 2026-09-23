@@ -39,6 +39,8 @@ dropout、定位誤差與延遲）如何影響 nuPlan 上固定的 AEB policy；
 前兩名模型的配對 bootstrap 區間在 mean IoU 上**包含零**；同樣兩個模型，改看行人與騎士等
 易受傷害用路人類別的 recall，區間**不含零**。
 
+![前兩名模型在 mean IoU 與 critical-class recall 上的配對差與 bootstrap 區間，由 rankings.json 繪製](docs/figures/headline-top-two.svg)
+
 <details>
 <summary>完整精度陳述</summary>
 
@@ -51,6 +53,14 @@ dropout、定位誤差與延遲）如何影響 nuPlan 上固定的 AEB policy；
 mean IoU 差值的區間包含零，critical-class recall 差值的區間則不包含零。
 前者不能證明模型等效或可以互換；兩個區間的差異也不等於直接檢驗了兩種指標的差異。
 這裡比較的是語意分割指標，沒有測試煞車決策或實車安全。
+
+下圖把同一個 mean IoU 差值拆到各類別。mean IoU 讓十九個類別各佔相同權重，所以易受傷害
+用路人類別的差距進到 mean IoU 時被稀釋了：標示出來的四個類別加總起來，已超過整個差值。
+長條是 `metrics.json` 中跨 seed 平均的點估計，沒有逐類別區間，而 mean IoU 的區間本身包含零。
+[`tests/contract/test_committed_figures.py`](tests/contract/test_committed_figures.py)
+會從證據重畫每一張圖，並在已發布的 metrics 上檢查這個拆解。
+
+![前兩名模型 mean IoU 差值的逐類別貢獻，標示出 critical 類別，由 metrics.json 繪製](docs/figures/miou-gap-by-class.svg)
 
 問題不在排名。三個模型的順序在三個指標下完全相同，而且這件事會和「出現反轉」一樣
 直白地被報告出來：
@@ -93,7 +103,7 @@ claims validator 從原始 artifact 重算顯示值；下方保留可逐位核�
 **critical miss**。instance 依面積分成三個 tertile，切點只從 training split 學習。
 
 本節每一個 instance 計數都來自各模型經溫度縮放後的 seed 17，不是跨 seed 平均，也沒有區間。
-各類別的圖在[重點](#重點)一節。
+各類別 critical miss 的圖在[重點](#重點)一節。
 
 這些結果只描述 locked cohort 中，語意與 instance 標註能互相佐證的最小 tertile
 instance。person 有 462 個樣本可支撐較穩定的 cohort 內描述；rider 與 motorcycle

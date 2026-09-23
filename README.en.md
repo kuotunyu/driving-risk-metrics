@@ -44,6 +44,8 @@ policy on nuPlan; it does not use these segmentation results.
 The paired bootstrap interval for the two best models **includes zero on mean IoU**, while
 the same comparison on recall over the vulnerable-road-user classes **excludes zero**.
 
+![Top two models: paired differences with bootstrap intervals on mean IoU and critical-class recall, drawn from rankings.json](docs/figures/headline-top-two.svg)
+
 <details>
 <summary>Full-precision statements</summary>
 
@@ -58,6 +60,16 @@ the critical-class recall difference excludes zero. The former does not establis
 equivalence or interchangeability; comparing these intervals is also not a direct
 test of a difference between the metrics. These are segmentation measurements,
 not tests of braking decisions or real-world safety.
+
+The figure below splits the same mean IoU difference by class. Mean IoU gives each of the
+nineteen classes equal weight, so the vulnerable-road-user gap reaches it diluted: the four
+highlighted classes together account for more than the whole difference. The bars are
+seed-averaged point estimates from `metrics.json` with no per-class interval, and the mean
+IoU interval itself includes zero.
+[`tests/contract/test_committed_figures.py`](tests/contract/test_committed_figures.py)
+redraws every figure from the evidence and checks this decomposition on the released metrics.
+
+![Per-class contribution to the mean IoU difference between the top two models, critical classes highlighted, drawn from metrics.json](docs/figures/miou-gap-by-class.svg)
 
 Ranking is not the issue here. The order of the three models is the same under all
 three metrics, and that is reported as plainly as a reversal would have been:
@@ -103,7 +115,7 @@ scores every annotated instance with equal weight, and calls an instance a
 grouped into size tertiles learned from the training split alone.
 
 Every instance count in this section comes from seed 17 of each model after temperature
-scaling, not from a mean over seeds, and carries no interval. The per-class figure is under
+scaling, not from a mean over seeds, and carries no interval. The critical-miss figure is under
 [At a glance](#at-a-glance).
 
 These results cover only smallest-tertile instances in the locked cohort whose

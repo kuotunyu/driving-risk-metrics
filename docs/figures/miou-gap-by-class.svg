@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="586" viewBox="0 0 760 586" role="img" aria-label="Per-class contribution to the mean IoU difference, SegFormer-B2 minus ConvNeXtV2-Tiny">
+<rect width="760" height="586" fill="#ffffff"/>
+<text x="8" y="20" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold">Per-class contribution to the mean IoU difference, SegFormer-B2 minus ConvNeXtV2-Tiny</text>
+<text x="8" y="36" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#555555">each bar: the class IoU difference divided by the number of classes; the bars sum to the mean IoU difference</text>
+<text x="8" y="52" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#555555">seed-averaged point estimates from metrics.json; no per-class interval was computed</text>
+<rect x="8" y="59" width="10" height="10" fill="#c0392b"/>
+<text x="22" y="68" font-family="Helvetica, Arial, sans-serif" font-size="12">critical classes (vulnerable road users)</text>
+<rect x="300" y="59" width="10" height="10" fill="#7f8c8d"/>
+<text x="314" y="68" font-family="Helvetica, Arial, sans-serif" font-size="12">other classes</text>
+<line class="zero" x1="600.67" y1="84" x2="600.67" y2="534" stroke="#999999" stroke-dasharray="4 3"/>
+<text x="322" y="98.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">rider</text>
+<rect class="bar critical" x="510.52" y="88.00" width="90.15" height="12" fill="#c0392b"/>
+<text x="322" y="118.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">bicycle</text>
+<rect class="bar critical" x="519.56" y="108.00" width="81.11" height="12" fill="#c0392b"/>
+<text x="322" y="138.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">person</text>
+<rect class="bar critical" x="556.92" y="128.00" width="43.74" height="12" fill="#c0392b"/>
+<text x="322" y="158.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">pole</text>
+<rect class="bar" x="557.90" y="148.00" width="42.77" height="12" fill="#7f8c8d"/>
+<text x="322" y="178.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">motorcycle</text>
+<rect class="bar critical" x="569.39" y="168.00" width="31.28" height="12" fill="#c0392b"/>
+<text x="322" y="198.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">traffic_light</text>
+<rect class="bar" x="574.10" y="188.00" width="26.56" height="12" fill="#7f8c8d"/>
+<text x="322" y="218.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">truck</text>
+<rect class="bar" x="580.28" y="208.00" width="20.39" height="12" fill="#7f8c8d"/>
+<text x="322" y="238.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">traffic_sign</text>
+<rect class="bar" x="583.64" y="228.00" width="17.03" height="12" fill="#7f8c8d"/>
+<text x="322" y="258.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">fence</text>
+<rect class="bar" x="593.34" y="248.00" width="7.33" height="12" fill="#7f8c8d"/>
+<text x="322" y="278.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">terrain</text>
+<rect class="bar" x="595.78" y="268.00" width="4.88" height="12" fill="#7f8c8d"/>
+<text x="322" y="298.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">car</text>
+<rect class="bar" x="596.26" y="288.00" width="4.41" height="12" fill="#7f8c8d"/>
+<text x="322" y="318.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">vegetation</text>
+<rect class="bar" x="600.09" y="308.00" width="0.58" height="12" fill="#7f8c8d"/>
+<text x="322" y="338.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">train</text>
+<rect class="bar" x="600.67" y="328.00" width="0.00" height="12" fill="#7f8c8d"/>
+<text x="322" y="358.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">road</text>
+<rect class="bar" x="600.67" y="348.00" width="0.02" height="12" fill="#7f8c8d"/>
+<text x="322" y="378.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">building</text>
+<rect class="bar" x="600.67" y="368.00" width="0.75" height="12" fill="#7f8c8d"/>
+<text x="322" y="398.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">sidewalk</text>
+<rect class="bar" x="600.67" y="388.00" width="0.85" height="12" fill="#7f8c8d"/>
+<text x="322" y="418.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">sky</text>
+<rect class="bar" x="600.67" y="408.00" width="3.05" height="12" fill="#7f8c8d"/>
+<text x="322" y="438.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">bus</text>
+<rect class="bar" x="600.67" y="428.00" width="47.16" height="12" fill="#7f8c8d"/>
+<text x="322" y="458.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">wall</text>
+<rect class="bar" x="600.67" y="448.00" width="92.22" height="12" fill="#7f8c8d"/>
+<line x1="8" y1="469" x2="736" y2="469" stroke="#cccccc"/>
+<text x="322" y="488.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">critical classes, combined</text>
+<rect class="combined" x="354.39" y="478.00" width="246.27" height="12" fill="#c0392b"/>
+<text x="322" y="508.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">other classes, combined</text>
+<rect class="combined" x="600.67" y="498.00" width="20.10" height="12" fill="#7f8c8d"/>
+<text x="322" y="528.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">mean IoU difference</text>
+<rect class="combined" x="374.50" y="518.00" width="226.17" height="12" fill="#1f3a5f"/>
+<line x1="330" y1="542.00" x2="736" y2="542.00" stroke="#333333" stroke-width="1"/>
+<line x1="330.00" y1="542.00" x2="330.00" y2="547.00" stroke="#333333"/>
+<text x="330.00" y="560.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">-0.012</text>
+<line x1="375.11" y1="542.00" x2="375.11" y2="547.00" stroke="#333333"/>
+<text x="375.11" y="560.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">-0.01</text>
+<line x1="420.22" y1="542.00" x2="420.22" y2="547.00" stroke="#333333"/>
+<text x="420.22" y="560.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">-0.008</text>
+<line x1="465.33" y1="542.00" x2="465.33" y2="547.00" stroke="#333333"/>
+<text x="465.33" y="560.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">-0.006</text>
+<line x1="510.44" y1="542.00" x2="510.44" y2="547.00" stroke="#333333"/>
+<text x="510.44" y="560.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">-0.004</text>
+<line x1="555.56" y1="542.00" x2="555.56" y2="547.00" stroke="#333333"/>
+<text x="555.56" y="560.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">-0.002</text>
+<line x1="600.67" y1="542.00" x2="600.67" y2="547.00" stroke="#333333"/>
+<text x="600.67" y="560.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">0</text>
+<line x1="645.78" y1="542.00" x2="645.78" y2="547.00" stroke="#333333"/>
+<text x="645.78" y="560.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">0.002</text>
+<line x1="690.89" y1="542.00" x2="690.89" y2="547.00" stroke="#333333"/>
+<text x="690.89" y="560.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">0.004</text>
+<line x1="736.00" y1="542.00" x2="736.00" y2="547.00" stroke="#333333"/>
+<text x="736.00" y="560.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">0.006</text>
+</svg>
