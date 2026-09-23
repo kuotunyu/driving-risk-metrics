@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="144" viewBox="0 0 760 144" role="img" aria-label="Paired differences between the top two models, SegFormer-B2 minus ConvNeXtV2-Tiny">
+<rect width="760" height="144" fill="#ffffff"/>
+<text x="8" y="20" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="bold">Paired differences between the top two models, SegFormer-B2 minus ConvNeXtV2-Tiny</text>
+<text x="8" y="36" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#555555">filled: interval excludes zero; hollow: interval includes zero</text>
+<line class="zero" x1="654.80" y1="48" x2="654.80" y2="100" stroke="#999999" stroke-dasharray="4 3"/>
+<g class="row includes-zero">
+<text x="322" y="65.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">mean IoU</text>
+<line x1="474.14" y1="61.00" x2="673.78" y2="61.00" stroke="#1f3a5f" stroke-width="2"/>
+<circle cx="573.38" cy="61.00" r="4.5" fill="#ffffff" stroke="#1f3a5f" stroke-width="2"/>
+</g>
+<g class="row excludes-zero">
+<text x="322" y="91.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="end">critical-class recall</text>
+<line x1="330.15" y1="87.00" x2="589.46" y2="87.00" stroke="#1f3a5f" stroke-width="2"/>
+<circle cx="465.57" cy="87.00" r="4.5" fill="#1f3a5f" stroke="#1f3a5f" stroke-width="2"/>
+</g>
+<line x1="330" y1="108.00" x2="736" y2="108.00" stroke="#333333" stroke-width="1"/>
+<line x1="330.00" y1="108.00" x2="330.00" y2="113.00" stroke="#333333"/>
+<text x="330.00" y="126.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">-0.04</text>
+<line x1="411.20" y1="108.00" x2="411.20" y2="113.00" stroke="#333333"/>
+<text x="411.20" y="126.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">-0.03</text>
+<line x1="492.40" y1="108.00" x2="492.40" y2="113.00" stroke="#333333"/>
+<text x="492.40" y="126.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">-0.02</text>
+<line x1="573.60" y1="108.00" x2="573.60" y2="113.00" stroke="#333333"/>
+<text x="573.60" y="126.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">-0.01</text>
+<line x1="654.80" y1="108.00" x2="654.80" y2="113.00" stroke="#333333"/>
+<text x="654.80" y="126.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">0</text>
+<line x1="736.00" y1="108.00" x2="736.00" y2="113.00" stroke="#333333"/>
+<text x="736.00" y="126.00" font-family="Helvetica, Arial, sans-serif" font-size="12" text-anchor="middle">0.01</text>
+</svg>

@@ -20,7 +20,7 @@ def figures_command(
     ],
     output_dir: Annotated[Path, typer.Option("--output-dir", file_okay=False)],
 ) -> None:
-    """Draw the two evidence figures as deterministic SVG from the committed documents."""
+    """Draw the evidence figures as deterministic SVG from the committed documents."""
 
     def operation() -> dict[str, Any]:
         result = FIGURES_SERVICE(artifacts_dir, output_dir)

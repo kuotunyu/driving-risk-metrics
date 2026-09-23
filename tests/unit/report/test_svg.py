@@ -1,8 +1,9 @@
-"""Contracts for the two deterministic SVG figures drawn from the evidence."""
+"""Contracts for the deterministic SVG figures drawn from the evidence."""
 
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -74,6 +75,49 @@ NOT_COMPUTED: dict[str, Any] = {
     "instances": {"not_computed": "the frozen area tertiles were not supplied"},
 }
 
+CLASS_NAMES = ["road", "person", "rider", "car", "wall", "motorcycle", "bicycle"]
+#: Four critical classes, as in the released risk profile, so four bars are highlighted.
+CRITICAL_IDS = [1, 2, 5, 6]
+IOU: dict[str, list[float]] = {
+    "alpha": [0.9, 0.5, 0.25, 0.75, 0.375, 0.5, 0.25],
+    "beta": [0.9, 0.625, 0.5, 0.75, 0.25, 0.625, 0.375],
+}
+
+
+def metrics_document(iou: dict[str, list[float]] = IOU) -> dict[str, Any]:
+    return {
+        "protocol_hash": PROTOCOL_HASH,
+        "dataset_manifest_hash": MANIFEST_HASH,
+        "metrics": {model: {"miou": sum(values) / len(values)} for model, values in iou.items()},
+        "per_class": {
+            "class_names": CLASS_NAMES,
+            "by_model": {model: {"iou": values} for model, values in iou.items()},
+        },
+        "risk_profiles": {"vru_priority": {"critical_class_ids": CRITICAL_IDS}},
+    }
+
+
+METRICS = metrics_document()
+
+
+def three_model_rankings(
+    miou: list[dict[str, Any]], critical_recall: list[dict[str, Any]]
+) -> dict[str, Any]:
+    return {
+        "comparisons": [{"baseline_order": ["alpha", "beta", "gamma"]}],
+        "separability": {"miou": miou, "critical_recall": critical_recall},
+    }
+
+
+def numbers_outside_ticks(figure: str) -> list[str]:
+    """Return every number printed in a text element that is not an axis tick label."""
+
+    found: list[str] = []
+    for attributes, content in re.findall(r"<text ([^>]*)>([^<]*)</text>", figure):
+        if 'text-anchor="middle"' not in attributes:
+            found.extend(re.findall(r"(?<![\w.])[-+]?\.?\d", content))
+    return found
+
 
 def load_svg_module() -> ModuleType:
     try:
@@ -87,6 +131,7 @@ def write_documents(directory: Path, *, extended: dict[str, Any] = EXTENDED) -> 
     directory.mkdir(parents=True, exist_ok=True)
     (directory / "rankings.json").write_text(json.dumps(RANKINGS, sort_keys=True), "utf-8")
     (directory / "extended-metrics.json").write_text(json.dumps(extended, sort_keys=True), "utf-8")
+    (directory / "metrics.json").write_text(json.dumps(METRICS, sort_keys=True), "utf-8")
     return directory
 
 
@@ -190,18 +235,21 @@ def test_two_runs_write_byte_identical_figures(tmp_path: Path) -> None:
     assert [path.name for path in first.figure_paths] == [
         "paired-differences.svg",
         "small-tertile-critical-misses.svg",
+        "headline-top-two.svg",
+        "miou-gap-by-class.svg",
     ]
     for left, right in zip(first.figure_paths, second.figure_paths, strict=True):
         assert left.read_bytes() == right.read_bytes()
         assert b"\r" not in left.read_bytes()
 
 
-def test_a_missing_document_fails_closed(tmp_path: Path) -> None:
+@pytest.mark.parametrize("document", ["rankings.json", "extended-metrics.json", "metrics.json"])
+def test_a_missing_document_fails_closed(tmp_path: Path, document: str) -> None:
     """Drawing from a partial evidence set would publish a figure nothing can audit."""
 
     svg = load_svg_module()
     directory = write_documents(tmp_path / "docs")
-    (directory / "extended-metrics.json").unlink()
+    (directory / document).unlink()
 
     with pytest.raises(FileNotFoundError, match=r"^report input is missing:"):
         svg.write_figures(directory, tmp_path / "out")
@@ -228,3 +276,143 @@ def test_report_package_exports_the_figure_entry_points() -> None:
     svg = load_svg_module()
     assert report.write_figures is svg.write_figures
     assert report.FiguresResult is svg.FiguresResult
+
+
+def test_the_headline_figure_draws_one_row_per_interval_metric_for_the_top_two() -> None:
+    """The lead comparison gets its own axis instead of a few pixels beside zero."""
+
+    svg = load_svg_module()
+
+    figure = svg.headline_top_two_svg(RANKINGS)
+
+    assert figure.count('class="row') == 2
+    assert figure.index(">mean IoU<") < figure.index(">critical-class recall<")
+    assert "pixel" not in figure
+    assert "alpha minus beta" in figure
+    assert 'class="zero"' in figure
+
+
+def test_the_headline_marker_is_hollow_when_the_interval_includes_zero() -> None:
+    """Filled and hollow markers carry the zero verdict, exactly as in the all-pairs figure."""
+
+    svg = load_svg_module()
+
+    figure = svg.headline_top_two_svg(RANKINGS)
+    includes = figure[figure.index('class="row includes-zero"') :]
+    excludes = figure[figure.index('class="row excludes-zero"') :]
+
+    assert includes[: includes.index("</g>")].count('fill="#ffffff"') == 1
+    assert excludes[: excludes.index("</g>")].count('fill="#1f3a5f"') == 1
+
+
+def test_the_top_two_are_found_by_name_and_keep_their_published_orientation() -> None:
+    """The pair's position in the list is not evidence; its model names are."""
+
+    svg = load_svg_module()
+    rankings = three_model_rankings(
+        [pair("alpha", "gamma", 0.1, 0.2), pair("beta", "alpha", -0.01, 0.03)],
+        [pair("beta", "gamma", 0.2, 0.3), pair("beta", "alpha", 0.01, 0.05)],
+    )
+
+    selected = svg.top_two_intervals(rankings)
+    figure = svg.headline_top_two_svg(rankings)
+
+    assert [(entry["left"], entry["right"]) for entry in selected.values()] == [
+        ("beta", "alpha"),
+        ("beta", "alpha"),
+    ]
+    assert list(selected) == ["miou", "critical_recall"]
+    assert selected["miou"]["low"] == -0.01
+    assert "beta minus alpha" in figure
+
+
+@pytest.mark.parametrize(
+    "miou",
+    [
+        [pair("alpha", "gamma", 0.1, 0.2)],
+        [pair("alpha", "beta", -0.01, 0.03), pair("beta", "alpha", -0.03, 0.01)],
+    ],
+    ids=["missing", "duplicate"],
+)
+def test_the_top_two_need_exactly_one_interval_per_metric(miou: list[dict[str, Any]]) -> None:
+    """A missing or ambiguous comparison must not be drawn as if it were the published one."""
+
+    svg = load_svg_module()
+    rankings = three_model_rankings(miou, [pair("alpha", "beta", 0.01, 0.05)])
+
+    with pytest.raises(
+        ValueError, match=r"^expected one miou interval between \['alpha', 'beta'\]"
+    ):
+        svg.top_two_intervals(rankings)
+
+
+def test_top_two_intervals_in_opposite_orientations_are_refused() -> None:
+    """One title names one subtraction; a row with the other sign would contradict it."""
+
+    svg = load_svg_module()
+    rankings = three_model_rankings(
+        [pair("alpha", "beta", -0.01, 0.03)], [pair("beta", "alpha", 0.01, 0.05)]
+    )
+
+    with pytest.raises(ValueError, match=r"^the top-two intervals disagree on orientation"):
+        svg.top_two_intervals(rankings)
+
+
+def test_the_gap_figure_highlights_exactly_the_critical_classes() -> None:
+    """The four vulnerable-road-user classes are the point of the figure and must stand out."""
+
+    svg = load_svg_module()
+
+    figure = svg.miou_gap_by_class_svg(METRICS, "alpha", "beta")
+
+    assert figure.count('class="bar critical"') == 4
+    assert figure.count('class="bar"') == len(CLASS_NAMES) - 4
+    assert figure.count('class="combined"') == 3
+    assert "critical classes (vulnerable road users)" in figure
+    assert "alpha minus beta" in figure
+
+
+def test_the_gap_figure_sorts_ascending_and_breaks_ties_by_class_order() -> None:
+    """The largest shortfall reads first, and equal bars never swap between builds."""
+
+    svg = load_svg_module()
+
+    figure = svg.miou_gap_by_class_svg(METRICS, "alpha", "beta")
+    labels = re.findall(r'text-anchor="end">([^<]+)</text>', figure)
+
+    assert labels == [
+        "rider",
+        "person",
+        "motorcycle",
+        "bicycle",
+        "road",
+        "car",
+        "wall",
+        "critical classes, combined",
+        "other classes, combined",
+        "mean IoU difference",
+    ]
+
+
+def test_a_decomposition_that_does_not_sum_to_the_published_difference_is_refused() -> None:
+    """Bars that do not add up to mean IoU would be a figure of some other quantity."""
+
+    svg = load_svg_module()
+    metrics = metrics_document()
+    metrics["metrics"]["alpha"]["miou"] += 1e-9
+
+    with pytest.raises(ValueError, match=r"^per-class contributions sum to"):
+        svg.miou_gap_by_class_svg(metrics, "alpha", "beta")
+
+
+def test_new_figures_print_no_number_outside_the_axis_ticks() -> None:
+    """Values are drawn, never printed, so no rounded result can reach a label."""
+
+    svg = load_svg_module()
+
+    for figure in (
+        svg.headline_top_two_svg(RANKINGS),
+        svg.miou_gap_by_class_svg(METRICS, "alpha", "beta"),
+    ):
+        assert numbers_outside_ticks(figure) == []
+        assert 'text-anchor="middle"' in figure
