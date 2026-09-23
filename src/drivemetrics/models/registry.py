@@ -1,18 +1,24 @@
 """The exactly three approved segmentation architectures and one construction policy.
 
-All three are contemporary and each represents a different pretraining paradigm,
-because pretraining is one of the strongest influences on how confident a model
-is, and confidence is what half the metrics in this study measure.
+All three are contemporary and each was chosen to represent a different
+pretraining paradigm, because pretraining is one of the strongest influences on
+how confident a model is, and confidence is what half the metrics in this study
+measure.
 
 - ``segformer_b2``: supervised hierarchical transformer with an all-MLP decoder.
 - ``upernet_convnextv2_tiny``: a modern convolutional backbone pretrained with
-  fully convolutional masked autoencoding, under a pyramid pooling decoder.
+  fully convolutional masked autoencoding and then fine-tuned on ImageNet-1k,
+  under a pyramid pooling decoder.
 - ``upernet_dinov2_small``: a self-supervised foundation-model vision
-  transformer backbone, under the same decoder.
+  transformer backbone, under the same decoder. As built here its
+  position-embedding table does not match the checkpoint's in shape, so that
+  table starts from random initialisation (see ``_load_backbone_weights``).
 
-Two share the UPerNet decoder on purpose. Holding the decoder fixed isolates the
-backbone and its pretraining, while SegFormer varies the decoder as well, so the
-comparison has both a controlled and an unconstrained axis.
+Two share the UPerNet decoder on purpose. Holding the decoder fixed removes it as
+a difference between those two, while SegFormer varies the decoder as well, so
+the comparison has both a controlled and an unconstrained axis. It does not
+isolate pretraining: the two backbones also differ in architecture, and the
+DINOv2 backbone does not receive every pretrained tensor.
 
 Every backbone is initialized from image-classification or self-supervised
 weights only, never from a checkpoint already trained for segmentation. Starting
@@ -60,24 +66,31 @@ DINOV2_SMALL_GEOMETRY: dict[str, Any] = {
 }
 
 
-def _load_backbone_weights(backbone: Any, checkpoint: str, loader: Any) -> None:
+def _load_backbone_weights(backbone: Any, checkpoint: str, loader: Any) -> tuple[str, ...]:
     """Copy classification or self-supervised weights into a segmentation backbone.
 
-    Only parameters that exist on both sides with matching shapes are copied.
-    The rest are the per-stage output norms the segmentation wrapper adds, which
-    have no counterpart in the pretrained model and must start fresh.
+    Only parameters that exist on both sides with matching shapes are copied;
+    every other backbone parameter keeps its random initialisation. For
+    ConvNeXtV2 those are the per-stage output norms the segmentation wrapper
+    adds, which have no counterpart in the pretrained model. For DINOv2 no
+    parameter lacks a counterpart, but one is skipped for its shape:
+    ``embeddings.position_embeddings``. ``DINOV2_SMALL_GEOMETRY`` leaves the
+    image size at the library default of 224 pixels, a table of 257 rows, while
+    the published checkpoint was built at 518 pixels, a table of 1370 rows.
+
+    Returns the checkpoint keys skipped for a shape mismatch, sorted, so the skip
+    can be seen rather than inferred. The build path does not use the value, and
+    which parameters load is unchanged.
     """
 
     source = loader.from_pretrained(checkpoint).state_dict()
     target = backbone.state_dict()
-    matched = {
-        key: value
-        for key, value in source.items()
-        if key in target and target[key].shape == value.shape
-    }
+    shared = [key for key in source if key in target]
+    matched = {key: source[key] for key in shared if target[key].shape == source[key].shape}
     if not matched:
         raise ValueError(f"no pretrained parameter matched the backbone from {checkpoint}")
     backbone.load_state_dict(matched, strict=False)
+    return tuple(sorted(key for key in shared if key not in matched))
 
 
 def _build_segformer(num_classes: int, pretrained: bool) -> Any:

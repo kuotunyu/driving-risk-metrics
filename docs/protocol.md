@@ -203,3 +203,37 @@ calibration.
    which occurred.
 4. **Every published number carries its evidence type** and traces to an artifact
    hash that can be recomputed.
+
+## Clarifications and deviations (noted 2026-09-23)
+
+Appended after the release. Nothing above this heading was edited.
+
+- **Deviations.** Instance coverage is published from one seed per model, and
+  intervals exist only for paired differences in three metrics, contrary to the
+  rule under Training that every reported number is a mean over seeds with an
+  interval. Both are recorded in
+  [`experiment-card.md`](experiment-card.md#deviations-from-the-stated-protocol-noted-2026-09-23),
+  together with the threats to validity.
+- **Expected calibration error.** The published ECE is the mean over classes of a
+  one-vs-rest classwise ECE. For each class, every scored pixel's predicted
+  probability for that class falls into one of fifteen fixed, equal-width bins
+  between zero and one. Each bin contributes the absolute gap between the fraction
+  of its pixels whose label is that class and their mean predicted probability,
+  weighted by the bin's share of all scored pixels. A class would be left out only
+  if no pixel had been scored at all: every scored pixel adds a probability to
+  every class, so all nineteen classes are averaged. The bin statistics are summed
+  over the cohort's images before the error is computed for each run, and the
+  published value is the mean over seeds
+  ([`calibration.py`](../src/drivemetrics/metrics/calibration.py)). Its magnitude
+  is not comparable with top-label ECE values, which bin only the highest
+  predicted probability of each pixel.
+- **Brier score.** The published Brier score is the squared difference between the
+  predicted probability vector and the one-hot label, summed over classes and
+  averaged over scored pixels, then averaged over seeds.
+- **Backbone checkpoints.** `facebook/convnextv2-tiny-1k-224` was pretrained by
+  fully convolutional masked autoencoding and then fine-tuned with supervision on
+  ImageNet-1k. The DINOv2 backbone did not load the checkpoint's position
+  embeddings; see the
+  [model card](model-card.md#known-weaknesses-measured-rather-than-assumed).
+  Differences between the three models are therefore differences between these
+  models as implemented, not between pretraining paradigms alone.

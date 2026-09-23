@@ -46,6 +46,14 @@ LIMITATIONS: tuple[str, ...] = (
     "Image-band results describe normalized image regions, not physical distance or depth.",
     "Confidence intervals come from the paired bootstrap named above. They are not"
     " hypothesis tests and are not a substitute for effect sizes.",
+    "Instance coverage comes from one seed per model, and intervals exist only for the"
+    " paired differences in mean IoU, critical-class recall and pixel accuracy. The"
+    " protocol asks for a mean over seeds with an interval for every reported number;"
+    " the experiment card records both deviations.",
+    "The DINOv2 backbone did not load the position embeddings of its checkpoint, whose"
+    " table did not match in shape, so they were trained from random initialisation."
+    " Its results describe that adapter as built here, not DINOv2 or self-supervised"
+    " pretraining.",
 )
 
 #: How the page names each approved model: the names the claims and the README use.

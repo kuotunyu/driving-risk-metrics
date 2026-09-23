@@ -9,8 +9,9 @@
 
 三個當代語意分割模型在 BDD100K 上以同一份凍結協定訓練，各跑三個 seed，最後在一組
 998 張影像的 locked cohort 上評估一次。這組 cohort 從未用於訓練、checkpoint 選擇、
-溫度校準或樣本挑選。三項指標的模型順序相同，但配對 bootstrap 對前兩名能否區分
-提供不同強度的證據；本 repository 也呈現像素平均容易遮蔽的 instance 層級失敗。
+溫度校準或樣本挑選。三項準確度指標的模型順序相同，但配對 bootstrap 對前兩名能否區分
+提供不同強度的證據；以信心為基礎的指標則多半偏向 mean IoU 第二名的 SegFormer-B2，
+但那只是沒有區間的點估計。本 repository 也呈現像素平均容易遮蔽的 instance 層級失敗。
 
 ## 重點
 
@@ -60,13 +61,21 @@ mean IoU 差值的區間包含零，並不能證明模型等效或可以互換�
 
 ![前兩名模型 mean IoU 差值的逐類別貢獻，標示出 critical 類別，由 metrics.json 繪製](docs/figures/miou-gap-by-class.svg)
 
-問題不在排名。三個模型的順序在三個指標下完全相同，而且這件事會和「出現反轉」一樣
+在三項準確度指標下，三個模型的順序完全相同，而且這件事會和「出現反轉」一樣
 直白地被報告出來：
 
 > 以 critical_recall 為三個模型排名，順序與以 miou 排名完全相同：未觀察到反轉。 <!-- claim: p1.ranking.critical-recall.no-reversal -->
 > 以 pixel_accuracy 為三個模型排名，順序與以 miou 排名完全相同：未觀察到反轉。 <!-- claim: p1.ranking.pixel-accuracy.no-reversal -->
 
-換指標改變的不是順序，而是這個 cohort 的 bootstrap 區間對區分前兩名提供多強的證據。
+在這三項指標之間，改變的不是順序，而是這個 cohort 的 bootstrap 區間對區分前兩名提供多強的證據。
+
+[`docs/protocol.md`](docs/protocol.md) 提出的問題也涵蓋校準與 selective risk 這類以信心為
+基礎的指標，而在這些指標上，前兩名多半不維持 mean IoU 的順序。無論是否經過溫度縮放，selective risk（AURC）與
+Brier score 都偏向 SegFormer-B2 而非 UperNet-ConvNeXtV2-Tiny，其中校準後的 Brier score
+只是些微領先；ECE 在溫度縮放前偏向 SegFormer-B2，縮放後則偏向 UperNet-ConvNeXtV2-Tiny。
+這些都是沒有區間的跨 seed 平均，只能說明方向，不能說明兩者可以區分。數值見線上報告的
+[Selective risk](https://kuotunyu.github.io/driving-risk-metrics/#selective-risk) 與
+[Calibration](https://kuotunyu.github.io/driving-risk-metrics/#calibration) 兩節。
 
 ![配對差與 bootstrap 區間，由 rankings.json 繪製](docs/figures/paired-differences.svg)
 
@@ -128,8 +137,12 @@ instance coverage 是在語意標註與 instance 標註互相佐證的 footprint
 
 ## 校準不一定有幫助
 
-溫度縮放在獨立的 calibration split 上擬合，再套用到 locked cohort。它降低了兩個模型的
-校準誤差，卻讓第三個變差：
+溫度縮放在獨立的 calibration split 上擬合，再套用到 locked cohort。這裡的 expected
+calibration error（ECE）是逐類別計算的：對每個
+類別，依像素對該類別的預測機率分進十五個等寬的 bin；每個 bin 貢獻其平均預測機率與該類別
+在其中實際出現頻率之間的差距，並以該 bin 的像素比例加權；最後把十九個類別的誤差平均。
+它的大小不能和一般常見的 top-label ECE 直接比較，完整定義見
+[`docs/protocol.md`](docs/protocol.md)。溫度縮放降低了兩個模型的這項誤差，卻讓第三個變差：
 
 > 溫度縮放降低了 UperNet-ConvNeXtV2-Tiny 在 locked cohort 上的 expected calibration error，從 0.004609387187919981 降到 0.0032855195799122。 <!-- claim: p1.calibration.convnextv2.ece -->
 > 溫度縮放降低了 UperNet-DINOv2-Small 在 locked cohort 上的 expected calibration error，從 0.005448051902032049 降到 0.003985369701553616。 <!-- claim: p1.calibration.dinov2.ece -->
@@ -141,6 +154,8 @@ instance coverage 是在語意標註與 instance 標註互相佐證的 footprint
 
 在本實驗中，原本 ECE 已低的模型經 calibration cohort 擬合的溫度縮放後，
 locked cohort 的 ECE 反而增加。逐 seed 數值補充了平均值，不能據此推論所有模型或資料集。
+SegFormer-B2 的 Brier score 也往同一方向移動：每一個 seed 在溫度縮放後都上升，另外兩個
+模型則下降。
 
 ## 樣本稀薄的類別會被標示，不會被藏起來
 
@@ -153,6 +168,10 @@ locked cohort 的 ECE 反而增加。逐 seed 數值補充了平均值，不能�
 準確率也隨用路人出現在畫面中的位置而變化：
 
 > 影像中間三分之一、也就是遠處用路人出現的區域，pixel accuracy 為：UperNet-ConvNeXtV2-Tiny 0.9063993962745598、SegFormer-B2 0.9039825378430191、UperNet-DINOv2-Small 0.8681091984773754。 <!-- claim: p1.bands.middle -->
+
+在上方與下方的 band，SegFormer-B2 些微領先 UperNet-ConvNeXtV2-Tiny；所有 band 數值都是
+沒有區間的跨 seed 平均，見
+[`extended-metrics.json`](docs/evidence/bdd100k_semseg_v1/extended-metrics.json)。
 
 這些 band 是正規化的影像列，不是深度，也不是實體距離。
 
@@ -260,6 +279,14 @@ BDD100K 不在此再散布，checkpoint 與約 54 GiB 的逐影像 prediction ar
   不是關於這些架構本身。
 - **量產安全論證。** instance coverage 與 risk-weighted cost 是評估工具，它們不是安全
   論證，也不能取代安全論證。
+- **把 risk-weighted cost 當成獨立的量測。** 在 `balanced` profile 下，它等於一減
+  pixel accuracy；在 `vru_priority` profile 下，因為 critical 類別的像素很少，它仍然跟著
+  像素錯誤率走；在 `drivable_boundary` profile 下，它對三個模型的排序也與像素錯誤率相同。它只計算 false negative，沒有任何成對混淆的成本。
+- **關於 DINOv2 或自監督預訓練的結論。** DINOv2 backbone 以函式庫預設的幾何設定建立，
+  所以它的 position embedding 表與 checkpoint 的形狀不符，被載入程式跳過，因而從隨機
+  初始化開始訓練。UperNet 只在單一 stride 上接收 backbone 的特徵，沒有多尺度 neck。
+  UperNet-DINOv2-Small 這一列描述的是這裡實作的 adapter，不是 DINOv2 或自監督預訓練本身；
+  詳見 [model card](docs/model-card.md#known-weaknesses-measured-rather-than-assumed)。
 
 ## 授權
 
