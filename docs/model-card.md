@@ -23,6 +23,23 @@ Every pretrained classification head is discarded and replaced with a fresh
 checkpoint is an ImageNet-1k classifier and this repository loads only its backbone.
 That message is the protocol working as specified, not a defect.
 
+## Third-party pretrained weights
+
+The backbone weights come from third parties and carry their own published terms.
+This table records what each source states, with links, as checked on 2026-09-23.
+It draws no legal conclusion.
+
+| Checkpoint | Paper | Licence as published |
+| --- | --- | --- |
+| `nvidia/mit-b2` | Xie et al., "SegFormer: Simple and Efficient Design for Semantic Segmentation with Transformers", NeurIPS 2021, [arXiv:2105.15203](https://arxiv.org/abs/2105.15203) | The [Hugging Face card](https://huggingface.co/nvidia/mit-b2) declares `license: other` and links the [NVIDIA Source Code License for SegFormer](https://github.com/NVlabs/SegFormer/blob/master/LICENSE), which restricts the Work and its derivative works to non-commercial use and defines that as "research or evaluation purposes only". |
+| `facebook/convnextv2-tiny-1k-224` | Woo et al., "ConvNeXt V2: Co-designing and Scaling ConvNets with Masked Autoencoders", CVPR 2023, [CVF open access](https://openaccess.thecvf.com/content/CVPR2023/html/Woo_ConvNeXt_V2_Co-Designing_and_Scaling_ConvNets_With_Masked_Autoencoders_CVPR_2023_paper.html) | The [Hugging Face card](https://huggingface.co/facebook/convnextv2-tiny-1k-224) declares `license: apache-2.0`. The [upstream ConvNeXt-V2 README](https://github.com/facebookresearch/ConvNeXt-V2#license) states that the project is released under the MIT license except the ImageNet pre-trained and fine-tuned models, which it lists as CC-BY-NC. The two sources differ, and this repository does not say which governs. |
+| `facebook/dinov2-small` | Oquab et al., "DINOv2: Learning Robust Visual Features without Supervision", Transactions on Machine Learning Research 2024, [arXiv:2304.07193](https://arxiv.org/abs/2304.07193) | The [Hugging Face card](https://huggingface.co/facebook/dinov2-small) declares `license: apache-2.0`, and the [upstream DINOv2 README](https://github.com/facebookresearch/dinov2#license) states that code and model weights are released under the Apache License 2.0. |
+
+The UperNet decoder follows Xiao et al., "Unified Perceptual Parsing for Scene
+Understanding", ECCV 2018 ([CVF open access](https://openaccess.thecvf.com/content_ECCV_2018/html/Tete_Xiao_Unified_Perceptual_Parsing_ECCV_2018_paper.html)).
+It is built from its configuration and trained from random initialisation; no
+pretrained UperNet weights are loaded.
+
 ## Training recipe, identical across the three except where the protocol differs
 
 | Setting | Value |
@@ -59,6 +76,11 @@ algorithms, so bit-identical retraining on CUDA is not guaranteed.
   pretraining paradigm, not a controlled comparison of the paradigms.
 - As a baseline to compare a new evaluation method against, since the prediction
   artifacts are stored and the analysis is deterministic.
+
+Anyone reusing these checkpoints, or weights derived from them, should review the
+upstream terms listed under
+[Third-party pretrained weights](#third-party-pretrained-weights); this repository
+makes no statement about their legal effect.
 
 ## What these models must not be used for
 

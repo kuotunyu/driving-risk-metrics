@@ -200,6 +200,7 @@ manifest 雜湊。兩道獨立檢查強制執行這件事，指令都列在
 - [`docs/experiment-card.md`](docs/experiment-card.md)：九次執行、雜湊與方法沿革。
 - [`docs/model-card.md`](docs/model-card.md)：三個架構與其允許用途。
 - [`docs/dataset-card.md`](docs/dataset-card.md)：BDD100K 來源、授權與凍結切分。
+- [`docs/related-work.md`](docs/related-work.md)：這些方法所依循或與之不同的既有研究，包括 Cityscapes 的 iIoU、溫度縮放與 risk–coverage 分析。
 
 工程與發布紀錄：
 
@@ -292,3 +293,7 @@ BDD100K 不在此再散布，checkpoint 與約 54 GiB 的逐影像 prediction ar
 
 MIT，見 [LICENSE](LICENSE)。BDD100K 由其作者以自身條款散布，不在此再散布，詳見
 [`docs/dataset-card.md`](docs/dataset-card.md)。
+
+三個預訓練 backbone 是第三方權重，各 checkpoint 已發布的條款並不相同，這裡也不散布任何
+checkpoint。每一個的論文與所發布的授權（附連結）列在
+[`docs/model-card.md`](docs/model-card.md#third-party-pretrained-weights)。

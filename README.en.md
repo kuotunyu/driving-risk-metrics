@@ -228,6 +228,7 @@ Research record:
 - [`docs/experiment-card.md`](docs/experiment-card.md) — the nine runs, their hashes and the method history.
 - [`docs/model-card.md`](docs/model-card.md) — the three architectures and their permitted use.
 - [`docs/dataset-card.md`](docs/dataset-card.md) — BDD100K provenance, licence and the frozen splits.
+- [`docs/related-work.md`](docs/related-work.md) — the published work these methods follow or depart from, including Cityscapes iIoU, temperature scaling and risk–coverage analysis.
 
 Engineering and release records:
 
@@ -333,3 +334,8 @@ output the claims cite.
 MIT, see [LICENSE](LICENSE). BDD100K is distributed by its authors under its own
 terms and is not redistributed here; see
 [`docs/dataset-card.md`](docs/dataset-card.md).
+
+The three pretrained backbones are third-party weights whose published terms
+differ from one checkpoint to another, and no checkpoint is redistributed here.
+Each one's paper and licence as published, with links, are listed in
+[`docs/model-card.md`](docs/model-card.md#third-party-pretrained-weights).
