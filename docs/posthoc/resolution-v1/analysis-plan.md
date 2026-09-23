@@ -132,6 +132,13 @@ two of the three models in the same category.
 If the three models fall into different categories, the overall conclusion is
 recorded as "model-dependent" and each model is reported separately.
 
+**Clarification (2026-09-23, added before any result existed).** B and C can
+hold at the same time, for example an interval of [0.01, 0.04]: a reliable
+improvement that is still inside the equivalence bound. The categories are
+checked in the order A, B, C, D and the first match applies, so that case is
+classified as B (partial support), because a lower bound above zero is evidence
+that resolution matters, however small.
+
 ### 4.4 Scale-mismatch diagnostic (decides whether C can stand)
 
 For a model, the `native` arm is treated as confounded by the train/test scale
