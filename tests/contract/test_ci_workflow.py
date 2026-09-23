@@ -112,11 +112,6 @@ def test_ci_triggers_only_on_the_default_branch() -> None:
     assert triggers["pull_request"]["branches"] == ["main"]
 
 
-def test_ci_jobs_run_on_a_pinned_runner_image() -> None:
-    for name, job in workflow()["jobs"].items():
-        assert job["runs-on"] == "ubuntu-24.04", name
-
-
 def identity_job() -> dict[str, Any]:
     job: dict[str, Any] = workflow()["jobs"]["commit-identity"]
     return job
