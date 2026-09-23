@@ -49,7 +49,7 @@ def load_backends_module() -> ModuleType:
 
 
 class TinyModule(torch.nn.Module):
-    """One trainable one-by-one convolution wrapped in the torchvision layout."""
+    """One trainable one-by-one convolution exposing its logits on a `logits` attribute."""
 
     def __init__(self) -> None:
         super().__init__()

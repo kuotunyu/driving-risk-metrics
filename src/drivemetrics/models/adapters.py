@@ -27,12 +27,12 @@ class SegmentationAdapter:
     """Wrap one backend module behind the framework-independent model surface.
 
     Torch is imported lazily inside :meth:`logits`, so the pure metric core stays
-    importable in the base CPU environment. Both approved backend layouts are
-    normalized here: torchvision segmentation models return a mapping whose
-    ``out`` entry holds the logits, and SegFormer returns quarter-resolution
-    logits on a ``logits`` attribute. Every layout is resized to the input height
-    and width with bilinear interpolation so downstream metrics always compare
-    logits and masks on the same pixel grid.
+    importable in the base CPU environment. Every approved backend (SegFormer and
+    both UperNet variants) is a Hugging Face ``transformers`` module that exposes
+    its logits on a ``logits`` attribute; SegFormer's are at quarter resolution.
+    Every output is resized to the input height and width with bilinear
+    interpolation so downstream metrics always compare logits and masks on the
+    same pixel grid.
     """
 
     module: Any

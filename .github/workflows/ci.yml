@@ -2,16 +2,16 @@ name: CI
 
 on:
   push:
-    branches: [main, rebuild/v1]
+    branches: [main]
   pull_request:
-    branches: [main, rebuild/v1]
+    branches: [main]
 
 permissions:
   contents: read
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     env:
       CUDA_VISIBLE_DEVICES: ""
@@ -94,3 +94,59 @@ jobs:
             ci-logs/clock.tsv
             ci-logs/verify.log
             ci-logs/exit-code.txt
+
+  commit-identity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository history
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: New commits use the maintainer noreply identity
+        shell: bash
+        env:
+          RANGE_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          RANGE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          maintainer='61350295+kuotunyu@users.noreply.github.com'
+          # A missing, all-zero or unreachable base (first push, force-push)
+          # leaves only the head commit to check.
+          if [[ -z "${RANGE_BASE:-}" || "$RANGE_BASE" =~ ^0+$ ]] \
+            || ! git cat-file -e "${RANGE_BASE}^{commit}" 2>/dev/null; then
+            range=("$RANGE_HEAD" -1)
+          else
+            range=("$RANGE_BASE..$RANGE_HEAD")
+          fi
+          # Capture first so a failing git log fails the step instead of
+          # yielding an empty, passing loop.
+          commits=$(git log --format='%H%x09%an%x09%ae%x09%ce' "${range[@]}")
+          bad=0
+          checked=0
+          while IFS=$'\t' read -r sha author_name author_email committer_email; do
+            [[ -n "$sha" ]] || continue
+            checked=$((checked + 1))
+            if [[ "$author_email" != "$maintainer" ]]; then
+              echo "::error::$sha author email $author_email is not the maintainer noreply address"
+              bad=1
+            fi
+            if [[ "$author_name" == *"[bot]"* ]]; then
+              echo "::error::$sha author $author_name is a bot account"
+              bad=1
+            fi
+            if [[ "$committer_email" != "$maintainer" && "$committer_email" != "noreply@github.com" ]]; then
+              echo "::error::$sha committer email $committer_email is neither the maintainer nor GitHub"
+              bad=1
+            fi
+            body=$(git log -1 --format=%B "$sha")
+            if grep -qiE '^[[:space:]]*co-authored-by:' <<<"$body"; then
+              echo "::error::$sha message carries a co-author trailer"
+              bad=1
+            fi
+          done <<<"$commits"
+          echo "checked $checked commit(s) in ${range[*]}"
+          exit "$bad"
