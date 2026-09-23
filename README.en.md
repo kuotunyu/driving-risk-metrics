@@ -10,9 +10,11 @@ The projects use different datasets and study settings and do not form a validat
 Three contemporary semantic segmentation models were trained on BDD100K under one
 frozen protocol, three seeds each, and evaluated once on a locked 998-image cohort
 that was never used for training, checkpoint selection, temperature fitting or
-sample selection. All three metrics give the same model order, while their paired
-bootstrap intervals provide different strength of evidence for separating the top
-two. This repository also reports instance-level failures hidden by pixel averages.
+sample selection. The three accuracy metrics give the same model order, while their
+paired bootstrap intervals provide different strength of evidence for separating the
+top two. The confidence-based metrics mostly favour SegFormer-B2, second on mean
+IoU, as point estimates without intervals. This repository also reports
+instance-level failures hidden by pixel averages.
 
 ## At a glance
 
@@ -68,14 +70,25 @@ redraws every figure from the evidence and checks this decomposition on the rele
 
 ![Per-class contribution to the mean IoU difference between the top two models, critical classes highlighted, drawn from metrics.json](docs/figures/miou-gap-by-class.svg)
 
-Ranking is not the issue here. The order of the three models is the same under all
-three metrics, and that is reported as plainly as a reversal would have been:
+Under the three accuracy metrics the order of the three models does not change, and
+that is reported as plainly as a reversal would have been:
 
 > Ranking the three models by critical_recall produces the same order as ranking them by miou: no reversal is observed. <!-- claim: p1.ranking.critical-recall.no-reversal -->
 > Ranking the three models by pixel_accuracy produces the same order as ranking them by miou: no reversal is observed. <!-- claim: p1.ranking.pixel-accuracy.no-reversal -->
 
-What changes between metrics is not the order but how strongly this cohort's
+What changes between these metrics is not the order but how strongly this cohort's
 bootstrap interval supports separating the top two.
+
+The project's question in [`docs/protocol.md`](docs/protocol.md) also covers
+calibration, and there the mean IoU order of the top two mostly does not hold.
+Selective risk (AURC) and the Brier score favour SegFormer-B2 over
+UperNet-ConvNeXtV2-Tiny with or without temperature scaling, the calibrated Brier
+score only marginally; ECE favours SegFormer-B2 before temperature scaling and
+UperNet-ConvNeXtV2-Tiny after it. These are seed means without intervals, so they
+show a direction, not a separation. The values are in the
+[Selective risk](https://kuotunyu.github.io/driving-risk-metrics/#selective-risk) and
+[Calibration](https://kuotunyu.github.io/driving-risk-metrics/#calibration) sections
+of the live report.
 
 ![Paired differences with bootstrap intervals, drawn from rankings.json](docs/figures/paired-differences.svg)
 
@@ -146,7 +159,13 @@ attribute an annotation artefact to the model:
 
 Temperature scaling is fitted on a held-out calibration split and applied to the
 locked cohort. It lowered the calibration error of two models and raised it for the
-third:
+third. The expected calibration error (ECE) here is classwise: for each class, pixels
+are grouped by their predicted probability for that class into fifteen equal-width
+bins; each bin contributes the gap between its mean predicted probability and how
+often the class actually occurs in it, weighted by the bin's share of pixels; and the
+per-class errors are averaged over all nineteen classes. It is not comparable in size
+with the top-label ECE usually reported. [`docs/protocol.md`](docs/protocol.md) gives
+the full definition.
 
 > Temperature scaling lowered the expected calibration error of UperNet-ConvNeXtV2-Tiny on the locked cohort, from 0.004609387187919981 to 0.0032855195799122. <!-- claim: p1.calibration.convnextv2.ece -->
 > Temperature scaling lowered the expected calibration error of UperNet-DINOv2-Small on the locked cohort, from 0.005448051902032049 to 0.003985369701553616. <!-- claim: p1.calibration.dinov2.ece -->
@@ -160,6 +179,8 @@ consistency visible:
 In this experiment, temperature scaling fitted on the calibration cohort increased
 locked-cohort ECE for a model whose ECE was already low. The per-seed values
 complement the mean; this observation does not generalize to all models or datasets.
+The Brier score of SegFormer-B2 moved the same way, rising after temperature scaling
+in every seed, while it fell for the other two models.
 
 ## Thin classes are labelled, not hidden
 
@@ -173,6 +194,10 @@ marked thin.
 Accuracy also varies by where in the frame a road user appears:
 
 > Pixel accuracy in the middle third of the image, where distant road users appear, is 0.9063993962745598 for UperNet-ConvNeXtV2-Tiny, 0.9039825378430191 for SegFormer-B2, 0.8681091984773754 for UperNet-DINOv2-Small. <!-- claim: p1.bands.middle -->
+
+In the top and bottom bands SegFormer-B2 is marginally ahead of
+UperNet-ConvNeXtV2-Tiny; all band values are seed means without intervals, in
+[`extended-metrics.json`](docs/evidence/bdd100k_semseg_v1/extended-metrics.json).
 
 These bands are normalized image rows. They are not depth and not metric distance.
 
@@ -289,6 +314,17 @@ output the claims cite.
   architectures in general.
 - **A production safety case.** Instance coverage and risk-weighted cost are
   evaluation tools. They are not a safety argument and not a substitute for one.
+- **Risk-weighted cost as an independent measure.** Under the `balanced` profile it
+  equals one minus pixel accuracy. Under the `vru_priority` profile it still tracks
+  pixel error, because critical-class pixels are rare. It counts false negatives
+  only and has no pairwise confusion costs.
+- **Conclusions about DINOv2 or self-supervised pretraining.** The DINOv2 backbone
+  was built at the library's default geometry, so its position-embedding table did
+  not match the checkpoint's in shape; the loader skipped it, and it was trained from
+  random initialisation. UperNet receives the backbone's features at a single stride
+  with no multi-scale neck. The UperNet-DINOv2-Small row describes this adapter as
+  implemented, not DINOv2 or self-supervised pretraining; see the
+  [model card](docs/model-card.md#known-weaknesses-measured-rather-than-assumed).
 
 ## Licence
 

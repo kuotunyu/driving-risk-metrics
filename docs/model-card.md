@@ -3,14 +3,18 @@
 Three models were trained under `bdd100k_semseg_v1`, one per pretraining paradigm.
 Half the metrics in this study measure confidence, and pretraining shapes
 confidence, so the three were chosen to differ in how they were pretrained rather
-than only in size.
+than only in size. The results describe these three models as implemented here,
+not the pretraining paradigms in general: the checkpoints also differ in
+architecture and fine-tuning, and the DINOv2 adapter does not carry over every
+pretrained tensor (see
+[Known weaknesses](#known-weaknesses-measured-rather-than-assumed)).
 
 ## What was trained
 
 | Model name | Architecture | Pretrained backbone | Pretraining paradigm |
 | --- | --- | --- | --- |
 | `segformer_b2` | SegFormer-B2, hierarchical transformer encoder with an all-MLP decoder | `nvidia/mit-b2` | supervised ImageNet classification, 2021 |
-| `upernet_convnextv2_tiny` | UperNet decoder on a ConvNeXtV2-Tiny backbone | `facebook/convnextv2-tiny-1k-224` | fully convolutional masked autoencoding, 2023 |
+| `upernet_convnextv2_tiny` | UperNet decoder on a ConvNeXtV2-Tiny backbone | `facebook/convnextv2-tiny-1k-224` | fully convolutional masked autoencoding, then supervised ImageNet-1k fine-tuning, 2023 |
 | `upernet_dinov2_small` | UperNet decoder on a DINOv2-Small backbone | `facebook/dinov2-small` | self-supervised distillation, 2023 |
 
 Every pretrained classification head is discarded and replaced with a fresh
@@ -42,15 +46,17 @@ evaluation, taken once.
 
 Nine checkpoints, all distinct, listed with their SHA-256 and fitted temperature in
 [`experiment-card.md`](experiment-card.md). The weights are not redistributed in
-this repository. Their digests are published so that a reader who obtains or
-reproduces them can prove they hold the same artifact the results were computed
-from.
+this repository. Their digests are published so that a reader who obtains them
+can prove they hold the same artifact the results were computed from. Training
+sets cuDNN to deterministic mode but does not enable PyTorch's deterministic
+algorithms, so bit-identical retraining on CUDA is not guaranteed.
 
 ## What these models may be used for
 
 - Reproducing the measurements in this repository from the same cohort and protocol.
-- Studying how pretraining paradigm relates to confidence calibration and to
-  instance-level coverage on road scenes.
+- Studying how these three models, as implemented here, differ in confidence
+  calibration and instance-level coverage on road scenes. They are one model per
+  pretraining paradigm, not a controlled comparison of the paradigms.
 - As a baseline to compare a new evaluation method against, since the prediction
   artifacts are stored and the analysis is deterministic.
 
@@ -77,6 +83,22 @@ from.
 - Temperature scaling raised `segformer_b2`'s calibration error on the locked
   cohort while lowering the other two models'. The per-seed values are published so
   that this can be read rather than inferred.
+- The `upernet_dinov2_small` row is evidence about this adapter as implemented,
+  not about DINOv2 or self-supervised pretraining. The backbone is configured at
+  the library's default 224-pixel geometry, so its position-embedding table has
+  257 rows, while the `facebook/dinov2-small` checkpoint was built at 518 pixels
+  with 1370 rows. The loader copies only same-shape tensors, so it skipped that
+  table, which was therefore trained from random initialisation; every other
+  backbone tensor was copied. UperNet receives the outputs of transformer layers
+  nine to twelve, all at one 1/14 stride, with no neck that turns them into a
+  multi-scale pyramid. Neither side of the 512 by 1024 canvas (height by width)
+  is a multiple of the 14-pixel patch, so the patch grid covers 504 by 1022
+  pixels: the bottom eight canvas rows never reach the backbone, and the logits
+  are bilinearly resized to the full canvas, which stretches the predictions
+  vertically by about 1.6 percent. How much of this model's gap to the other two
+  these choices account for was not measured. The code is `DINOV2_SMALL_GEOMETRY`
+  and `_load_backbone_weights` in
+  [`src/drivemetrics/models/registry.py`](../src/drivemetrics/models/registry.py).
 
 ## Provenance
 

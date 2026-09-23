@@ -366,6 +366,11 @@ manifest, over the <code>{{ ground_truth.split_name }}</code> split.
 {% endif %}
 {% if instances.not_computed %}
 <p>Instance coverage: not computed. {{ instances.not_computed }}.</p>
+{% else %}
+<p>
+Each model's instance counts come from one run, its first approved seed after
+temperature scaling, not from a mean over seeds, and carry no interval.
+</p>
 {% endif %}
 {% for row in instances.rows %}
 <h3>{{ row.model }}</h3>

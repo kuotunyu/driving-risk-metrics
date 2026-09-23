@@ -675,6 +675,27 @@ def test_instance_coverage_is_published_by_class_and_by_tertile(tmp_path: Path) 
     assert "0.94" in page
 
 
+def test_the_instance_section_says_its_counts_come_from_one_seed(tmp_path: Path) -> None:
+    """Counts from one run, under a page that states three seeds, would read as a seed mean."""
+
+    result = build(tmp_path)
+    page = result.index_path.read_text(encoding="utf-8")
+
+    assert "not from a mean over seeds" in page
+
+
+def test_the_limitations_name_the_single_seed_counts_and_the_dinov2_adapter(
+    tmp_path: Path,
+) -> None:
+    """A deviation disclosed only in the cards would be missing from the page most readers see."""
+
+    result = build(tmp_path)
+    page = result.index_path.read_text(encoding="utf-8")
+
+    assert "Instance coverage comes from one seed per model" in page
+    assert "did not load the position embeddings of its checkpoint" in page
+
+
 def test_selective_risk_states_where_its_curve_is_defined(tmp_path: Path) -> None:
     """An AURC over a quantized curve is not the AURC of a continuous one."""
 
