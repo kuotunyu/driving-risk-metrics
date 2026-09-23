@@ -15,6 +15,8 @@ support. Frozen cohort hashes and the reproduction command live in
 | Ignore index | 255 |
 | Source geometry | 1280 × 720 |
 | Licence | The BDD100K licence shipped with the distribution |
+| Licence text, public copy | [`doc/source/license.rst`](https://github.com/bdd100k/bdd100k/blob/master/doc/source/license.rst) in the BDD100K code repository, which separates the licence of the repository's code from the licence of the data and labels |
+| Citation | Yu, F., Chen, H., Wang, X., Xian, W., Chen, Y., Liu, F., Madhavan, V., Darrell, T. "BDD100K: A Diverse Driving Dataset for Heterogeneous Multitask Learning". CVPR 2020. [CVF open access](https://openaccess.thecvf.com/content_CVPR_2020/html/Yu_BDD100K_A_Diverse_Driving_Dataset_for_Heterogeneous_Multitask_Learning_CVPR_2020_paper.html) |
 
 The dataset is not redistributed by this repository, and no image, mask, or
 manifest is committed. Users supply their own licensed copy and point
