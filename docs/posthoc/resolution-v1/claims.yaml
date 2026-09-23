@@ -1,0 +1,68 @@
+allowed_evidence_types:
+- observed
+- derived
+- synthetic
+- illustrative
+claim_required_fields:
+- claim_id
+- text
+- evidence_type
+- protocol_hash
+- dataset_manifest_hash
+- artifact_path
+- metric_path
+- status
+allowed_statuses:
+- draft
+- verified
+- rejected
+- superseded
+claims:
+- claim_id: p1.posthoc.resolution.counts
+  text: The calibration split holds 700 images; 127 of them contain the 355 corroborated small-tertile
+    person instances every arm is scored on.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: 9f7288d24227678174eb596ed59fdc6c6879b8e01ae554191eef72e1a375b097
+  artifact_path: docs/posthoc/resolution-v1/evidence/resolution-evidence.json
+  metric_path: /counts
+  status: verified
+- claim_id: p1.posthoc.resolution.segformer
+  text: Post-release, on the calibration split and averaged over three seeds, SegFormer-B2 misses 0.748356807511737
+    of small people at the formal input scale, 0.6328638497652582 at s085 and 0.6582159624413145 at native;
+    the pre-registered formal minus native difference is 0.09014084507042254 with Bonferroni-adjusted
+    bootstrap interval 0.034651028223118975 to 0.1461138365633627 (category B). Seed-mean mIoU is 0.5550429656739747
+    at formal and 0.5280155107415259 at native, and the large-person formal minus native difference is
+    -0.04368471035137702 (descriptive interval -0.07867835877188757 to -0.013070074826588044).
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: 9f7288d24227678174eb596ed59fdc6c6879b8e01ae554191eef72e1a375b097
+  artifact_path: docs/posthoc/resolution-v1/evidence/resolution-evidence.json
+  metric_path: /models/segformer_b2
+  status: verified
+- claim_id: p1.posthoc.resolution.convnextv2
+  text: Post-release, on the calibration split and averaged over three seeds, UperNet-ConvNeXtV2-Tiny
+    misses 0.7154929577464789 of small people at the formal input scale, 0.6901408450704225 at s085 and
+    0.6910798122065728 at native; the pre-registered formal minus native difference is 0.024413145539906103
+    with Bonferroni-adjusted bootstrap interval -0.03721911359801041 to 0.08819262131391055 (category
+    D). Seed-mean mIoU is 0.5922691064211247 at formal and 0.5508155405050342 at native, and the large-person
+    formal minus native difference is -0.07027540360873694 (descriptive interval -0.110128667355806 to -0.03526683370625093).
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: 9f7288d24227678174eb596ed59fdc6c6879b8e01ae554191eef72e1a375b097
+  artifact_path: docs/posthoc/resolution-v1/evidence/resolution-evidence.json
+  metric_path: /models/upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.resolution.dinov2
+  text: Post-release, on the calibration split and averaged over three seeds, UperNet-DINOv2-Small misses
+    0.819718309859155 of small people at the formal input scale, 0.828169014084507 at s085 and 0.7718309859154929
+    at native; the pre-registered formal minus native difference is 0.04788732394366197 with Bonferroni-adjusted
+    bootstrap interval 0.009727512833426735 to 0.08468021585186486 (category B). Seed-mean mIoU is 0.43725834765745075
+    at formal and 0.4192257744570124 at native, and the large-person formal minus native difference is
+    -0.04368471035137702 (descriptive interval -0.07307316932316933 to -0.016285982892402222).
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: 9f7288d24227678174eb596ed59fdc6c6879b8e01ae554191eef72e1a375b097
+  artifact_path: docs/posthoc/resolution-v1/evidence/resolution-evidence.json
+  metric_path: /models/upernet_dinov2_small
+  status: verified

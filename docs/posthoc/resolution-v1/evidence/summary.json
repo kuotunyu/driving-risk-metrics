@@ -1,0 +1,2719 @@
+{
+  "analysis_plan": "docs/posthoc/resolution-v1/analysis-plan.md",
+  "counts": {
+    "images": 700,
+    "images_with_small_person": 127,
+    "small_person_instances": 355
+  },
+  "overall": "B",
+  "primary": {
+    "segformer_b2": {
+      "category": "B",
+      "critical_misses": {
+        "formal": {
+          "segformer_b2-seed-17": 268,
+          "segformer_b2-seed-42": 267,
+          "segformer_b2-seed-73": 262
+        },
+        "native": {
+          "segformer_b2-seed-17": 236,
+          "segformer_b2-seed-42": 233,
+          "segformer_b2-seed-73": 232
+        },
+        "s085": {
+          "segformer_b2-seed-17": 222,
+          "segformer_b2-seed-42": 229,
+          "segformer_b2-seed-73": 223
+        }
+      },
+      "downgraded_from": null,
+      "formal_minus_native": {
+        "estimate": 0.09014084507042254,
+        "instances": 355,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.1461138365633627,
+            "low": 0.034651028223118975
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.1355418231122236,
+            "low": 0.045311545722058755
+          }
+        ],
+        "per_seed": [
+          0.09014084507042254,
+          0.09577464788732394,
+          0.08450704225352113
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "formal_minus_s085": {
+        "estimate": 0.11549295774647887,
+        "instances": 355,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.18328579916815232,
+            "low": 0.0474594149400651
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.17155844240085696,
+            "low": 0.05956794314684049
+          }
+        ],
+        "per_seed": [
+          0.1295774647887324,
+          0.10704225352112676,
+          0.10985915492957747
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "large_person_formal_minus_native": {
+        "estimate": -0.04368471035137702,
+        "instances": 351,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": -0.00706699289074767,
+            "low": -0.08802935897614503
+          },
+          {
+            "confidence": 0.95,
+            "high": -0.013070074826588044,
+            "low": -0.07867835877188757
+          }
+        ],
+        "per_seed": [
+          -0.037037037037037035,
+          -0.042735042735042736,
+          -0.05128205128205128
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "runs": [
+        "segformer_b2-seed-17",
+        "segformer_b2-seed-42",
+        "segformer_b2-seed-73"
+      ],
+      "scale_mismatch": {
+        "confounded": true,
+        "large_person_native_worse": true,
+        "miou_drop_exceeds_limit": true,
+        "miou_drop_formal_minus_native": 0.027027454932448847
+      }
+    },
+    "upernet_convnextv2_tiny": {
+      "category": "D",
+      "critical_misses": {
+        "formal": {
+          "upernet_convnextv2_tiny-seed-17": 248,
+          "upernet_convnextv2_tiny-seed-42": 255,
+          "upernet_convnextv2_tiny-seed-73": 259
+        },
+        "native": {
+          "upernet_convnextv2_tiny-seed-17": 236,
+          "upernet_convnextv2_tiny-seed-42": 254,
+          "upernet_convnextv2_tiny-seed-73": 246
+        },
+        "s085": {
+          "upernet_convnextv2_tiny-seed-17": 238,
+          "upernet_convnextv2_tiny-seed-42": 252,
+          "upernet_convnextv2_tiny-seed-73": 245
+        }
+      },
+      "downgraded_from": null,
+      "formal_minus_native": {
+        "estimate": 0.024413145539906103,
+        "instances": 355,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.08819262131391055,
+            "low": -0.03721911359801041
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.07730567375886524,
+            "low": -0.027061069039951854
+          }
+        ],
+        "per_seed": [
+          0.03380281690140845,
+          0.0028169014084507044,
+          0.036619718309859155
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "formal_minus_s085": {
+        "estimate": 0.02535211267605634,
+        "instances": 355,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.0737582379209948,
+            "low": -0.02158673379261614
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.0660105394961606,
+            "low": -0.011906406208892389
+          }
+        ],
+        "per_seed": [
+          0.028169014084507043,
+          0.008450704225352112,
+          0.03943661971830986
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "large_person_formal_minus_native": {
+        "estimate": -0.07027540360873694,
+        "instances": 351,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": -0.028535572171935756,
+            "low": -0.12092961812495143
+          },
+          {
+            "confidence": 0.95,
+            "high": -0.03526683370625093,
+            "low": -0.110128667355806
+          }
+        ],
+        "per_seed": [
+          -0.08262108262108261,
+          -0.08547008547008547,
+          -0.042735042735042736
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "runs": [
+        "upernet_convnextv2_tiny-seed-17",
+        "upernet_convnextv2_tiny-seed-42",
+        "upernet_convnextv2_tiny-seed-73"
+      ],
+      "scale_mismatch": {
+        "confounded": true,
+        "large_person_native_worse": true,
+        "miou_drop_exceeds_limit": true,
+        "miou_drop_formal_minus_native": 0.04145356591609051
+      }
+    },
+    "upernet_dinov2_small": {
+      "category": "B",
+      "critical_misses": {
+        "formal": {
+          "upernet_dinov2_small-seed-17": 297,
+          "upernet_dinov2_small-seed-42": 294,
+          "upernet_dinov2_small-seed-73": 282
+        },
+        "native": {
+          "upernet_dinov2_small-seed-17": 273,
+          "upernet_dinov2_small-seed-42": 275,
+          "upernet_dinov2_small-seed-73": 274
+        },
+        "s085": {
+          "upernet_dinov2_small-seed-17": 289,
+          "upernet_dinov2_small-seed-42": 298,
+          "upernet_dinov2_small-seed-73": 295
+        }
+      },
+      "downgraded_from": null,
+      "formal_minus_native": {
+        "estimate": 0.04788732394366197,
+        "instances": 355,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.08468021585186486,
+            "low": 0.009727512833426735
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.07774947079976198,
+            "low": 0.017345532624022574
+          }
+        ],
+        "per_seed": [
+          0.0676056338028169,
+          0.05352112676056338,
+          0.022535211267605635
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "formal_minus_s085": {
+        "estimate": -0.008450704225352112,
+        "instances": 355,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.029595086196660146,
+            "low": -0.0447265382526381
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.023045504678549825,
+            "low": -0.03785612047167389
+          }
+        ],
+        "per_seed": [
+          0.022535211267605635,
+          -0.011267605633802818,
+          -0.036619718309859155
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "large_person_formal_minus_native": {
+        "estimate": -0.04368471035137702,
+        "instances": 351,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": -0.009679716410853132,
+            "low": -0.07920243756819628
+          },
+          {
+            "confidence": 0.95,
+            "high": -0.016285982892402222,
+            "low": -0.07307316932316933
+          }
+        ],
+        "per_seed": [
+          -0.005698005698005698,
+          -0.10541310541310542,
+          -0.019943019943019943
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "runs": [
+        "upernet_dinov2_small-seed-17",
+        "upernet_dinov2_small-seed-42",
+        "upernet_dinov2_small-seed-73"
+      ],
+      "scale_mismatch": {
+        "confounded": true,
+        "large_person_native_worse": true,
+        "miou_drop_exceeds_limit": false,
+        "miou_drop_formal_minus_native": 0.01803257320043833
+      }
+    }
+  },
+  "schema_version": "driving-risk-resolution-summary/v1",
+  "secondary": {
+    "dose_response": {
+      "segformer_b2": {
+        "monotone_non_increasing": false,
+        "steps": [
+          {
+            "arm": "formal",
+            "miss_rate": 0.748356807511737,
+            "scale": 0.7111111111111111
+          },
+          {
+            "arm": "s085",
+            "miss_rate": 0.6328638497652582,
+            "scale": 0.85
+          },
+          {
+            "arm": "native",
+            "miss_rate": 0.6582159624413145,
+            "scale": 1.0
+          }
+        ]
+      },
+      "upernet_convnextv2_tiny": {
+        "monotone_non_increasing": false,
+        "steps": [
+          {
+            "arm": "formal",
+            "miss_rate": 0.7154929577464789,
+            "scale": 0.7111111111111111
+          },
+          {
+            "arm": "s085",
+            "miss_rate": 0.6901408450704225,
+            "scale": 0.85
+          },
+          {
+            "arm": "native",
+            "miss_rate": 0.6910798122065728,
+            "scale": 1.0
+          }
+        ]
+      },
+      "upernet_dinov2_small": {
+        "monotone_non_increasing": false,
+        "steps": [
+          {
+            "arm": "formal",
+            "miss_rate": 0.819718309859155,
+            "scale": 0.7111111111111111
+          },
+          {
+            "arm": "s085",
+            "miss_rate": 0.828169014084507,
+            "scale": 0.85
+          },
+          {
+            "arm": "native",
+            "miss_rate": 0.7718309859154929,
+            "scale": 1.0
+          }
+        ]
+      }
+    },
+    "input_area_bins": {
+      "segformer_b2": {
+        "formal": [
+          {
+            "critical_misses": 3,
+            "high": 2.0,
+            "instances": 3,
+            "low": 1.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 2,
+            "high": 4.0,
+            "instances": 3,
+            "low": 2.0,
+            "miss_rate": 0.6666666666666666
+          },
+          {
+            "critical_misses": 6,
+            "high": 8.0,
+            "instances": 6,
+            "low": 4.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 29,
+            "high": 16.0,
+            "instances": 30,
+            "low": 8.0,
+            "miss_rate": 0.9666666666666667
+          },
+          {
+            "critical_misses": 91,
+            "high": 32.0,
+            "instances": 102,
+            "low": 16.0,
+            "miss_rate": 0.8921568627450981
+          },
+          {
+            "critical_misses": 217,
+            "high": 64.0,
+            "instances": 276,
+            "low": 32.0,
+            "miss_rate": 0.7862318840579711
+          },
+          {
+            "critical_misses": 293,
+            "high": 128.0,
+            "instances": 387,
+            "low": 64.0,
+            "miss_rate": 0.7571059431524548
+          },
+          {
+            "critical_misses": 281,
+            "high": 256.0,
+            "instances": 516,
+            "low": 128.0,
+            "miss_rate": 0.5445736434108527
+          },
+          {
+            "critical_misses": 167,
+            "high": 512.0,
+            "instances": 555,
+            "low": 256.0,
+            "miss_rate": 0.3009009009009009
+          },
+          {
+            "critical_misses": 87,
+            "high": 1024.0,
+            "instances": 513,
+            "low": 512.0,
+            "miss_rate": 0.1695906432748538
+          },
+          {
+            "critical_misses": 23,
+            "high": 2048.0,
+            "instances": 255,
+            "low": 1024.0,
+            "miss_rate": 0.09019607843137255
+          },
+          {
+            "critical_misses": 15,
+            "high": 4096.0,
+            "instances": 153,
+            "low": 2048.0,
+            "miss_rate": 0.09803921568627451
+          },
+          {
+            "critical_misses": 2,
+            "high": 8192.0,
+            "instances": 60,
+            "low": 4096.0,
+            "miss_rate": 0.03333333333333333
+          },
+          {
+            "critical_misses": 3,
+            "high": 16384.0,
+            "instances": 27,
+            "low": 8192.0,
+            "miss_rate": 0.1111111111111111
+          },
+          {
+            "critical_misses": 0,
+            "high": 32768.0,
+            "instances": 15,
+            "low": 16384.0,
+            "miss_rate": 0.0
+          },
+          {
+            "critical_misses": 3,
+            "high": 131072.0,
+            "instances": 3,
+            "low": 65536.0,
+            "miss_rate": 1.0
+          }
+        ],
+        "native": [
+          {
+            "critical_misses": 3,
+            "high": 4.0,
+            "instances": 3,
+            "low": 2.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 3,
+            "high": 8.0,
+            "instances": 3,
+            "low": 4.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 6,
+            "high": 16.0,
+            "instances": 6,
+            "low": 8.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 28,
+            "high": 32.0,
+            "instances": 30,
+            "low": 16.0,
+            "miss_rate": 0.9333333333333333
+          },
+          {
+            "critical_misses": 83,
+            "high": 64.0,
+            "instances": 102,
+            "low": 32.0,
+            "miss_rate": 0.8137254901960784
+          },
+          {
+            "critical_misses": 216,
+            "high": 128.0,
+            "instances": 282,
+            "low": 64.0,
+            "miss_rate": 0.7659574468085106
+          },
+          {
+            "critical_misses": 234,
+            "high": 256.0,
+            "instances": 393,
+            "low": 128.0,
+            "miss_rate": 0.5954198473282443
+          },
+          {
+            "critical_misses": 233,
+            "high": 512.0,
+            "instances": 522,
+            "low": 256.0,
+            "miss_rate": 0.446360153256705
+          },
+          {
+            "critical_misses": 152,
+            "high": 1024.0,
+            "instances": 555,
+            "low": 512.0,
+            "miss_rate": 0.27387387387387385
+          },
+          {
+            "critical_misses": 101,
+            "high": 2048.0,
+            "instances": 507,
+            "low": 1024.0,
+            "miss_rate": 0.1992110453648915
+          },
+          {
+            "critical_misses": 36,
+            "high": 4096.0,
+            "instances": 246,
+            "low": 2048.0,
+            "miss_rate": 0.14634146341463414
+          },
+          {
+            "critical_misses": 26,
+            "high": 8192.0,
+            "instances": 153,
+            "low": 4096.0,
+            "miss_rate": 0.16993464052287582
+          },
+          {
+            "critical_misses": 3,
+            "high": 16384.0,
+            "instances": 57,
+            "low": 8192.0,
+            "miss_rate": 0.05263157894736842
+          },
+          {
+            "critical_misses": 4,
+            "high": 32768.0,
+            "instances": 27,
+            "low": 16384.0,
+            "miss_rate": 0.14814814814814814
+          },
+          {
+            "critical_misses": 0,
+            "high": 65536.0,
+            "instances": 15,
+            "low": 32768.0,
+            "miss_rate": 0.0
+          },
+          {
+            "critical_misses": 3,
+            "high": 262144.0,
+            "instances": 3,
+            "low": 131072.0,
+            "miss_rate": 1.0
+          }
+        ],
+        "s085": [
+          {
+            "critical_misses": 3,
+            "high": 2.0,
+            "instances": 3,
+            "low": 1.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 6,
+            "high": 8.0,
+            "instances": 6,
+            "low": 4.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 12,
+            "high": 16.0,
+            "instances": 15,
+            "low": 8.0,
+            "miss_rate": 0.8
+          },
+          {
+            "critical_misses": 43,
+            "high": 32.0,
+            "instances": 54,
+            "low": 16.0,
+            "miss_rate": 0.7962962962962963
+          },
+          {
+            "critical_misses": 137,
+            "high": 64.0,
+            "instances": 171,
+            "low": 32.0,
+            "miss_rate": 0.8011695906432749
+          },
+          {
+            "critical_misses": 217,
+            "high": 128.0,
+            "instances": 336,
+            "low": 64.0,
+            "miss_rate": 0.6458333333333334
+          },
+          {
+            "critical_misses": 258,
+            "high": 256.0,
+            "instances": 486,
+            "low": 128.0,
+            "miss_rate": 0.5308641975308642
+          },
+          {
+            "critical_misses": 141,
+            "high": 512.0,
+            "instances": 534,
+            "low": 256.0,
+            "miss_rate": 0.2640449438202247
+          },
+          {
+            "critical_misses": 107,
+            "high": 1024.0,
+            "instances": 552,
+            "low": 512.0,
+            "miss_rate": 0.19384057971014493
+          },
+          {
+            "critical_misses": 51,
+            "high": 2048.0,
+            "instances": 393,
+            "low": 1024.0,
+            "miss_rate": 0.1297709923664122
+          },
+          {
+            "critical_misses": 28,
+            "high": 4096.0,
+            "instances": 195,
+            "low": 2048.0,
+            "miss_rate": 0.14358974358974358
+          },
+          {
+            "critical_misses": 2,
+            "high": 8192.0,
+            "instances": 93,
+            "low": 4096.0,
+            "miss_rate": 0.021505376344086023
+          },
+          {
+            "critical_misses": 5,
+            "high": 16384.0,
+            "instances": 42,
+            "low": 8192.0,
+            "miss_rate": 0.11904761904761904
+          },
+          {
+            "critical_misses": 0,
+            "high": 32768.0,
+            "instances": 18,
+            "low": 16384.0,
+            "miss_rate": 0.0
+          },
+          {
+            "critical_misses": 0,
+            "high": 65536.0,
+            "instances": 3,
+            "low": 32768.0,
+            "miss_rate": 0.0
+          },
+          {
+            "critical_misses": 3,
+            "high": 131072.0,
+            "instances": 3,
+            "low": 65536.0,
+            "miss_rate": 1.0
+          }
+        ]
+      },
+      "upernet_convnextv2_tiny": {
+        "formal": [
+          {
+            "critical_misses": 2,
+            "high": 2.0,
+            "instances": 3,
+            "low": 1.0,
+            "miss_rate": 0.6666666666666666
+          },
+          {
+            "critical_misses": 3,
+            "high": 4.0,
+            "instances": 3,
+            "low": 2.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 6,
+            "high": 8.0,
+            "instances": 6,
+            "low": 4.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 24,
+            "high": 16.0,
+            "instances": 30,
+            "low": 8.0,
+            "miss_rate": 0.8
+          },
+          {
+            "critical_misses": 88,
+            "high": 32.0,
+            "instances": 102,
+            "low": 16.0,
+            "miss_rate": 0.8627450980392157
+          },
+          {
+            "critical_misses": 222,
+            "high": 64.0,
+            "instances": 276,
+            "low": 32.0,
+            "miss_rate": 0.8043478260869565
+          },
+          {
+            "critical_misses": 265,
+            "high": 128.0,
+            "instances": 387,
+            "low": 64.0,
+            "miss_rate": 0.6847545219638242
+          },
+          {
+            "critical_misses": 255,
+            "high": 256.0,
+            "instances": 516,
+            "low": 128.0,
+            "miss_rate": 0.4941860465116279
+          },
+          {
+            "critical_misses": 151,
+            "high": 512.0,
+            "instances": 555,
+            "low": 256.0,
+            "miss_rate": 0.27207207207207207
+          },
+          {
+            "critical_misses": 98,
+            "high": 1024.0,
+            "instances": 513,
+            "low": 512.0,
+            "miss_rate": 0.19103313840155944
+          },
+          {
+            "critical_misses": 28,
+            "high": 2048.0,
+            "instances": 255,
+            "low": 1024.0,
+            "miss_rate": 0.10980392156862745
+          },
+          {
+            "critical_misses": 9,
+            "high": 4096.0,
+            "instances": 153,
+            "low": 2048.0,
+            "miss_rate": 0.058823529411764705
+          },
+          {
+            "critical_misses": 1,
+            "high": 8192.0,
+            "instances": 60,
+            "low": 4096.0,
+            "miss_rate": 0.016666666666666666
+          },
+          {
+            "critical_misses": 3,
+            "high": 16384.0,
+            "instances": 27,
+            "low": 8192.0,
+            "miss_rate": 0.1111111111111111
+          },
+          {
+            "critical_misses": 0,
+            "high": 32768.0,
+            "instances": 15,
+            "low": 16384.0,
+            "miss_rate": 0.0
+          },
+          {
+            "critical_misses": 3,
+            "high": 131072.0,
+            "instances": 3,
+            "low": 65536.0,
+            "miss_rate": 1.0
+          }
+        ],
+        "native": [
+          {
+            "critical_misses": 2,
+            "high": 4.0,
+            "instances": 3,
+            "low": 2.0,
+            "miss_rate": 0.6666666666666666
+          },
+          {
+            "critical_misses": 3,
+            "high": 8.0,
+            "instances": 3,
+            "low": 4.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 6,
+            "high": 16.0,
+            "instances": 6,
+            "low": 8.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 23,
+            "high": 32.0,
+            "instances": 30,
+            "low": 16.0,
+            "miss_rate": 0.7666666666666667
+          },
+          {
+            "critical_misses": 83,
+            "high": 64.0,
+            "instances": 102,
+            "low": 32.0,
+            "miss_rate": 0.8137254901960784
+          },
+          {
+            "critical_misses": 218,
+            "high": 128.0,
+            "instances": 282,
+            "low": 64.0,
+            "miss_rate": 0.7730496453900709
+          },
+          {
+            "critical_misses": 265,
+            "high": 256.0,
+            "instances": 393,
+            "low": 128.0,
+            "miss_rate": 0.6743002544529262
+          },
+          {
+            "critical_misses": 248,
+            "high": 512.0,
+            "instances": 522,
+            "low": 256.0,
+            "miss_rate": 0.47509578544061304
+          },
+          {
+            "critical_misses": 198,
+            "high": 1024.0,
+            "instances": 555,
+            "low": 512.0,
+            "miss_rate": 0.3567567567567568
+          },
+          {
+            "critical_misses": 114,
+            "high": 2048.0,
+            "instances": 507,
+            "low": 1024.0,
+            "miss_rate": 0.22485207100591717
+          },
+          {
+            "critical_misses": 56,
+            "high": 4096.0,
+            "instances": 246,
+            "low": 2048.0,
+            "miss_rate": 0.22764227642276422
+          },
+          {
+            "critical_misses": 23,
+            "high": 8192.0,
+            "instances": 153,
+            "low": 4096.0,
+            "miss_rate": 0.1503267973856209
+          },
+          {
+            "critical_misses": 4,
+            "high": 16384.0,
+            "instances": 57,
+            "low": 8192.0,
+            "miss_rate": 0.07017543859649122
+          },
+          {
+            "critical_misses": 3,
+            "high": 32768.0,
+            "instances": 27,
+            "low": 16384.0,
+            "miss_rate": 0.1111111111111111
+          },
+          {
+            "critical_misses": 3,
+            "high": 65536.0,
+            "instances": 15,
+            "low": 32768.0,
+            "miss_rate": 0.2
+          },
+          {
+            "critical_misses": 3,
+            "high": 262144.0,
+            "instances": 3,
+            "low": 131072.0,
+            "miss_rate": 1.0
+          }
+        ],
+        "s085": [
+          {
+            "critical_misses": 2,
+            "high": 2.0,
+            "instances": 3,
+            "low": 1.0,
+            "miss_rate": 0.6666666666666666
+          },
+          {
+            "critical_misses": 6,
+            "high": 8.0,
+            "instances": 6,
+            "low": 4.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 12,
+            "high": 16.0,
+            "instances": 15,
+            "low": 8.0,
+            "miss_rate": 0.8
+          },
+          {
+            "critical_misses": 50,
+            "high": 32.0,
+            "instances": 54,
+            "low": 16.0,
+            "miss_rate": 0.9259259259259259
+          },
+          {
+            "critical_misses": 150,
+            "high": 64.0,
+            "instances": 171,
+            "low": 32.0,
+            "miss_rate": 0.8771929824561403
+          },
+          {
+            "critical_misses": 255,
+            "high": 128.0,
+            "instances": 336,
+            "low": 64.0,
+            "miss_rate": 0.7589285714285714
+          },
+          {
+            "critical_misses": 265,
+            "high": 256.0,
+            "instances": 486,
+            "low": 128.0,
+            "miss_rate": 0.5452674897119342
+          },
+          {
+            "critical_misses": 154,
+            "high": 512.0,
+            "instances": 534,
+            "low": 256.0,
+            "miss_rate": 0.2883895131086142
+          },
+          {
+            "critical_misses": 125,
+            "high": 1024.0,
+            "instances": 552,
+            "low": 512.0,
+            "miss_rate": 0.22644927536231885
+          },
+          {
+            "critical_misses": 49,
+            "high": 2048.0,
+            "instances": 393,
+            "low": 1024.0,
+            "miss_rate": 0.12468193384223919
+          },
+          {
+            "critical_misses": 30,
+            "high": 4096.0,
+            "instances": 195,
+            "low": 2048.0,
+            "miss_rate": 0.15384615384615385
+          },
+          {
+            "critical_misses": 5,
+            "high": 8192.0,
+            "instances": 93,
+            "low": 4096.0,
+            "miss_rate": 0.053763440860215055
+          },
+          {
+            "critical_misses": 3,
+            "high": 16384.0,
+            "instances": 42,
+            "low": 8192.0,
+            "miss_rate": 0.07142857142857142
+          },
+          {
+            "critical_misses": 0,
+            "high": 32768.0,
+            "instances": 18,
+            "low": 16384.0,
+            "miss_rate": 0.0
+          },
+          {
+            "critical_misses": 3,
+            "high": 65536.0,
+            "instances": 3,
+            "low": 32768.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 3,
+            "high": 131072.0,
+            "instances": 3,
+            "low": 65536.0,
+            "miss_rate": 1.0
+          }
+        ]
+      },
+      "upernet_dinov2_small": {
+        "formal": [
+          {
+            "critical_misses": 3,
+            "high": 2.0,
+            "instances": 3,
+            "low": 1.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 3,
+            "high": 4.0,
+            "instances": 3,
+            "low": 2.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 6,
+            "high": 8.0,
+            "instances": 6,
+            "low": 4.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 29,
+            "high": 16.0,
+            "instances": 30,
+            "low": 8.0,
+            "miss_rate": 0.9666666666666667
+          },
+          {
+            "critical_misses": 94,
+            "high": 32.0,
+            "instances": 102,
+            "low": 16.0,
+            "miss_rate": 0.9215686274509803
+          },
+          {
+            "critical_misses": 233,
+            "high": 64.0,
+            "instances": 276,
+            "low": 32.0,
+            "miss_rate": 0.8442028985507246
+          },
+          {
+            "critical_misses": 326,
+            "high": 128.0,
+            "instances": 387,
+            "low": 64.0,
+            "miss_rate": 0.8423772609819121
+          },
+          {
+            "critical_misses": 336,
+            "high": 256.0,
+            "instances": 516,
+            "low": 128.0,
+            "miss_rate": 0.6511627906976745
+          },
+          {
+            "critical_misses": 260,
+            "high": 512.0,
+            "instances": 555,
+            "low": 256.0,
+            "miss_rate": 0.46846846846846846
+          },
+          {
+            "critical_misses": 181,
+            "high": 1024.0,
+            "instances": 513,
+            "low": 512.0,
+            "miss_rate": 0.35282651072124754
+          },
+          {
+            "critical_misses": 85,
+            "high": 2048.0,
+            "instances": 255,
+            "low": 1024.0,
+            "miss_rate": 0.3333333333333333
+          },
+          {
+            "critical_misses": 55,
+            "high": 4096.0,
+            "instances": 153,
+            "low": 2048.0,
+            "miss_rate": 0.35947712418300654
+          },
+          {
+            "critical_misses": 17,
+            "high": 8192.0,
+            "instances": 60,
+            "low": 4096.0,
+            "miss_rate": 0.2833333333333333
+          },
+          {
+            "critical_misses": 5,
+            "high": 16384.0,
+            "instances": 27,
+            "low": 8192.0,
+            "miss_rate": 0.18518518518518517
+          },
+          {
+            "critical_misses": 0,
+            "high": 32768.0,
+            "instances": 15,
+            "low": 16384.0,
+            "miss_rate": 0.0
+          },
+          {
+            "critical_misses": 3,
+            "high": 131072.0,
+            "instances": 3,
+            "low": 65536.0,
+            "miss_rate": 1.0
+          }
+        ],
+        "native": [
+          {
+            "critical_misses": 3,
+            "high": 4.0,
+            "instances": 3,
+            "low": 2.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 3,
+            "high": 8.0,
+            "instances": 3,
+            "low": 4.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 6,
+            "high": 16.0,
+            "instances": 6,
+            "low": 8.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 27,
+            "high": 32.0,
+            "instances": 30,
+            "low": 16.0,
+            "miss_rate": 0.9
+          },
+          {
+            "critical_misses": 95,
+            "high": 64.0,
+            "instances": 102,
+            "low": 32.0,
+            "miss_rate": 0.9313725490196079
+          },
+          {
+            "critical_misses": 228,
+            "high": 128.0,
+            "instances": 282,
+            "low": 64.0,
+            "miss_rate": 0.8085106382978723
+          },
+          {
+            "critical_misses": 302,
+            "high": 256.0,
+            "instances": 393,
+            "low": 128.0,
+            "miss_rate": 0.7684478371501272
+          },
+          {
+            "critical_misses": 320,
+            "high": 512.0,
+            "instances": 522,
+            "low": 256.0,
+            "miss_rate": 0.6130268199233716
+          },
+          {
+            "critical_misses": 236,
+            "high": 1024.0,
+            "instances": 555,
+            "low": 512.0,
+            "miss_rate": 0.4252252252252252
+          },
+          {
+            "critical_misses": 195,
+            "high": 2048.0,
+            "instances": 507,
+            "low": 1024.0,
+            "miss_rate": 0.38461538461538464
+          },
+          {
+            "critical_misses": 88,
+            "high": 4096.0,
+            "instances": 246,
+            "low": 2048.0,
+            "miss_rate": 0.35772357723577236
+          },
+          {
+            "critical_misses": 62,
+            "high": 8192.0,
+            "instances": 153,
+            "low": 4096.0,
+            "miss_rate": 0.40522875816993464
+          },
+          {
+            "critical_misses": 22,
+            "high": 16384.0,
+            "instances": 57,
+            "low": 8192.0,
+            "miss_rate": 0.38596491228070173
+          },
+          {
+            "critical_misses": 6,
+            "high": 32768.0,
+            "instances": 27,
+            "low": 16384.0,
+            "miss_rate": 0.2222222222222222
+          },
+          {
+            "critical_misses": 2,
+            "high": 65536.0,
+            "instances": 15,
+            "low": 32768.0,
+            "miss_rate": 0.13333333333333333
+          },
+          {
+            "critical_misses": 3,
+            "high": 262144.0,
+            "instances": 3,
+            "low": 131072.0,
+            "miss_rate": 1.0
+          }
+        ],
+        "s085": [
+          {
+            "critical_misses": 3,
+            "high": 2.0,
+            "instances": 3,
+            "low": 1.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 5,
+            "high": 8.0,
+            "instances": 6,
+            "low": 4.0,
+            "miss_rate": 0.8333333333333334
+          },
+          {
+            "critical_misses": 15,
+            "high": 16.0,
+            "instances": 15,
+            "low": 8.0,
+            "miss_rate": 1.0
+          },
+          {
+            "critical_misses": 52,
+            "high": 32.0,
+            "instances": 54,
+            "low": 16.0,
+            "miss_rate": 0.9629629629629629
+          },
+          {
+            "critical_misses": 149,
+            "high": 64.0,
+            "instances": 171,
+            "low": 32.0,
+            "miss_rate": 0.8713450292397661
+          },
+          {
+            "critical_misses": 294,
+            "high": 128.0,
+            "instances": 336,
+            "low": 64.0,
+            "miss_rate": 0.875
+          },
+          {
+            "critical_misses": 367,
+            "high": 256.0,
+            "instances": 486,
+            "low": 128.0,
+            "miss_rate": 0.7551440329218106
+          },
+          {
+            "critical_misses": 307,
+            "high": 512.0,
+            "instances": 534,
+            "low": 256.0,
+            "miss_rate": 0.5749063670411985
+          },
+          {
+            "critical_misses": 246,
+            "high": 1024.0,
+            "instances": 552,
+            "low": 512.0,
+            "miss_rate": 0.44565217391304346
+          },
+          {
+            "critical_misses": 167,
+            "high": 2048.0,
+            "instances": 393,
+            "low": 1024.0,
+            "miss_rate": 0.42493638676844786
+          },
+          {
+            "critical_misses": 81,
+            "high": 4096.0,
+            "instances": 195,
+            "low": 2048.0,
+            "miss_rate": 0.4153846153846154
+          },
+          {
+            "critical_misses": 33,
+            "high": 8192.0,
+            "instances": 93,
+            "low": 4096.0,
+            "miss_rate": 0.3548387096774194
+          },
+          {
+            "critical_misses": 12,
+            "high": 16384.0,
+            "instances": 42,
+            "low": 8192.0,
+            "miss_rate": 0.2857142857142857
+          },
+          {
+            "critical_misses": 0,
+            "high": 32768.0,
+            "instances": 18,
+            "low": 16384.0,
+            "miss_rate": 0.0
+          },
+          {
+            "critical_misses": 0,
+            "high": 65536.0,
+            "instances": 3,
+            "low": 32768.0,
+            "miss_rate": 0.0
+          },
+          {
+            "critical_misses": 3,
+            "high": 131072.0,
+            "instances": 3,
+            "low": 65536.0,
+            "miss_rate": 1.0
+          }
+        ]
+      }
+    },
+    "iou": {
+      "segformer_b2": {
+        "formal": {
+          "per_run": {
+            "segformer_b2-seed-17": {
+              "class_iou": {
+                "bicycle": 0.21986598330024845,
+                "building": 0.825875554860262,
+                "bus": 0.6092869639249396,
+                "car": 0.8559286055466906,
+                "fence": 0.5424381304046194,
+                "motorcycle": 0.5810524553104199,
+                "person": 0.580296059294534,
+                "pole": 0.37691705474378484,
+                "rider": 0.36378222269761473,
+                "road": 0.918415569291543,
+                "sidewalk": 0.6202838378389428,
+                "sky": 0.9273537135564179,
+                "terrain": 0.4774249665755151,
+                "traffic_light": 0.31695031553120484,
+                "traffic_sign": 0.5713872901783791,
+                "train": 0.0,
+                "truck": 0.5984218191613184,
+                "vegetation": 0.8306075077906284,
+                "wall": 0.3578798802165218
+              },
+              "mean_iou": 0.5565351542222939
+            },
+            "segformer_b2-seed-42": {
+              "class_iou": {
+                "bicycle": 0.19518357324522964,
+                "building": 0.8271674783601811,
+                "bus": 0.6384862351445161,
+                "car": 0.8612650139761339,
+                "fence": 0.5382093635799364,
+                "motorcycle": 0.5520052303159707,
+                "person": 0.5766062132622966,
+                "pole": 0.37969649472088013,
+                "rider": 0.369981112332265,
+                "road": 0.9163623501715795,
+                "sidewalk": 0.613127341213276,
+                "sky": 0.9286770458299417,
+                "terrain": 0.46713322194888496,
+                "traffic_light": 0.31650270199540065,
+                "traffic_sign": 0.5765214495682528,
+                "train": 0.0,
+                "truck": 0.6126761088389527,
+                "vegetation": 0.8303463962647556,
+                "wall": 0.3839053570114548
+              },
+              "mean_iou": 0.5570448783042057
+            },
+            "segformer_b2-seed-73": {
+              "class_iou": {
+                "bicycle": 0.20731586878913794,
+                "building": 0.826733808263114,
+                "bus": 0.5890995806249065,
+                "car": 0.8578194781072587,
+                "fence": 0.5382618910893981,
+                "motorcycle": 0.5593506362010193,
+                "person": 0.57590189815991,
+                "pole": 0.37772985225530803,
+                "rider": 0.3336301782350755,
+                "road": 0.919455842548248,
+                "sidewalk": 0.615507753939678,
+                "sky": 0.9268306512239398,
+                "terrain": 0.4682636815142824,
+                "traffic_light": 0.31725441475686916,
+                "traffic_sign": 0.5720594827153235,
+                "train": 0.0,
+                "truck": 0.5974346012389048,
+                "vegetation": 0.8303971920536232,
+                "wall": 0.36638161369707084
+              },
+              "mean_iou": 0.5515488644954246
+            }
+          },
+          "seed_mean_class_iou": {
+            "bicycle": 0.20745514177820534,
+            "building": 0.826592280494519,
+            "bus": 0.6122909265647873,
+            "car": 0.8583376992100278,
+            "fence": 0.539636461691318,
+            "motorcycle": 0.5641361072758033,
+            "person": 0.5776013902389135,
+            "pole": 0.378114467239991,
+            "rider": 0.3557978377549851,
+            "road": 0.9180779206704569,
+            "sidewalk": 0.6163063109972989,
+            "sky": 0.9276204702034332,
+            "terrain": 0.4709406233462275,
+            "traffic_light": 0.3169024774278249,
+            "traffic_sign": 0.5733227408206517,
+            "train": 0.0,
+            "truck": 0.6028441764130587,
+            "vegetation": 0.8304503653696691,
+            "wall": 0.3693889503083491
+          },
+          "seed_mean_miou": 0.5550429656739747
+        },
+        "native": {
+          "per_run": {
+            "segformer_b2-seed-17": {
+              "class_iou": {
+                "bicycle": 0.1850961011637336,
+                "building": 0.8140945783904803,
+                "bus": 0.5471992544096429,
+                "car": 0.8383282788225483,
+                "fence": 0.4689684455559007,
+                "motorcycle": 0.49298806176846005,
+                "person": 0.5776040731660634,
+                "pole": 0.3786535076183294,
+                "rider": 0.3706543227735185,
+                "road": 0.9060435796528975,
+                "sidewalk": 0.5627623682990605,
+                "sky": 0.9267706807213941,
+                "terrain": 0.43459990224287326,
+                "traffic_light": 0.30695360337817407,
+                "traffic_sign": 0.503244496360859,
+                "train": 0.187305673829092,
+                "truck": 0.5195718148136448,
+                "vegetation": 0.8237800686924831,
+                "wall": 0.3174465724914048
+              },
+              "mean_iou": 0.5348455465342399
+            },
+            "segformer_b2-seed-42": {
+              "class_iou": {
+                "bicycle": 0.1651153946586705,
+                "building": 0.8152453179985493,
+                "bus": 0.5899171730882775,
+                "car": 0.8431709083183235,
+                "fence": 0.4838142646401324,
+                "motorcycle": 0.34688906806423436,
+                "person": 0.5635194721670854,
+                "pole": 0.37758388107774526,
+                "rider": 0.3520043062503958,
+                "road": 0.9044332593249277,
+                "sidewalk": 0.553512362975523,
+                "sky": 0.9279963277088404,
+                "terrain": 0.43624625591451144,
+                "traffic_light": 0.3080430966639321,
+                "traffic_sign": 0.5337617263478759,
+                "train": 0.0,
+                "truck": 0.5413806987761622,
+                "vegetation": 0.823684153886282,
+                "wall": 0.35236630999374563
+              },
+              "mean_iou": 0.522035998834485
+            },
+            "segformer_b2-seed-73": {
+              "class_iou": {
+                "bicycle": 0.19169115205695128,
+                "building": 0.8149544821947489,
+                "bus": 0.5616464755829137,
+                "car": 0.8361895955025602,
+                "fence": 0.4673681569021448,
+                "motorcycle": 0.4921616494985667,
+                "person": 0.5662163301609406,
+                "pole": 0.3742596983298835,
+                "rider": 0.35684600294554325,
+                "road": 0.9054654149816258,
+                "sidewalk": 0.5598465387458215,
+                "sky": 0.9259458180521601,
+                "terrain": 0.44038131481891246,
+                "traffic_light": 0.31018232093506604,
+                "traffic_sign": 0.5127349158309251,
+                "train": 0.0018518861460397416,
+                "truck": 0.5285102395930933,
+                "vegetation": 0.8222828953056052,
+                "wall": 0.34759986267769594
+              },
+              "mean_iou": 0.5271649868558524
+            }
+          },
+          "seed_mean_class_iou": {
+            "bicycle": 0.18063421595978513,
+            "building": 0.8147647928612595,
+            "bus": 0.5662543010269446,
+            "car": 0.8392295942144773,
+            "fence": 0.4733836223660593,
+            "motorcycle": 0.44401292644375373,
+            "person": 0.5691132918313632,
+            "pole": 0.376832362341986,
+            "rider": 0.35983487732315256,
+            "road": 0.9053140846531503,
+            "sidewalk": 0.5587070900068016,
+            "sky": 0.9269042754941316,
+            "terrain": 0.4370758243254324,
+            "traffic_light": 0.30839300699239075,
+            "traffic_sign": 0.51658037951322,
+            "train": 0.06305251999171058,
+            "truck": 0.5298209177276334,
+            "vegetation": 0.8232490392947901,
+            "wall": 0.33913758172094877
+          },
+          "seed_mean_miou": 0.5280155107415259
+        },
+        "s085": {
+          "per_run": {
+            "segformer_b2-seed-17": {
+              "class_iou": {
+                "bicycle": 0.200584118490607,
+                "building": 0.805667188453544,
+                "bus": 0.5549040289449387,
+                "car": 0.7950803823892697,
+                "fence": 0.47969387276322245,
+                "motorcycle": 0.5343255699055883,
+                "person": 0.5603041868639373,
+                "pole": 0.37301281382425505,
+                "rider": 0.3338556511637331,
+                "road": 0.8844806269495233,
+                "sidewalk": 0.4707522058853134,
+                "sky": 0.9241092476467412,
+                "terrain": 0.38928412778149774,
+                "traffic_light": 0.30628065791067943,
+                "traffic_sign": 0.5382996595714197,
+                "train": 0.03863046321419508,
+                "truck": 0.5555519671336988,
+                "vegetation": 0.8165500247777497,
+                "wall": 0.3152626585193326
+              },
+              "mean_iou": 0.5198226027468025
+            },
+            "segformer_b2-seed-42": {
+              "class_iou": {
+                "bicycle": 0.16415389416860726,
+                "building": 0.8068669416071214,
+                "bus": 0.5785690605549774,
+                "car": 0.7989470501602558,
+                "fence": 0.4785714838241432,
+                "motorcycle": 0.47650842314864567,
+                "person": 0.5577915868702918,
+                "pole": 0.3778146069764756,
+                "rider": 0.32839750532173134,
+                "road": 0.8821418478364493,
+                "sidewalk": 0.46782825803703515,
+                "sky": 0.9265416927158069,
+                "terrain": 0.3944629628714752,
+                "traffic_light": 0.3057044943015378,
+                "traffic_sign": 0.5384787003845777,
+                "train": 0.0,
+                "truck": 0.5574098816298703,
+                "vegetation": 0.8168843657906886,
+                "wall": 0.3467998589043101
+              },
+              "mean_iou": 0.5159932955317894
+            },
+            "segformer_b2-seed-73": {
+              "class_iou": {
+                "bicycle": 0.19062127226179099,
+                "building": 0.806997653084223,
+                "bus": 0.5675584161963177,
+                "car": 0.7903098794162758,
+                "fence": 0.4831974250670757,
+                "motorcycle": 0.5085425133476771,
+                "person": 0.5557687220573637,
+                "pole": 0.3754492514591901,
+                "rider": 0.3393682779082705,
+                "road": 0.8835954972300532,
+                "sidewalk": 0.46845189945749777,
+                "sky": 0.9248661792503354,
+                "terrain": 0.3856196866966587,
+                "traffic_light": 0.31150341599553705,
+                "traffic_sign": 0.5361082213965895,
+                "train": 0.0,
+                "truck": 0.5588273012419894,
+                "vegetation": 0.8162777873783864,
+                "wall": 0.33199420638520605
+              },
+              "mean_iou": 0.517634610833181
+            }
+          },
+          "seed_mean_class_iou": {
+            "bicycle": 0.18511976164033506,
+            "building": 0.8065105943816295,
+            "bus": 0.5670105018987446,
+            "car": 0.7947791039886005,
+            "fence": 0.4804875938848138,
+            "motorcycle": 0.5064588354673037,
+            "person": 0.557954831930531,
+            "pole": 0.3754255574199736,
+            "rider": 0.3338738114645783,
+            "road": 0.8834059906720086,
+            "sidewalk": 0.4690107877932821,
+            "sky": 0.9251723732042946,
+            "terrain": 0.3897889257832105,
+            "traffic_light": 0.30782952273591807,
+            "traffic_sign": 0.5376288604508623,
+            "train": 0.012876821071398361,
+            "truck": 0.5572630500018528,
+            "vegetation": 0.8165707259822749,
+            "wall": 0.33135224126961627
+          },
+          "seed_mean_miou": 0.517816836370591
+        }
+      },
+      "upernet_convnextv2_tiny": {
+        "formal": {
+          "per_run": {
+            "upernet_convnextv2_tiny-seed-17": {
+              "class_iou": {
+                "bicycle": 0.2148421245984233,
+                "building": 0.8228237346563947,
+                "bus": 0.6806324363853763,
+                "car": 0.8622512216257159,
+                "fence": 0.5505471846732968,
+                "motorcycle": 0.5708316473570774,
+                "person": 0.5841911196688612,
+                "pole": 0.4024103605915589,
+                "rider": 0.3416887088775004,
+                "road": 0.9206497127987187,
+                "sidewalk": 0.6179482615302525,
+                "sky": 0.9231981550362655,
+                "terrain": 0.46753172239609697,
+                "traffic_light": 0.33574978230079977,
+                "traffic_sign": 0.5736886581366373,
+                "train": 0.6549293039154754,
+                "truck": 0.6308190293922973,
+                "vegetation": 0.8248508090246061,
+                "wall": 0.36609570521185497
+              },
+              "mean_iou": 0.5971410356935373
+            },
+            "upernet_convnextv2_tiny-seed-42": {
+              "class_iou": {
+                "bicycle": 0.21018546540881672,
+                "building": 0.823685386699318,
+                "bus": 0.7168581697076025,
+                "car": 0.864518369001755,
+                "fence": 0.5499679193379576,
+                "motorcycle": 0.4860043791794534,
+                "person": 0.5893883208024697,
+                "pole": 0.40796393319534746,
+                "rider": 0.3400084271869621,
+                "road": 0.9198667358090423,
+                "sidewalk": 0.6148312968485004,
+                "sky": 0.9244452099246396,
+                "terrain": 0.47868558284696844,
+                "traffic_light": 0.3334260344305083,
+                "traffic_sign": 0.5770869541270929,
+                "train": 0.4685309442590996,
+                "truck": 0.6405693003088178,
+                "vegetation": 0.8241137246567128,
+                "wall": 0.3564308548370752
+              },
+              "mean_iou": 0.5856087899246389
+            },
+            "upernet_convnextv2_tiny-seed-73": {
+              "class_iou": {
+                "bicycle": 0.21335138405241102,
+                "building": 0.8237300175585979,
+                "bus": 0.7317809930840183,
+                "car": 0.8622890819080493,
+                "fence": 0.53151886267289,
+                "motorcycle": 0.5530727700136912,
+                "person": 0.5920580722090637,
+                "pole": 0.40340450427989694,
+                "rider": 0.32966721704467733,
+                "road": 0.9214981422642945,
+                "sidewalk": 0.6176640529724972,
+                "sky": 0.9248163804165973,
+                "terrain": 0.46929813152171934,
+                "traffic_light": 0.32393119797710684,
+                "traffic_sign": 0.5635065293428894,
+                "train": 0.6113540467970848,
+                "truck": 0.6416873723246981,
+                "vegetation": 0.8239668730476564,
+                "wall": 0.34849674977092593
+              },
+              "mean_iou": 0.594057493645198
+            }
+          },
+          "seed_mean_class_iou": {
+            "bicycle": 0.21279299135321703,
+            "building": 0.8234130463047702,
+            "bus": 0.7097571997256656,
+            "car": 0.8630195575118401,
+            "fence": 0.5440113222280482,
+            "motorcycle": 0.5366362655167407,
+            "person": 0.5885458375601315,
+            "pole": 0.4045929326889344,
+            "rider": 0.33712145103637997,
+            "road": 0.9206715302906852,
+            "sidewalk": 0.6168145371170833,
+            "sky": 0.9241532484591675,
+            "terrain": 0.47183847892159486,
+            "traffic_light": 0.3310356715694716,
+            "traffic_sign": 0.5714273805355399,
+            "train": 0.57827143165722,
+            "truck": 0.637691900675271,
+            "vegetation": 0.8243104689096584,
+            "wall": 0.35700776993995204
+          },
+          "seed_mean_miou": 0.5922691064211247
+        },
+        "native": {
+          "per_run": {
+            "upernet_convnextv2_tiny-seed-17": {
+              "class_iou": {
+                "bicycle": 0.18825119886669417,
+                "building": 0.7992754607018687,
+                "bus": 0.5549453805958382,
+                "car": 0.8460067036476489,
+                "fence": 0.5001961230541554,
+                "motorcycle": 0.35436786283080884,
+                "person": 0.5466478918800634,
+                "pole": 0.3946936244468995,
+                "rider": 0.33762524197158766,
+                "road": 0.9044604253298135,
+                "sidewalk": 0.5527691175102564,
+                "sky": 0.9223870108143525,
+                "terrain": 0.4298548098354408,
+                "traffic_light": 0.3111751717281076,
+                "traffic_sign": 0.5555796456720666,
+                "train": 0.6193038900263235,
+                "truck": 0.5728474194602359,
+                "vegetation": 0.8135780970351795,
+                "wall": 0.32155761472069844
+              },
+              "mean_iou": 0.5539748784277916
+            },
+            "upernet_convnextv2_tiny-seed-42": {
+              "class_iou": {
+                "bicycle": 0.1978048508710025,
+                "building": 0.801859754518475,
+                "bus": 0.6046867223178425,
+                "car": 0.8459517998319522,
+                "fence": 0.5036209481881294,
+                "motorcycle": 0.36369112860716707,
+                "person": 0.5511959810827934,
+                "pole": 0.3909804564834054,
+                "rider": 0.31992936990869286,
+                "road": 0.9046414671157174,
+                "sidewalk": 0.548522553765772,
+                "sky": 0.921530088365277,
+                "terrain": 0.4421109359386332,
+                "traffic_light": 0.3060623732344516,
+                "traffic_sign": 0.5656876422700904,
+                "train": 0.5768737365883999,
+                "truck": 0.5633645868305353,
+                "vegetation": 0.8115583543559429,
+                "wall": 0.2786967933511532
+              },
+              "mean_iou": 0.5525668180855491
+            },
+            "upernet_convnextv2_tiny-seed-73": {
+              "class_iou": {
+                "bicycle": 0.1865577399238033,
+                "building": 0.8024637511820639,
+                "bus": 0.550720858286639,
+                "car": 0.8437073052563989,
+                "fence": 0.48273498170133,
+                "motorcycle": 0.33650302998550496,
+                "person": 0.5521685689034003,
+                "pole": 0.3884834703402746,
+                "rider": 0.33945615982241956,
+                "road": 0.9022778637100718,
+                "sidewalk": 0.5657981856182696,
+                "sky": 0.9232273373483306,
+                "terrain": 0.4417321183814592,
+                "traffic_light": 0.3051490656349833,
+                "traffic_sign": 0.5265387829524976,
+                "train": 0.5337865483271961,
+                "truck": 0.5730497182379793,
+                "vegetation": 0.8125322276166707,
+                "wall": 0.30530586180418484
+              },
+              "mean_iou": 0.5459049250017618
+            }
+          },
+          "seed_mean_class_iou": {
+            "bicycle": 0.1908712632205,
+            "building": 0.8011996554674692,
+            "bus": 0.5701176537334399,
+            "car": 0.8452219362453334,
+            "fence": 0.4955173509812049,
+            "motorcycle": 0.351520673807827,
+            "person": 0.5500041472887524,
+            "pole": 0.3913858504235265,
+            "rider": 0.3323369239009,
+            "road": 0.9037932520518676,
+            "sidewalk": 0.555696618964766,
+            "sky": 0.9223814788426533,
+            "terrain": 0.4378992880518444,
+            "traffic_light": 0.30746220353251413,
+            "traffic_sign": 0.5492686902982182,
+            "train": 0.5766547249806399,
+            "truck": 0.5697539081762502,
+            "vegetation": 0.812556226335931,
+            "wall": 0.3018534232920122
+          },
+          "seed_mean_miou": 0.5508155405050342
+        },
+        "s085": {
+          "per_run": {
+            "upernet_convnextv2_tiny-seed-17": {
+              "class_iou": {
+                "bicycle": 0.21638556094086486,
+                "building": 0.8138533355620559,
+                "bus": 0.6189240001837971,
+                "car": 0.8532036060796448,
+                "fence": 0.5371673638409322,
+                "motorcycle": 0.5283666645023051,
+                "person": 0.5772313966720253,
+                "pole": 0.40052981156756573,
+                "rider": 0.36017489274798176,
+                "road": 0.9118031110984567,
+                "sidewalk": 0.5799915326625944,
+                "sky": 0.9228583667809187,
+                "terrain": 0.44680024654458894,
+                "traffic_light": 0.32159989320839866,
+                "traffic_sign": 0.5575870971419656,
+                "train": 0.5441062408959346,
+                "truck": 0.6142118135927759,
+                "vegetation": 0.8205188194215086,
+                "wall": 0.3351997108197215
+              },
+              "mean_iou": 0.5768691296981072
+            },
+            "upernet_convnextv2_tiny-seed-42": {
+              "class_iou": {
+                "bicycle": 0.21346258561358408,
+                "building": 0.8149651501908725,
+                "bus": 0.6434087413360569,
+                "car": 0.8521894815927581,
+                "fence": 0.5262097438413907,
+                "motorcycle": 0.4789646139064309,
+                "person": 0.5876264497084354,
+                "pole": 0.4011699754741166,
+                "rider": 0.3563265848828177,
+                "road": 0.9122332928717046,
+                "sidewalk": 0.5790222698024166,
+                "sky": 0.9231397294893375,
+                "terrain": 0.4599904210878991,
+                "traffic_light": 0.3139721546986621,
+                "traffic_sign": 0.570573143958435,
+                "train": 0.5636154060177273,
+                "truck": 0.5991182094275824,
+                "vegetation": 0.819397742355456,
+                "wall": 0.3204396469156895
+              },
+              "mean_iou": 0.5755697549037564
+            },
+            "upernet_convnextv2_tiny-seed-73": {
+              "class_iou": {
+                "bicycle": 0.20929894203653476,
+                "building": 0.815095490286281,
+                "bus": 0.6285276172739049,
+                "car": 0.8517432706409954,
+                "fence": 0.5205708676858207,
+                "motorcycle": 0.553673040447019,
+                "person": 0.576738127275587,
+                "pole": 0.3958239596184394,
+                "rider": 0.34726376094960854,
+                "road": 0.9108770270378073,
+                "sidewalk": 0.5933616006115568,
+                "sky": 0.9242489587542458,
+                "terrain": 0.45816668057053656,
+                "traffic_light": 0.3194804296014983,
+                "traffic_sign": 0.5431124792225533,
+                "train": 0.5894291389584593,
+                "truck": 0.597255863213964,
+                "vegetation": 0.8196255420014351,
+                "wall": 0.31920101021138175
+              },
+              "mean_iou": 0.5775523055998752
+            }
+          },
+          "seed_mean_class_iou": {
+            "bicycle": 0.2130490295303279,
+            "building": 0.8146379920130699,
+            "bus": 0.6302867862645863,
+            "car": 0.8523787861044662,
+            "fence": 0.527982658456048,
+            "motorcycle": 0.5203347729519184,
+            "person": 0.5805319912186825,
+            "pole": 0.39917458222004054,
+            "rider": 0.354588412860136,
+            "road": 0.9116378103359896,
+            "sidewalk": 0.5841251343588559,
+            "sky": 0.9234156850081674,
+            "terrain": 0.45498578273434154,
+            "traffic_light": 0.3183508258361864,
+            "traffic_sign": 0.5570909067743179,
+            "train": 0.5657169286240404,
+            "truck": 0.6035286287447741,
+            "vegetation": 0.8198473679261333,
+            "wall": 0.32494678931559756
+          },
+          "seed_mean_miou": 0.5766637300672462
+        }
+      },
+      "upernet_dinov2_small": {
+        "formal": {
+          "per_run": {
+            "upernet_dinov2_small-seed-17": {
+              "class_iou": {
+                "bicycle": 0.12602733433681726,
+                "building": 0.7843058665247314,
+                "bus": 0.41979146401533185,
+                "car": 0.8115962763072797,
+                "fence": 0.36835691804945453,
+                "motorcycle": 0.07387991042755221,
+                "person": 0.43816352110150575,
+                "pole": 0.2222480004995027,
+                "rider": 0.1390923592798776,
+                "road": 0.9039490862072178,
+                "sidewalk": 0.5547791139645529,
+                "sky": 0.9135145849997438,
+                "terrain": 0.41845274168988117,
+                "traffic_light": 0.24072665011159053,
+                "traffic_sign": 0.46486139105105867,
+                "train": 0.0,
+                "truck": 0.40755275762786686,
+                "vegetation": 0.795970121196196,
+                "wall": 0.30336772463301986
+              },
+              "mean_iou": 0.4414018853696411
+            },
+            "upernet_dinov2_small-seed-42": {
+              "class_iou": {
+                "bicycle": 0.10256795086374111,
+                "building": 0.7777183600785257,
+                "bus": 0.3972828804289478,
+                "car": 0.8041340646859026,
+                "fence": 0.38851274045364437,
+                "motorcycle": 0.0859423288812448,
+                "person": 0.43609247012449776,
+                "pole": 0.22970741153445418,
+                "rider": 0.06374962206079589,
+                "road": 0.9073968411866042,
+                "sidewalk": 0.5546205442933245,
+                "sky": 0.9153349279029571,
+                "terrain": 0.4242038285642872,
+                "traffic_light": 0.24058151176737197,
+                "traffic_sign": 0.44013952004225215,
+                "train": 0.0,
+                "truck": 0.41722184512331734,
+                "vegetation": 0.7908046776693535,
+                "wall": 0.3005404966278423
+              },
+              "mean_iou": 0.4356080011731086
+            },
+            "upernet_dinov2_small-seed-73": {
+              "class_iou": {
+                "bicycle": 0.11968807728190127,
+                "building": 0.7781190871990351,
+                "bus": 0.4079719092351276,
+                "car": 0.8084249397573364,
+                "fence": 0.35101574540778063,
+                "motorcycle": 0.06670235176295887,
+                "person": 0.4328640210256602,
+                "pole": 0.22570373401186794,
+                "rider": 0.08517264725795531,
+                "road": 0.9051226245737872,
+                "sidewalk": 0.5590049484393383,
+                "sky": 0.9129510166674054,
+                "terrain": 0.4244970868565854,
+                "traffic_light": 0.24662005474106866,
+                "traffic_sign": 0.4519000505556689,
+                "train": 0.0,
+                "truck": 0.42560177624242446,
+                "vegetation": 0.7921296256128157,
+                "wall": 0.267048275533731
+              },
+              "mean_iou": 0.4347651564296026
+            }
+          },
+          "seed_mean_class_iou": {
+            "bicycle": 0.11609445416081988,
+            "building": 0.7800477712674306,
+            "bus": 0.408348751226469,
+            "car": 0.8080517602501729,
+            "fence": 0.3692951346369599,
+            "motorcycle": 0.07550819702391863,
+            "person": 0.4357066707505546,
+            "pole": 0.22588638201527492,
+            "rider": 0.09600487619954294,
+            "road": 0.9054895173225365,
+            "sidewalk": 0.5561348688990719,
+            "sky": 0.9139335098567022,
+            "terrain": 0.42238455237025124,
+            "traffic_light": 0.24264273887334373,
+            "traffic_sign": 0.4523003205496599,
+            "train": 0.0,
+            "truck": 0.4167921263312029,
+            "vegetation": 0.7929681414927884,
+            "wall": 0.2903188322648644
+          },
+          "seed_mean_miou": 0.43725834765745075
+        },
+        "native": {
+          "per_run": {
+            "upernet_dinov2_small-seed-17": {
+              "class_iou": {
+                "bicycle": 0.0941249157695636,
+                "building": 0.7734384625825527,
+                "bus": 0.365691305856424,
+                "car": 0.7898153820591051,
+                "fence": 0.32941593960484705,
+                "motorcycle": 0.13845458514949327,
+                "person": 0.4160071594104172,
+                "pole": 0.2149796139543691,
+                "rider": 0.13073421450565292,
+                "road": 0.8965274318037216,
+                "sidewalk": 0.52524418224265,
+                "sky": 0.9104469287469985,
+                "terrain": 0.39158919919784724,
+                "traffic_light": 0.24326880671774775,
+                "traffic_sign": 0.4495279582527341,
+                "train": 0.0,
+                "truck": 0.39066039684281606,
+                "vegetation": 0.7920452693145398,
+                "wall": 0.25865648040714045
+              },
+              "mean_iou": 0.42687517012729587
+            },
+            "upernet_dinov2_small-seed-42": {
+              "class_iou": {
+                "bicycle": 0.07442753448266183,
+                "building": 0.7696287952012447,
+                "bus": 0.341984021332645,
+                "car": 0.7872420762856572,
+                "fence": 0.32272044029314584,
+                "motorcycle": 0.07337711054907148,
+                "person": 0.40978632964710543,
+                "pole": 0.2218558503191994,
+                "rider": 0.11674113077367018,
+                "road": 0.8974311739949994,
+                "sidewalk": 0.5302498319819089,
+                "sky": 0.9135868415633628,
+                "terrain": 0.40561775734760647,
+                "traffic_light": 0.23859499841356832,
+                "traffic_sign": 0.43003143380413833,
+                "train": 0.0,
+                "truck": 0.38105525340087126,
+                "vegetation": 0.7872016531546921,
+                "wall": 0.2884733764558912
+              },
+              "mean_iou": 0.4205266110000757
+            },
+            "upernet_dinov2_small-seed-73": {
+              "class_iou": {
+                "bicycle": 0.05061404421713079,
+                "building": 0.7673564893067109,
+                "bus": 0.31245319708287683,
+                "car": 0.7839483242149786,
+                "fence": 0.31641690605408224,
+                "motorcycle": 0.0809855638104165,
+                "person": 0.4059823125436734,
+                "pole": 0.21666174258288035,
+                "rider": 0.0610021299730402,
+                "road": 0.8965288840103321,
+                "sidewalk": 0.5269111717700335,
+                "sky": 0.9108009865414499,
+                "terrain": 0.3889341120290239,
+                "traffic_light": 0.25197550158514576,
+                "traffic_sign": 0.448216231495205,
+                "train": 0.0,
+                "truck": 0.35678298986678814,
+                "vegetation": 0.7863849172258196,
+                "wall": 0.23327979832005824
+              },
+              "mean_iou": 0.41027554224366564
+            }
+          },
+          "seed_mean_class_iou": {
+            "bicycle": 0.07305549815645207,
+            "building": 0.7701412490301695,
+            "bus": 0.34004284142398195,
+            "car": 0.7870019275199137,
+            "fence": 0.3228510953173584,
+            "motorcycle": 0.09760575316966041,
+            "person": 0.4105919338670654,
+            "pole": 0.21783240228548295,
+            "rider": 0.1028258250841211,
+            "road": 0.8968291632696843,
+            "sidewalk": 0.5274683953315308,
+            "sky": 0.9116115856172704,
+            "terrain": 0.39538035619149253,
+            "traffic_light": 0.24461310223882063,
+            "traffic_sign": 0.44259187451735915,
+            "train": 0.0,
+            "truck": 0.37616621337015843,
+            "vegetation": 0.7885439465650173,
+            "wall": 0.2601365517276966
+          },
+          "seed_mean_miou": 0.4192257744570124
+        },
+        "s085": {
+          "per_run": {
+            "upernet_dinov2_small-seed-17": {
+              "class_iou": {
+                "bicycle": 0.1125368466160476,
+                "building": 0.7679046938267962,
+                "bus": 0.37669717946539755,
+                "car": 0.7926852948320641,
+                "fence": 0.33886741334482606,
+                "motorcycle": 0.1017986921756023,
+                "person": 0.40167630257889747,
+                "pole": 0.16869422733613457,
+                "rider": 0.12011761783817132,
+                "road": 0.898447299980653,
+                "sidewalk": 0.5338879473323793,
+                "sky": 0.9020638987637112,
+                "terrain": 0.4144400609296805,
+                "traffic_light": 0.2214943518264174,
+                "traffic_sign": 0.4189508959102722,
+                "train": 0.0,
+                "truck": 0.37531975402560763,
+                "vegetation": 0.7842040289964353,
+                "wall": 0.26920739415339595
+              },
+              "mean_iou": 0.42099967894381524
+            },
+            "upernet_dinov2_small-seed-42": {
+              "class_iou": {
+                "bicycle": 0.10116401840530782,
+                "building": 0.7658033491477447,
+                "bus": 0.386478170988933,
+                "car": 0.7902097514564929,
+                "fence": 0.3660859520582653,
+                "motorcycle": 0.07676305220883534,
+                "person": 0.3951936793013965,
+                "pole": 0.17882199051744616,
+                "rider": 0.09204329621758256,
+                "road": 0.9001072076017506,
+                "sidewalk": 0.5321184847504773,
+                "sky": 0.9054713350910816,
+                "terrain": 0.4228769068371143,
+                "traffic_light": 0.21359454736750996,
+                "traffic_sign": 0.41622195498099085,
+                "train": 0.0,
+                "truck": 0.3997995017384312,
+                "vegetation": 0.779809478994601,
+                "wall": 0.2969498538767409
+              },
+              "mean_iou": 0.42207960692319474
+            },
+            "upernet_dinov2_small-seed-73": {
+              "class_iou": {
+                "bicycle": 0.0979309128965344,
+                "building": 0.7669995775230205,
+                "bus": 0.3586141901325378,
+                "car": 0.7874135397280658,
+                "fence": 0.33226793544606104,
+                "motorcycle": 0.07264710694694419,
+                "person": 0.39899789246862233,
+                "pole": 0.17553014284048896,
+                "rider": 0.08155231456001957,
+                "road": 0.9014070606410327,
+                "sidewalk": 0.5379241192840712,
+                "sky": 0.9013333726289391,
+                "terrain": 0.4120686888180284,
+                "traffic_light": 0.23054942506871198,
+                "traffic_sign": 0.4228506139879493,
+                "train": 0.0,
+                "truck": 0.37292548898292044,
+                "vegetation": 0.7807367349226427,
+                "wall": 0.25732463363024083
+              },
+              "mean_iou": 0.4152144079214121
+            }
+          },
+          "seed_mean_class_iou": {
+            "bicycle": 0.10387725930596327,
+            "building": 0.7669025401658538,
+            "bus": 0.3739298468622894,
+            "car": 0.7901028620055409,
+            "fence": 0.3457404336163841,
+            "motorcycle": 0.08373628377712727,
+            "person": 0.3986226247829721,
+            "pole": 0.17434878689802322,
+            "rider": 0.09790440953859114,
+            "road": 0.8999871894078121,
+            "sidewalk": 0.5346435171223093,
+            "sky": 0.902956202161244,
+            "terrain": 0.4164618855282744,
+            "traffic_light": 0.22187944142087979,
+            "traffic_sign": 0.41934115495973745,
+            "train": 0.0,
+            "truck": 0.38268158158231974,
+            "vegetation": 0.7815834143045596,
+            "wall": 0.27449396055345926
+          },
+          "seed_mean_miou": 0.4194312312628074
+        }
+      }
+    },
+    "mcnemar_formal_vs_native": [
+      {
+        "formal_only_misses": 45,
+        "holm_adjusted_p_value": 0.00024092727703295408,
+        "native_only_misses": 13,
+        "p_value": 3.011590962911926e-05,
+        "run_id": "segformer_b2-seed-17"
+      },
+      {
+        "formal_only_misses": 47,
+        "holm_adjusted_p_value": 0.00010932037220661578,
+        "native_only_misses": 13,
+        "p_value": 1.2146708022957309e-05,
+        "run_id": "segformer_b2-seed-42"
+      },
+      {
+        "formal_only_misses": 44,
+        "holm_adjusted_p_value": 0.0007034768948840366,
+        "native_only_misses": 14,
+        "p_value": 0.00010049669926914809,
+        "run_id": "segformer_b2-seed-73"
+      },
+      {
+        "formal_only_misses": 46,
+        "holm_adjusted_p_value": 0.706442212240657,
+        "native_only_misses": 34,
+        "p_value": 0.21851803947870374,
+        "run_id": "upernet_convnextv2_tiny-seed-17"
+      },
+      {
+        "formal_only_misses": 33,
+        "holm_adjusted_p_value": 1.0,
+        "native_only_misses": 32,
+        "p_value": 1.0,
+        "run_id": "upernet_convnextv2_tiny-seed-42"
+      },
+      {
+        "formal_only_misses": 46,
+        "holm_adjusted_p_value": 0.706442212240657,
+        "native_only_misses": 33,
+        "p_value": 0.17661055306016424,
+        "run_id": "upernet_convnextv2_tiny-seed-73"
+      },
+      {
+        "formal_only_misses": 41,
+        "holm_adjusted_p_value": 0.013395309719657541,
+        "native_only_misses": 17,
+        "p_value": 0.0022325516199429235,
+        "run_id": "upernet_dinov2_small-seed-17"
+      },
+      {
+        "formal_only_misses": 40,
+        "holm_adjusted_p_value": 0.1020735689981745,
+        "native_only_misses": 21,
+        "p_value": 0.0204147137996349,
+        "run_id": "upernet_dinov2_small-seed-42"
+      },
+      {
+        "formal_only_misses": 27,
+        "holm_adjusted_p_value": 0.706442212240657,
+        "native_only_misses": 19,
+        "p_value": 0.3019956131896606,
+        "run_id": "upernet_dinov2_small-seed-73"
+      }
+    ],
+    "residual_native_miss_rate": {
+      "segformer_b2": {
+        "per_seed": [
+          0.6647887323943662,
+          0.6563380281690141,
+          0.6535211267605634
+        ],
+        "seed_mean": 0.6582159624413145
+      },
+      "upernet_convnextv2_tiny": {
+        "per_seed": [
+          0.6647887323943662,
+          0.7154929577464789,
+          0.6929577464788732
+        ],
+        "seed_mean": 0.6910798122065728
+      },
+      "upernet_dinov2_small": {
+        "per_seed": [
+          0.7690140845070422,
+          0.7746478873239436,
+          0.7718309859154929
+        ],
+        "seed_mean": 0.7718309859154929
+      }
+    },
+    "small_counts": {
+      "bicycle": {
+        "critical_misses": {
+          "formal": {
+            "segformer_b2-seed-17": 16,
+            "segformer_b2-seed-42": 18,
+            "segformer_b2-seed-73": 18,
+            "upernet_convnextv2_tiny-seed-17": 15,
+            "upernet_convnextv2_tiny-seed-42": 17,
+            "upernet_convnextv2_tiny-seed-73": 14,
+            "upernet_dinov2_small-seed-17": 20,
+            "upernet_dinov2_small-seed-42": 20,
+            "upernet_dinov2_small-seed-73": 20
+          },
+          "native": {
+            "segformer_b2-seed-17": 14,
+            "segformer_b2-seed-42": 15,
+            "segformer_b2-seed-73": 14,
+            "upernet_convnextv2_tiny-seed-17": 13,
+            "upernet_convnextv2_tiny-seed-42": 15,
+            "upernet_convnextv2_tiny-seed-73": 13,
+            "upernet_dinov2_small-seed-17": 19,
+            "upernet_dinov2_small-seed-42": 20,
+            "upernet_dinov2_small-seed-73": 18
+          },
+          "s085": {
+            "segformer_b2-seed-17": 16,
+            "segformer_b2-seed-42": 16,
+            "segformer_b2-seed-73": 17,
+            "upernet_convnextv2_tiny-seed-17": 16,
+            "upernet_convnextv2_tiny-seed-42": 15,
+            "upernet_convnextv2_tiny-seed-73": 13,
+            "upernet_dinov2_small-seed-17": 19,
+            "upernet_dinov2_small-seed-42": 19,
+            "upernet_dinov2_small-seed-73": 19
+          }
+        },
+        "instances": 20
+      },
+      "motorcycle": {
+        "critical_misses": {
+          "formal": {
+            "segformer_b2-seed-17": 7,
+            "segformer_b2-seed-42": 7,
+            "segformer_b2-seed-73": 8,
+            "upernet_convnextv2_tiny-seed-17": 8,
+            "upernet_convnextv2_tiny-seed-42": 8,
+            "upernet_convnextv2_tiny-seed-73": 8,
+            "upernet_dinov2_small-seed-17": 9,
+            "upernet_dinov2_small-seed-42": 9,
+            "upernet_dinov2_small-seed-73": 9
+          },
+          "native": {
+            "segformer_b2-seed-17": 7,
+            "segformer_b2-seed-42": 8,
+            "segformer_b2-seed-73": 7,
+            "upernet_convnextv2_tiny-seed-17": 8,
+            "upernet_convnextv2_tiny-seed-42": 8,
+            "upernet_convnextv2_tiny-seed-73": 8,
+            "upernet_dinov2_small-seed-17": 8,
+            "upernet_dinov2_small-seed-42": 8,
+            "upernet_dinov2_small-seed-73": 9
+          },
+          "s085": {
+            "segformer_b2-seed-17": 7,
+            "segformer_b2-seed-42": 7,
+            "segformer_b2-seed-73": 7,
+            "upernet_convnextv2_tiny-seed-17": 7,
+            "upernet_convnextv2_tiny-seed-42": 8,
+            "upernet_convnextv2_tiny-seed-73": 8,
+            "upernet_dinov2_small-seed-17": 9,
+            "upernet_dinov2_small-seed-42": 9,
+            "upernet_dinov2_small-seed-73": 9
+          }
+        },
+        "instances": 9
+      }
+    },
+    "small_person_and_rider": {
+      "segformer_b2": {
+        "estimate": 0.08762420957542909,
+        "instances": 369,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.14208755476451265,
+            "low": 0.03438129815354015
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.13137585836022167,
+            "low": 0.044444444444444446
+          }
+        ],
+        "per_seed": [
+          0.08943089430894309,
+          0.0921409214092141,
+          0.08130081300813008
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "upernet_convnextv2_tiny": {
+        "estimate": 0.025293586269196026,
+        "instances": 369,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.08649579066438448,
+            "low": -0.034460559629823626
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.07626468342637796,
+            "low": -0.024155215138544715
+          }
+        ],
+        "per_seed": [
+          0.02981029810298103,
+          0.005420054200542005,
+          0.04065040650406504
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "upernet_dinov2_small": {
+        "estimate": 0.04607046070460705,
+        "instances": 369,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.08111726128665397,
+            "low": 0.009438421626851903
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.07471338428723782,
+            "low": 0.016666666666666666
+          }
+        ],
+        "per_seed": [
+          0.06504065040650407,
+          0.051490514905149054,
+          0.02168021680216802
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      }
+    },
+    "small_rider": {
+      "segformer_b2": {
+        "estimate": 0.023809523809523808,
+        "instances": 14,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.06060606060606061,
+            "low": 0.0
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.05555555555555555,
+            "low": 0.0
+          }
+        ],
+        "per_seed": [
+          0.07142857142857142,
+          0.0,
+          0.0
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "upernet_convnextv2_tiny": {
+        "estimate": 0.047619047619047616,
+        "instances": 14,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.14583333333333334,
+            "low": -0.09523809523809523
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.1282051282051282,
+            "low": -0.07407407407407407
+          }
+        ],
+        "per_seed": [
+          -0.07142857142857142,
+          0.07142857142857142,
+          0.14285714285714285
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      },
+      "upernet_dinov2_small": {
+        "estimate": 0.0,
+        "instances": 14,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.0,
+            "low": 0.0
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.0,
+            "low": 0.0
+          }
+        ],
+        "per_seed": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "resamples": 5000,
+        "seed": 20260831,
+        "undefined_resamples": 0
+      }
+    }
+  },
+  "settings": {
+    "bootstrap_resamples": 5000,
+    "bootstrap_seed": 20260831,
+    "descriptive_confidence": 0.95,
+    "equivalence_bound": 0.05,
+    "miou_drop_limit": 0.02,
+    "primary_confidence": 0.9833333333333333,
+    "support_threshold": 0.1
+  },
+  "status": "post-release analysis on the calibration split, not the locked cohort; pre-registered decision rules",
+  "sweep": {
+    "arms": [
+      "formal",
+      "s085",
+      "native"
+    ],
+    "bitmask_set_sha256": "357b698bed7a9cd92b3d7e70a41db13c0c526b14b62d1e9a4321190b3f91dbac",
+    "commit": "fb376783dc6f8ba026849c5973e1167c07450e9d",
+    "dataset_manifest_sha256": "9f7288d24227678174eb596ed59fdc6c6879b8e01ae554191eef72e1a375b097",
+    "hardware": [
+      {
+        "cuda": "13.0",
+        "gpu": "NVIDIA A100-SXM4-40GB, 40960 MiB",
+        "runtime": "colab",
+        "torch": "2.13.0+cu130"
+      }
+    ],
+    "lock_sha256": "dc8126e683d8ebdb31eb2d9e46e94e3524953a1084aec9629df83a8dfa57f0fc",
+    "parity_criteria": [
+      "exact"
+    ],
+    "protocol_sha256": "b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f",
+    "runs": [
+      {
+        "checkpoint_sha256": "94904bef3125613b8785b9e20cf65cc80e65704fa8a54db8ebfa9c5e3fc1b698",
+        "model": "segformer_b2",
+        "run_id": "segformer_b2-seed-17",
+        "seed": 17
+      },
+      {
+        "checkpoint_sha256": "7bc6d3a9a2bdc06ea0ee38660336fae87c068f2be6fe8e4874e10029860dc438",
+        "model": "segformer_b2",
+        "run_id": "segformer_b2-seed-42",
+        "seed": 42
+      },
+      {
+        "checkpoint_sha256": "f75181d5c17a36d18926cc06f3fb66a1929de4f540c051603d8d1e32975f7676",
+        "model": "segformer_b2",
+        "run_id": "segformer_b2-seed-73",
+        "seed": 73
+      },
+      {
+        "checkpoint_sha256": "8ea366d4648da5bb1cb09585d5c51186ace58169a71c44a16f0517bd9320a027",
+        "model": "upernet_convnextv2_tiny",
+        "run_id": "upernet_convnextv2_tiny-seed-17",
+        "seed": 17
+      },
+      {
+        "checkpoint_sha256": "f5754121e1cabc7eb00c3d30d08e9ccc24ffd5b1da69638feaab02a5881d5461",
+        "model": "upernet_convnextv2_tiny",
+        "run_id": "upernet_convnextv2_tiny-seed-42",
+        "seed": 42
+      },
+      {
+        "checkpoint_sha256": "7d6730bc303b50e72592b876a3f6d609fe5703ee14db72a655ab34b87f93a7c0",
+        "model": "upernet_convnextv2_tiny",
+        "run_id": "upernet_convnextv2_tiny-seed-73",
+        "seed": 73
+      },
+      {
+        "checkpoint_sha256": "194b9a388939671eabf12bca9409c95bdd96513d15737dd410acd2d836a6d534",
+        "model": "upernet_dinov2_small",
+        "run_id": "upernet_dinov2_small-seed-17",
+        "seed": 17
+      },
+      {
+        "checkpoint_sha256": "def1fec93265fbdf018a3c3b6fa81d8a10bf3f5a54147d7eea08e30a962d5c29",
+        "model": "upernet_dinov2_small",
+        "run_id": "upernet_dinov2_small-seed-42",
+        "seed": 42
+      },
+      {
+        "checkpoint_sha256": "1f6ac669714f39d5798037775c95d5469ce5ab338ee32e74b8cd0e3e93ca4585",
+        "model": "upernet_dinov2_small",
+        "run_id": "upernet_dinov2_small-seed-73",
+        "seed": 73
+      }
+    ],
+    "tertiles_sha256": "5f9365d5b9189b49649e34fc8403f16f4934d630ceb5cf903429007a52997206"
+  }
+}

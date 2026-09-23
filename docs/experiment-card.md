@@ -192,7 +192,9 @@ Recorded so that a reader can weigh them. None of them changes a published numbe
   [`bdd100k_semseg_v1.yaml`](../configs/protocols/bdd100k_semseg_v1.yaml)), about
   0.71 of the source height and width, and its predictions are mapped back to
   source geometry before scoring. The smallest instances are therefore scored at
-  full resolution but predicted from a downsampled image.
+  full resolution but predicted from a downsampled image. A pre-registered
+  post-release analysis on the calibration split measures how much this costs:
+  see [`posthoc/resolution-v1/results.md`](posthoc/resolution-v1/results.md).
 - **No multiplicity adjustment.** Nine paired intervals are published, three pairs
   of models times three metrics, each at 0.95 confidence, with no adjustment for
   their number. Read them as descriptive, not as a family of hypothesis tests.
