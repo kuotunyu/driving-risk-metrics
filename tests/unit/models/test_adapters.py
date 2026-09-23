@@ -118,10 +118,10 @@ def make_image(height: int = 512, width: int = 1024) -> np.ndarray:
     return np.zeros((2, 3, height, width), dtype=np.float32)
 
 
-def test_torchvision_dict_output_is_unwrapped_and_returned_as_float64(
+def test_logits_attribute_is_extracted_and_returned_as_float64(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Returning the raw dict would break every downstream NumPy metric kernel."""
+    """Returning the raw output object would break every downstream NumPy metric kernel."""
 
     adapters = load_adapters_module()
     torch = install_fake_torch(monkeypatch)
