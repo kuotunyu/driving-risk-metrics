@@ -69,8 +69,8 @@ mean IoU 差值的區間包含零，並不能證明模型等效或可以互換�
 
 在這三項指標之間，改變的不是順序，而是這個 cohort 的 bootstrap 區間對區分前兩名提供多強的證據。
 
-[`docs/protocol.md`](docs/protocol.md) 提出的問題也涵蓋校準，而在以信心為基礎的指標上，
-前兩名多半不維持 mean IoU 的順序。無論是否經過溫度縮放，selective risk（AURC）與
+[`docs/protocol.md`](docs/protocol.md) 提出的問題也涵蓋校準與 selective risk 這類以信心為
+基礎的指標，而在這些指標上，前兩名多半不維持 mean IoU 的順序。無論是否經過溫度縮放，selective risk（AURC）與
 Brier score 都偏向 SegFormer-B2 而非 UperNet-ConvNeXtV2-Tiny，其中校準後的 Brier score
 只是些微領先；ECE 在溫度縮放前偏向 SegFormer-B2，縮放後則偏向 UperNet-ConvNeXtV2-Tiny。
 這些都是沒有區間的跨 seed 平均，只能說明方向，不能說明兩者可以區分。數值見線上報告的
@@ -137,12 +137,12 @@ instance coverage 是在語意標註與 instance 標註互相佐證的 footprint
 
 ## 校準不一定有幫助
 
-溫度縮放在獨立的 calibration split 上擬合，再套用到 locked cohort。它降低了兩個模型的
-校準誤差，卻讓第三個變差。這裡的 expected calibration error（ECE）是逐類別計算的：對每個
+溫度縮放在獨立的 calibration split 上擬合，再套用到 locked cohort。這裡的 expected
+calibration error（ECE）是逐類別計算的：對每個
 類別，依像素對該類別的預測機率分進十五個等寬的 bin；每個 bin 貢獻其平均預測機率與該類別
 在其中實際出現頻率之間的差距，並以該 bin 的像素比例加權；最後把十九個類別的誤差平均。
 它的大小不能和一般常見的 top-label ECE 直接比較，完整定義見
-[`docs/protocol.md`](docs/protocol.md)。
+[`docs/protocol.md`](docs/protocol.md)。溫度縮放降低了兩個模型的這項誤差，卻讓第三個變差：
 
 > 溫度縮放降低了 UperNet-ConvNeXtV2-Tiny 在 locked cohort 上的 expected calibration error，從 0.004609387187919981 降到 0.0032855195799122。 <!-- claim: p1.calibration.convnextv2.ece -->
 > 溫度縮放降低了 UperNet-DINOv2-Small 在 locked cohort 上的 expected calibration error，從 0.005448051902032049 降到 0.003985369701553616。 <!-- claim: p1.calibration.dinov2.ece -->
@@ -281,7 +281,7 @@ BDD100K 不在此再散布，checkpoint 與約 54 GiB 的逐影像 prediction ar
   論證，也不能取代安全論證。
 - **把 risk-weighted cost 當成獨立的量測。** 在 `balanced` profile 下，它等於一減
   pixel accuracy；在 `vru_priority` profile 下，因為 critical 類別的像素很少，它仍然跟著
-  像素錯誤率走。它只計算 false negative，沒有任何成對混淆的成本。
+  像素錯誤率走；在 `drivable_boundary` profile 下，它對三個模型的排序也與像素錯誤率相同。它只計算 false negative，沒有任何成對混淆的成本。
 - **關於 DINOv2 或自監督預訓練的結論。** DINOv2 backbone 以函式庫預設的幾何設定建立，
   所以它的 position embedding 表與 checkpoint 的形狀不符，被載入程式跳過，因而從隨機
   初始化開始訓練。UperNet 只在單一 stride 上接收 backbone 的特徵，沒有多尺度 neck。
