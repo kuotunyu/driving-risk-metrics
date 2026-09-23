@@ -23,14 +23,12 @@
 instance 計數來自每個模型的單一訓練 seed（seed 17，三個核准 seed 中的第一個，經溫度縮放；
 溫度縮放不會改變預測類別），不是跨 seed 平均，也沒有區間。這是
 [`docs/protocol.md`](docs/protocol.md) 跨 seed 平均規則的例外。rider 與 motorcycle 的最小
-tertile instance 太少，極端失敗值得檢查，但不足以估計失敗率；person 的樣本可支撐較穩定的
-cohort 內描述。
+tertile instance 太少，不足以估計失敗率；person 的樣本可支撐較穩定的 cohort 內描述。
 
 以像素平均的分數可能看起來不錯，但這個 cohort 中多數最小 tertile 的 person 與全部最小
 tertile 的 rider 都是 critical miss。下圖列出三個模型在每一個 instance 類別上的結果：car
 是數量最多的類別，也是唯一多數最小 tertile instance 被正確找回的類別，所以這種失敗不只發生
-在易受傷害用路人身上。另一個專案 perception-error-to-aeb 研究注入的物件層級感知誤差（例如
-dropout、定位誤差與延遲）如何影響 nuPlan 上固定的 AEB policy；它沒有使用這裡的分割結果。
+在易受傷害用路人身上。
 
 ![各類別在最小 tertile 上的 critical miss，每個模型各取一個訓練 seed，由 extended-metrics.json 繪製](docs/figures/small-tertile-critical-misses.svg)
 
@@ -50,8 +48,8 @@ dropout、定位誤差與延遲）如何影響 nuPlan 上固定的 AEB policy；
 
 </details>
 
-mean IoU 差值的區間包含零，critical-class recall 差值的區間則不包含零。
-前者不能證明模型等效或可以互換；兩個區間的差異也不等於直接檢驗了兩種指標的差異。
+mean IoU 差值的區間包含零，並不能證明模型等效或可以互換；兩個區間的差異也不等於直接檢驗了
+兩種指標的差異。
 這裡比較的是語意分割指標，沒有測試煞車決策或實車安全。
 
 下圖把同一個 mean IoU 差值拆到各類別。mean IoU 讓十九個類別各佔相同權重，所以易受傷害
@@ -163,22 +161,16 @@ locked cohort 的 ECE 反而增加。逐 seed 數值補充了平均值，不能�
 上面每一個結果句都帶著 <code>&lt;!-- claim: ... --&gt;</code> 標記。該 claim 指名
 [`docs/evidence/bdd100k_semseg_v1/`](docs/evidence/bdd100k_semseg_v1) 底下的一個
 artifact、其中的一個 JSON pointer，以及該 artifact 必須帶有的 protocol 與 dataset
-manifest 雜湊。兩道獨立檢查強制執行這件事：
+manifest 雜湊。兩道獨立檢查強制執行這件事，指令都列在
+[檢查每一個已發布數字](#檢查每一個已發布數字只用-cpu不需資料集不需-gpu)。
 
-```bash
-uv run --frozen driving-risk audit-claims --claims docs/claims.yaml
-uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/validate_claims.py \
-  --claims docs/claims.yaml --repo-root . --document README.md --document README.en.md \
-  --document docs/release-notes/v1.0.0.md --document docs/release-notes/v1.0.1.md \
-  --document docs/release-notes/v1.0.2.md
-```
-
-第一道證明 registry 中每一條 claim 都能從自己的 artifact 重現。第二道讀這些文件、
-追溯每一個帶標記的句子，並且**回報任何同時出現指標名稱與數字卻沒有標記的行**。
+第一道是 `audit-claims`，證明 registry 中每一條 claim 都能從自己的 artifact 重現。第二道是
+`validate_claims.py`，讀兩份 README 與 release notes、追溯每一個帶標記的句子，並且
+**回報任何同時出現指標名稱與數字卻沒有標記的行**。
 沒有人能追溯的數字，正是這個專案存在要防止的失敗，所以它會讓建置失敗，而不是被發布。
 同一道檢查也在測試套件中執行
 （[`tests/contract/test_published_documents.py`](tests/contract/test_published_documents.py)），
-所以加入無法追溯數字的 pull request 會在合併前就讓 CI 失敗。
+所以加入無法追溯數字的 pull request，其 CI 檢查會失敗。
 
 證據同時在一般測試執行中自我檢查：任何一個已發布數字在任何被追蹤的 artifact 中被
 改動，測試套件就會失敗。
