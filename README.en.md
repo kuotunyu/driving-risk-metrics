@@ -33,9 +33,7 @@ A pixel-averaged score can look healthy while most of the smallest pedestrians a
 smallest rider in this cohort are critically missed. The figure shows every instance class
 for all three models: car, by far the most frequent, is the only class in which most
 smallest-tertile instances are recovered, so the failure is not unique to vulnerable road
-users. The separate perception-error-to-aeb project studies how injected object-level
-perception errors, such as dropout, localization error and latency, affect a fixed AEB
-policy on nuPlan; it does not use these segmentation results.
+users.
 
 ![Critical misses on the smallest-tertile instances by class, one training seed per model, drawn from extended-metrics.json](docs/figures/small-tertile-critical-misses.svg)
 
@@ -55,11 +53,10 @@ the same comparison on recall over the vulnerable-road-user classes **excludes z
 
 </details>
 
-The interval for the mean IoU difference includes zero, while the interval for
-the critical-class recall difference excludes zero. The former does not establish
-equivalence or interchangeability; comparing these intervals is also not a direct
-test of a difference between the metrics. These are segmentation measurements,
-not tests of braking decisions or real-world safety.
+A mean IoU interval that includes zero does not establish equivalence or
+interchangeability; comparing these intervals is also not a direct test of a
+difference between the metrics. These are segmentation measurements, not tests of
+braking decisions or real-world safety.
 
 The figure below splits the same mean IoU difference by class. Mean IoU gives each of the
 nineteen classes equal weight, so the vulnerable-road-user gap reaches it diluted: the four
@@ -184,23 +181,17 @@ These bands are normalized image rows. They are not depth and not metric distanc
 Each result sentence above carries a <code>&lt;!-- claim: ... --&gt;</code> marker. The claim names an
 artifact under [`docs/evidence/bdd100k_semseg_v1/`](docs/evidence/bdd100k_semseg_v1),
 a JSON pointer inside it, and the protocol and dataset manifest hashes the artifact
-must carry. Two independent checks enforce it:
+must carry. Two independent checks enforce it; both commands are listed under
+[Check every published number](#check-every-published-number-cpu-only-no-dataset-no-gpu).
 
-```bash
-uv run --frozen driving-risk audit-claims --claims docs/claims.yaml
-uv run --frozen python .agents/skills/auditing-driving-risk-claims/scripts/validate_claims.py \
-  --claims docs/claims.yaml --repo-root . --document README.md --document README.en.md \
-  --document docs/release-notes/v1.0.0.md --document docs/release-notes/v1.0.1.md \
-  --document docs/release-notes/v1.0.2.md
-```
-
-The first proves every registry claim reproduces from its own artifact. The second
-reads these documents, traces every marked sentence, and **reports any line that
-states a metric and a number without a marker**. A number nobody can trace is the
+The first, `audit-claims`, proves every registry claim reproduces from its own artifact.
+The second, `validate_claims.py`, reads both READMEs and the release notes, traces every
+marked sentence, and **reports any line that states a metric and a number without a
+marker**. A number nobody can trace is the
 failure this project exists to prevent, so an untraceable one fails the build rather
 than shipping. The same check runs inside the test suite
 ([`tests/contract/test_published_documents.py`](tests/contract/test_published_documents.py)),
-so a pull request that adds an untraced number fails CI before it can merge.
+so a pull request that adds an untraced number fails its CI check.
 
 The evidence is also self-checking inside the ordinary test run: a change to any
 published number, in any tracked artifact, fails the test suite.
