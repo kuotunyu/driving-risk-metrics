@@ -58,9 +58,6 @@ jobs:
           --artifacts-dir docs/evidence/bdd100k_semseg_v1
           --output-dir site
 
-      - name: Copy the committed figures beside the report
-        run: mkdir -p site/figures-svg && cp docs/figures/*.svg site/figures-svg/
-
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
 

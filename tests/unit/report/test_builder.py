@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import re
+from decimal import Decimal
 from pathlib import Path
 from types import ModuleType
 from typing import Any
@@ -29,8 +31,10 @@ METRICS = {
         "support_pixels": [900000, 40000, 109005],
         "images_with_class": [998, 640, 7],
         "by_model": {
-            "upernet_convnextv2_tiny": {"iou": [0.95, 0.69, 0.0], "recall": [0.98, 0.83, 0.0]},
-            "upernet_dinov2_small": {"iou": [0.93, 0.46, 0.0], "recall": [0.97, 0.57, 0.0]},
+            # Each model's class IoUs average to its mean IoU above, as the per-class
+            # decomposition figure requires.
+            "upernet_convnextv2_tiny": {"iou": [0.95, 0.88, 0.0], "recall": [0.98, 0.83, 0.0]},
+            "upernet_dinov2_small": {"iou": [0.93, 0.81, 0.0], "recall": [0.97, 0.57, 0.0]},
         },
     },
     "calibration": {
@@ -112,6 +116,36 @@ RANKINGS = {
             "reversal_observed": True,
         }
     ],
+    "separability": {
+        "miou": [
+            {
+                "left": "upernet_convnextv2_tiny",
+                "right": "upernet_dinov2_small",
+                "estimate": 0.03,
+                "low": 0.01,
+                "high": 0.05,
+                "excludes_zero": True,
+            }
+        ],
+        "critical_recall": [
+            {
+                "left": "upernet_convnextv2_tiny",
+                "right": "upernet_dinov2_small",
+                "estimate": -0.07,
+                "low": -0.1,
+                "high": 0.004,
+                "excludes_zero": False,
+            }
+        ],
+    },
+}
+
+#: The shape `rank` writes when no metric was compared: no order and no intervals.
+RANKINGS_WITHOUT_COMPARISONS = {
+    "protocol_hash": PROTOCOL_HASH,
+    "dataset_manifest_hash": MANIFEST_HASH,
+    "baseline_metric": "miou",
+    "comparisons": [],
 }
 
 
@@ -387,13 +421,14 @@ def write_workspace(
     claims: list[dict[str, Any]] | None = None,
     drop: str | None = None,
     extended: dict[str, Any] | None = None,
+    rankings: dict[str, Any] | None = None,
 ) -> tuple[Path, Path, Path]:
     artifacts = tmp_path / "artifacts"
     artifacts.mkdir(parents=True, exist_ok=True)
     documents = {
         "metrics": METRICS,
         "intervals": INTERVALS,
-        "rankings": RANKINGS,
+        "rankings": rankings if rankings is not None else RANKINGS,
         "extended-metrics": extended if extended is not None else EXTENDED,
         "gallery-manifest": GALLERY,
         "formal_run_index": RUN_INDEX,
@@ -528,6 +563,10 @@ def test_two_builds_produce_byte_identical_output(tmp_path: Path) -> None:
     assert first.index_path.read_bytes() == second.index_path.read_bytes()
     assert [path.name for path in first.figure_paths] == [path.name for path in second.figure_paths]
     for left, right in zip(first.figure_paths, second.figure_paths, strict=True):
+        assert left.read_bytes() == right.read_bytes()
+    assert [path.name for path in first.svg_paths] == [path.name for path in second.svg_paths]
+    assert first.svg_paths
+    for left, right in zip(first.svg_paths, second.svg_paths, strict=True):
         assert left.read_bytes() == right.read_bytes()
 
 
@@ -694,7 +733,12 @@ def test_the_gallery_is_a_table_of_sample_ids_and_never_ships_an_image(
     page = result.index_path.read_text(encoding="utf-8")
 
     assert "zzz-009" in page
-    assert "<img" not in page
+    # The only images are the evidence figures drawn beside the page, never pixels.
+    sources = re.findall(r'<img src="([^"]*)"', page)
+    assert sources
+    assert all(re.fullmatch(r"figures-svg/[a-z0-9-]+\.svg", source) for source in sources)
+    assert page.count("<img") == len(sources)
+    assert not re.search(r"""(?:src|href)\s*=\s*["']?data:""", page)
 
 
 def test_the_nine_formal_runs_are_listed_with_their_checkpoints(tmp_path: Path) -> None:
@@ -725,3 +769,329 @@ def test_a_block_the_analysis_could_not_compute_is_stated_rather_than_faked(
     assert "ground truth was not available to this analysis run" in page
     assert "the frozen area tertiles were not supplied" in page
     assert "Critical misses" not in page
+    assert "<img" not in page
+    assert load_builder_module().NOT_DRAWN in page
+    assert result.svg_paths == ()
+    assert not (tmp_path / "site" / "figures-svg").exists()
+
+
+def headline_claims() -> list[dict[str, Any]]:
+    """The registry entries the page opens with, pointing at this workspace's fixtures."""
+
+    def claim(claim_id: str, text: str, artifact: str, pointer: str) -> dict[str, Any]:
+        return {
+            "claim_id": claim_id,
+            "text": text,
+            "evidence_type": "observed",
+            "protocol_hash": PROTOCOL_HASH,
+            "dataset_manifest_hash": MANIFEST_HASH,
+            "artifact_path": f"artifacts/{artifact}",
+            "metric_path": pointer,
+            "status": "verified",
+        }
+
+    return [
+        *default_claims(),
+        claim(
+            "p1.interval.miou.segformer-minus-convnextv2",
+            "The paired difference in mean IoU is 0.03, and its bootstrap interval from 0.01"
+            " to 0.05 excludes zero.",
+            "rankings.json",
+            "/separability/miou/0",
+        ),
+        claim(
+            "p1.interval.critical-recall.segformer-minus-convnextv2",
+            "The paired difference in critical-class recall is -0.07, and its bootstrap"
+            " interval from -0.1 to 0.004 includes zero.",
+            "rankings.json",
+            "/separability/critical_recall/0",
+        ),
+        claim(
+            "p1.instances.convnextv2.person-small",
+            "UperNet-ConvNeXtV2-Tiny recovers less than half the pixels of 17 of the 18"
+            " smallest-tertile person instances.",
+            "extended-metrics.json",
+            "/instances/upernet_convnextv2_tiny/by_class/person/by_tertile/small",
+        ),
+    ]
+
+
+def section_body(page: str, section_id: str) -> str:
+    match = re.search(rf'<section id="{section_id}">(.*?)</section>', page, re.DOTALL)
+    assert match is not None, section_id
+    return match.group(1)
+
+
+def figure_blocks(page: str) -> list[tuple[str, str]]:
+    """Return every figure on the page as (caption, body)."""
+
+    return re.findall(
+        r"<figure>\s*<figcaption>(.*?)</figcaption>(.*?)</figure>", page, flags=re.DOTALL
+    )
+
+
+def test_the_page_leads_with_findings_and_ends_with_its_provenance(tmp_path: Path) -> None:
+    """A reviewer meets the findings first; the hashes and the claims table close the page."""
+
+    page = build(tmp_path).index_path.read_text(encoding="utf-8")
+
+    assert re.findall(r'<section id="([^"]+)"', page) == [
+        "summary",
+        "key-figures",
+        "headline",
+        "figures",
+        "runs",
+        "per-class",
+        "calibration",
+        "risk-profiles",
+        "bands",
+        "instances",
+        "selective-risk",
+        "gallery",
+        "rankings",
+        "provenance",
+        "claims",
+        "limitations",
+    ]
+
+
+def test_the_hashes_and_the_claims_table_are_collapsed_but_complete(tmp_path: Path) -> None:
+    """Collapsing the provenance must not drop a hash or a claim from the page."""
+
+    page = build(tmp_path).index_path.read_text(encoding="utf-8")
+
+    assert page.count("<details>") == 2
+    for section_id, heading in (
+        ("provenance", "What these numbers describe"),
+        ("claims", "Verified claims"),
+    ):
+        body = section_body(page, section_id).strip()
+        assert body.startswith(f"<details>\n<summary><h2>{heading}</h2></summary>")
+        assert body.endswith("</details>")
+    assert PROTOCOL_HASH in section_body(page, "provenance")
+    assert MANIFEST_HASH in section_body(page, "provenance")
+    assert "FCN reaches 0.61 mIoU" in section_body(page, "claims")
+
+
+def test_the_cohort_seeds_and_interval_method_stay_visible_at_the_top(tmp_path: Path) -> None:
+    """Collapsing the hashes must not hide what every number describes."""
+
+    summary = section_body(build(tmp_path).index_path.read_text(encoding="utf-8"), "summary")
+
+    assert "<code>locked_validation</code> cohort" in summary
+    assert " ".join(summary.split()).count("1000 evaluated samples, 3 seeds per model") == 1
+    assert str(METRICS["interval_method"]) in summary
+
+
+def test_the_page_links_the_repository_readmes_release_and_sibling_projects(
+    tmp_path: Path,
+) -> None:
+    """The Pages homepage is the entry point, so it must lead back to everything else."""
+
+    from drivemetrics import __version__
+
+    page = build(tmp_path).index_path.read_text(encoding="utf-8")
+    nav = re.search(r'<nav class="links"[^>]*>(.*?)</nav>', page, re.DOTALL)
+
+    assert nav is not None
+    repository = "https://github.com/kuotunyu/driving-risk-metrics"
+    assert re.findall(r'href="([^"]+)"', nav.group(1)) == [
+        repository,
+        f"{repository}/blob/main/README.en.md",
+        f"{repository}/blob/main/README.md",
+        f"{repository}/releases/tag/v{__version__}",
+        "https://github.com/kuotunyu/bev-calibration-lab",
+        "https://github.com/kuotunyu/perception-error-to-aeb",
+    ]
+    assert f">Release v{__version__}</a>" in nav.group(1)
+
+
+def test_the_page_describes_itself_to_link_previews(tmp_path: Path) -> None:
+    """A shared link must preview as the study, not as a bare file name."""
+
+    page = build(tmp_path).index_path.read_text(encoding="utf-8")
+    title = "driving-risk-metrics: safety-oriented segmentation evaluation (BDD100K)"
+
+    assert f"<title>{title}</title>" in page
+    assert f'<meta property="og:title" content="{title}">' in page
+    assert '<meta property="og:type" content="website">' in page
+    assert (
+        '<meta property="og:url" content="https://kuotunyu.github.io/driving-risk-metrics/">'
+        in page
+    )
+    for name in ('name="description"', 'property="og:description"'):
+        content = re.search(rf'<meta {name} content="([^"]+)">', page)
+        assert content is not None, name
+        assert "locked_validation cohort, 1000 samples, 3 seeds per model" in content.group(1)
+
+
+def test_the_lede_states_the_headline_claims_rounded_like_the_readme(tmp_path: Path) -> None:
+    """The opening values use the validator's rounding and keep the full value beside them."""
+
+    page = build(tmp_path, claims=headline_claims()).index_path.read_text(encoding="utf-8")
+    findings = re.search(r'<ul class="findings">(.*?)</ul>', page, re.DOTALL)
+
+    assert findings is not None
+    items = [
+        " ".join(item.split())
+        for item in re.findall(r"<li>(.*?)</li>", findings.group(1), re.DOTALL)
+    ]
+    assert items == [
+        "Mean IoU, UperNet-ConvNeXtV2-Tiny minus UperNet-DINOv2-Small:"
+        ' <span title="0.03">0.030</span>, paired bootstrap interval'
+        ' <span title="0.01">0.010</span> to <span title="0.05">0.050</span>,'
+        " which excludes zero.",
+        "Critical-class recall, UperNet-ConvNeXtV2-Tiny minus UperNet-DINOv2-Small:"
+        ' <span title="-0.07">-0.070</span>, paired bootstrap interval'
+        ' <span title="-0.1">-0.100</span> to <span title="0.004">0.004</span>,'
+        " which includes zero.",
+        "UperNet-ConvNeXtV2-Tiny recovers less than half the pixels of 17 of the 18"
+        " smallest-tertile person instances.",
+    ]
+    assert "one training seed per model (seed 17, the first" in " ".join(page.split())
+
+
+def test_a_headline_claim_the_registry_does_not_verify_is_left_out(tmp_path: Path) -> None:
+    """A statement whose claim is missing or unverified must not open the page."""
+
+    claims = headline_claims()
+    assert claims[3]["claim_id"] == "p1.interval.critical-recall.segformer-minus-convnextv2"
+    claims[3]["status"] = "draft"
+    page = build(tmp_path, claims=claims).index_path.read_text(encoding="utf-8")
+    items = re.findall(r"<li>(.*?)</li>", section_body(page, "summary"), re.DOTALL)
+
+    assert len(items) == 2
+    assert items[0].startswith("Mean IoU")
+    assert "smallest-tertile person instances" in items[1]
+    assert "Critical-class recall" not in section_body(page, "summary")
+    assert "one training seed per model" in section_body(page, "summary")
+
+    bare = build(tmp_path / "bare").index_path.read_text(encoding="utf-8")
+    assert '<ul class="findings">' not in bare
+    assert "one training seed per model" not in section_body(bare, "summary")
+
+
+def test_displayed_values_use_the_validator_rounding_rule() -> None:
+    """Round half to even on the decimal text, as the claims validator does, never on the float."""
+
+    builder = load_builder_module()
+
+    for value in (0.6320100232208011, -0.010027276977824351, 0.520379600009604, 0.0005, 0.0015):
+        expected = f"{Decimal(str(value)).quantize(Decimal('0.001')):.3f}"
+        assert builder.display_value(value) == {"text": expected, "full": str(value)}
+    assert builder.display_value(0.0005)["text"] == "0.000"
+    assert builder.display_value(0.520379600009604)["text"] == "0.520"
+
+
+def test_the_headline_table_rounds_every_metric_best_model_first(tmp_path: Path) -> None:
+    """The compact table follows the baseline ranking and names models as the claims do."""
+
+    body = section_body(build(tmp_path).index_path.read_text(encoding="utf-8"), "headline")
+    rows = re.findall(r"<tr>(.*?)</tr>", body, re.DOTALL)
+
+    assert rows[0] == "<th>Model</th><th>mean IoU</th><th>critical-class recall</th>"
+    assert rows[1:] == [
+        '<td>UperNet-ConvNeXtV2-Tiny</td><td title="0.61">0.610</td><td title="0.64">0.640</td>',
+        '<td>UperNet-DINOv2-Small</td><td title="0.58">0.580</td><td title="0.71">0.710</td>',
+    ]
+
+
+def test_only_figures_that_draw_intervals_mention_the_bootstrap(tmp_path: Path) -> None:
+    """A caption must not promise intervals on a chart that draws none."""
+
+    page = build(tmp_path).index_path.read_text(encoding="utf-8")
+    blocks = figure_blocks(page)
+
+    assert len(blocks) == 6
+    for caption, body in blocks:
+        draws_intervals = (
+            'id="figure-paired-differences"' in body or "figures-svg/headline-top-two.svg" in body
+        )
+        assert ("bootstrap" in caption) == draws_intervals, caption
+        states_none = "draws no interval" in caption or "no per-class interval" in caption
+        assert states_none != draws_intervals, caption
+
+
+def test_each_chart_has_its_own_caption_and_readable_labels(tmp_path: Path) -> None:
+    """Charts name models and metrics as the claims do, best model first."""
+
+    result = build(tmp_path)
+    figures = result.index_path.parent / "figures"
+    page = result.index_path.read_text(encoding="utf-8")
+    captions = [caption for caption, body in figure_blocks(page) if "plotly-graph-div" in body]
+
+    assert len(set(captions)) == len(captions) == 3
+    assert captions[0].startswith("Critical-class recall of each model")
+    assert "models ordered by mean IoU, best first" in captions[0]
+    miou = json.loads((figures / "miou.json").read_text(encoding="utf-8"))
+    assert miou["layout"]["title"]["text"] == "Mean IoU by model"
+    assert miou["layout"]["xaxis"]["categoryarray"] == [
+        "UperNet-ConvNeXtV2-Tiny",
+        "UperNet-DINOv2-Small",
+    ]
+    intervals = json.loads((figures / "paired-differences.json").read_text(encoding="utf-8"))
+    assert intervals["data"][0]["y"] == [
+        "UperNet-ConvNeXtV2-Tiny minus UperNet-DINOv2-Small (mean IoU)"
+    ]
+
+
+def test_models_are_ordered_by_name_when_nothing_was_ranked(tmp_path: Path) -> None:
+    """Without a ranking there is no best model, and no curated figure can be drawn."""
+
+    result = build(tmp_path, rankings=RANKINGS_WITHOUT_COMPARISONS)
+    page = result.index_path.read_text(encoding="utf-8")
+
+    assert "models ordered by name." in page
+    assert result.svg_paths == ()
+    assert "<img" not in page
+
+
+def test_an_interval_key_in_another_shape_keeps_its_own_label() -> None:
+    """Only a ``left minus right (metric)`` key is renamed; any other passes through."""
+
+    builder = load_builder_module()
+
+    assert builder._interval_label("upernet_convnextv2_tiny (miou)") == (
+        "upernet_convnextv2_tiny (miou)"
+    )
+    assert builder._interval_label("segformer_b2 minus other (pixel_accuracy)") == (
+        "SegFormer-B2 minus other (pixel accuracy)"
+    )
+
+
+def test_the_curated_figures_are_drawn_beside_the_page_and_shown_first(tmp_path: Path) -> None:
+    """A local build must be self-contained: the page's SVGs are written by the build."""
+
+    from drivemetrics.report.svg import FIGURE_NAMES
+
+    result = build(tmp_path)
+    page = result.index_path.read_text(encoding="utf-8")
+    site = result.index_path.parent
+
+    assert [path.name for path in result.svg_paths] == [f"{name}.svg" for name in FIGURE_NAMES]
+    assert all(path.parent == site / "figures-svg" and path.is_file() for path in result.svg_paths)
+    images = re.findall(
+        r'<img src="([^"]+)" width="(\d+)" height="(\d+)" alt="([^"]+)">',
+        section_body(page, "key-figures"),
+    )
+    assert [source for source, _, _, _ in images] == [
+        "figures-svg/headline-top-two.svg",
+        "figures-svg/small-tertile-critical-misses.svg",
+        "figures-svg/miou-gap-by-class.svg",
+    ]
+    for source, width, height, alt in images:
+        svg = (site / source).read_text(encoding="utf-8")
+        assert f'width="{width}" height="{height}"' in svg
+        assert alt
+    assert page.index("figures-svg/") < page.index('id="figure-')
+
+
+def test_rankings_without_intervals_draw_no_curated_figure(tmp_path: Path) -> None:
+    """An older rankings document has no separability block; the page says so."""
+
+    rankings = {key: value for key, value in RANKINGS.items() if key != "separability"}
+    result = build(tmp_path, rankings=rankings)
+    page = result.index_path.read_text(encoding="utf-8")
+
+    assert result.svg_paths == ()
+    assert load_builder_module().NOT_DRAWN in section_body(page, "key-figures")
