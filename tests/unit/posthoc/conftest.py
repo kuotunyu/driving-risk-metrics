@@ -147,6 +147,15 @@ def place(bitmask: np.ndarray, rows: Any, columns: Any, *, category: int, annota
     bitmask[rows, columns, 3] = annotation_id & 0xFF
 
 
+def grid_for(prediction: Prediction, model: str, seed: int) -> Callable[[str], np.ndarray]:
+    """One run's prediction grid for each image."""
+
+    def grid(sample_id: str) -> np.ndarray:
+        return prediction(sample_id, model, seed)
+
+    return grid
+
+
 @dataclass(frozen=True)
 class Study:
     """Everything the extraction reads, laid out as the released study lays it out."""
@@ -210,7 +219,7 @@ def build_study(
             payloads = write_artifacts(
                 directory,
                 digest,
-                lambda sample_id, model=model, seed=seed: prediction(sample_id, model, seed),
+                grid_for(prediction, model, seed),
                 spread_offset=offset,
             )
             write_run_record(directory, run_id, seed, digest, payloads)
