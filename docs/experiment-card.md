@@ -145,3 +145,57 @@ that changed silently is not a method.
   estimate of population performance.
 - Class `train` appears in 7 images of the locked cohort. Its per-class values are
   published with that count attached and should not be read as a model property.
+
+### Deviations from the stated protocol (noted 2026-09-23)
+
+The protocol says that every reported number is a mean over seeds with an interval,
+never a single seed ([`protocol.md`](protocol.md), under Training). Two groups of
+published numbers do not meet that rule:
+
+- **Instance coverage comes from one seed per model.** The extended-metrics step
+  passes only the first calibrated run of each model, in approved-seed order, to
+  the instance block (`src/drivemetrics/analysis/extended.py`, lines 519 to 521).
+  Every instance-coverage value, the counts included, is therefore from seed 17
+  and has no interval. Both READMEs and the generated report say so where the
+  counts appear.
+- **Intervals exist only for paired differences in three metrics.** The paired
+  bootstrap intervals in `intervals.json` cover the difference between each pair
+  of models in mean IoU, critical-class recall and pixel accuracy. The per-model
+  means in the READMEs' headline table carry no interval of their own, and ECE,
+  Brier score, selective risk (AURC), image-band pixel accuracy and risk-weighted
+  cost are seed means without intervals.
+
+## Threats to validity
+
+Recorded so that a reader can weigh them. None of them changes a published number.
+
+- **Three seeds per model.** The seed stage of the two-stage bootstrap resamples
+  from only three seeds per model, so the intervals reflect seed-to-seed variation
+  only as far as three runs can show it.
+- **The instance-coverage rule changed after the locked cohort had been scored.**
+  The first full analysis, at `cc139a0`, scored the nine runs on the locked cohort,
+  instance coverage included, under a rule that required total agreement between
+  the semantic and instance annotations. That rule was replaced at `ab2954d` (see
+  [Analysis](#analysis) and
+  [Method history](#method-history-what-contact-with-real-data-changed) above, and
+  [`verification/analysis-reproduction.md`](verification/analysis-reproduction.md)).
+  The measurement behind the replacement used locked-cohort labels only, with no
+  model output ([`protocol.md`](protocol.md), under Ground-truth metrics). Rule 1
+  in [`protocol.md`](protocol.md) says the locked cohort is spent the moment it
+  influences a decision. Whether this replacement was such a decision is left to
+  the reader, and the instance-coverage numbers should be read with this history
+  in mind.
+- **Inference geometry is below source resolution.** BDD100K images are 720
+  pixels high and 1280 wide ([`dataset-card.md`](dataset-card.md)). Every model
+  sees them resized to 512 by 910 and padded to 512 by 1024, height by width (the
+  `input` block of
+  [`bdd100k_semseg_v1.yaml`](../configs/protocols/bdd100k_semseg_v1.yaml)), about
+  0.71 of the source height and width, and its predictions are mapped back to
+  source geometry before scoring. The smallest instances are therefore scored at
+  full resolution but predicted from a downsampled image.
+- **No multiplicity adjustment.** Nine paired intervals are published, three pairs
+  of models times three metrics, each at 0.95 confidence, with no adjustment for
+  their number. Read them as descriptive, not as a family of hypothesis tests.
+- **The DINOv2 adapter.** The `upernet_dinov2_small` backbone did not load the
+  checkpoint's position embeddings and trained them from random initialisation;
+  see the [model card](model-card.md#known-weaknesses-measured-rather-than-assumed).
