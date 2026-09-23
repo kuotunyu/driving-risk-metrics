@@ -25,10 +25,7 @@ def test_each_approved_model_produces_logits_at_the_input_resolution(name: str) 
     """A backend output-layout change would silently misalign logits and masks."""
 
     pytest.importorskip("torch", reason="the optional train extra is not installed")
-    if name == "segformer_b2":
-        pytest.importorskip("transformers", reason="the optional train extra is not installed")
-    else:
-        pytest.importorskip("torchvision", reason="the optional train extra is not installed")
+    pytest.importorskip("transformers", reason="the optional train extra is not installed")
 
     model = create_model(name, NUM_CLASSES, False)  # type: ignore[arg-type]
     image = np.zeros((1, 3, SMOKE_HEIGHT, SMOKE_WIDTH), dtype=np.float32)
@@ -45,10 +42,7 @@ def test_each_approved_model_exposes_trainable_parameters(name: str) -> None:
     """The training engine cannot build an optimizer without real backend parameters."""
 
     pytest.importorskip("torch", reason="the optional train extra is not installed")
-    if name == "segformer_b2":
-        pytest.importorskip("transformers", reason="the optional train extra is not installed")
-    else:
-        pytest.importorskip("torchvision", reason="the optional train extra is not installed")
+    pytest.importorskip("transformers", reason="the optional train extra is not installed")
 
     model = create_model(name, NUM_CLASSES, False)  # type: ignore[arg-type]
 
