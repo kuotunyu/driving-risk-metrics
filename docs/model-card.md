@@ -71,8 +71,8 @@ from.
 - As a baseline to compare a new evaluation method against, since the prediction
   artifacts are stored and the analysis is deterministic.
 
-No checkpoint is redistributed here. Anyone reusing these checkpoints, or weights
-derived from them, should review the upstream terms listed under
+Anyone reusing these checkpoints, or weights derived from them, should review the
+upstream terms listed under
 [Third-party pretrained weights](#third-party-pretrained-weights); this repository
 makes no statement about their legal effect.
 
