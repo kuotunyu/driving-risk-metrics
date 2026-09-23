@@ -60,24 +60,31 @@ DINOV2_SMALL_GEOMETRY: dict[str, Any] = {
 }
 
 
-def _load_backbone_weights(backbone: Any, checkpoint: str, loader: Any) -> None:
+def _load_backbone_weights(backbone: Any, checkpoint: str, loader: Any) -> tuple[str, ...]:
     """Copy classification or self-supervised weights into a segmentation backbone.
 
-    Only parameters that exist on both sides with matching shapes are copied.
-    The rest are the per-stage output norms the segmentation wrapper adds, which
-    have no counterpart in the pretrained model and must start fresh.
+    Only parameters that exist on both sides with matching shapes are copied;
+    every other backbone parameter keeps its random initialisation. For
+    ConvNeXtV2 those are the per-stage output norms the segmentation wrapper
+    adds, which have no counterpart in the pretrained model. For DINOv2 no
+    parameter lacks a counterpart, but one is skipped for its shape:
+    ``embeddings.position_embeddings``. ``DINOV2_SMALL_GEOMETRY`` leaves the
+    image size at the library default of 224 pixels, a table of 257 rows, while
+    the published checkpoint was built at 518 pixels, a table of 1370 rows.
+
+    Returns the checkpoint keys skipped for a shape mismatch, sorted, so the skip
+    can be seen rather than inferred. The build path does not use the value, and
+    which parameters load is unchanged.
     """
 
     source = loader.from_pretrained(checkpoint).state_dict()
     target = backbone.state_dict()
-    matched = {
-        key: value
-        for key, value in source.items()
-        if key in target and target[key].shape == value.shape
-    }
+    shared = [key for key in source if key in target]
+    matched = {key: source[key] for key in shared if target[key].shape == source[key].shape}
     if not matched:
         raise ValueError(f"no pretrained parameter matched the backbone from {checkpoint}")
     backbone.load_state_dict(matched, strict=False)
+    return tuple(sorted(key for key in shared if key not in matched))
 
 
 def _build_segformer(num_classes: int, pretrained: bool) -> Any:
