@@ -123,6 +123,20 @@ def _json_numbers(value: object) -> set[Decimal]:
     return set()
 
 
+def claim_value(claim: ClaimV1, repository_root: Path) -> object:
+    """Return the value at the claim's metric pointer, exactly as its artifact holds it.
+
+    A missing artifact raises ``FileNotFoundError`` and a pointer that resolves to
+    nothing raises ``LookupError``.
+    """
+
+    artifact: Any = json.loads(
+        (repository_root / claim.artifact_path).read_text(encoding="utf-8"),
+        parse_constant=_reject_json_constant,
+    )
+    return _resolve_json_pointer(artifact, claim.metric_path)
+
+
 def metric_numbers(claim: ClaimV1, repository_root: Path) -> set[Decimal]:
     """Return every number at the claim's metric pointer.
 
@@ -132,11 +146,7 @@ def metric_numbers(claim: ClaimV1, repository_root: Path) -> set[Decimal]:
     check.
     """
 
-    artifact: Any = json.loads(
-        (repository_root / claim.artifact_path).read_text(encoding="utf-8"),
-        parse_constant=_reject_json_constant,
-    )
-    return _json_numbers(_resolve_json_pointer(artifact, claim.metric_path))
+    return _json_numbers(claim_value(claim, repository_root))
 
 
 def audit_claims(claims_path: Path, repository_root: Path) -> tuple[str, ...]:
