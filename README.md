@@ -2,7 +2,7 @@
 
 **只看 mIoU，會漏掉哪些與易受傷害用路人相關的分割失敗？**
 
-[English](README.en.md) · [線上報告](https://kuotunyu.github.io/driving-risk-metrics/) · [Release v1.0.2](https://github.com/kuotunyu/driving-risk-metrics/releases/tag/v1.0.2)
+[English](README.en.md) · [線上報告](https://kuotunyu.github.io/driving-risk-metrics/) · [Release v1.1.0](https://github.com/kuotunyu/driving-risk-metrics/releases/tag/v1.1.0)
 
 自駕感知安全三案作品集之一，另外兩案是 [bev-calibration-lab](https://github.com/kuotunyu/bev-calibration-lab)（[網站](https://kuotunyu.github.io/bev-calibration-lab/)），在 nuScenes 上研究相機/LiDAR calibration fault；以及 [perception-error-to-aeb](https://github.com/kuotunyu/perception-error-to-aeb)（[網站](https://kuotunyu.github.io/perception-error-to-aeb/)），在 nuPlan 上把感知誤差送進固定的 AEB policy。
 三案使用不同資料集與研究設定，不代表已驗證同一套模型從感知驅動 AEB。
