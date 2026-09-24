@@ -33,7 +33,7 @@ def test_the_root_help_lists_the_allseed_group() -> None:
     assert "allseed" in result.output
 
 
-@pytest.mark.parametrize("command", ["extract", "analyse"])
+@pytest.mark.parametrize("command", ["extract", "analyse", "evidence"])
 def test_every_subcommand_requires_its_options(command: str) -> None:
     result = runner.invoke(app, ["allseed", command])
 
@@ -157,3 +157,30 @@ def test_a_refusing_service_exits_nonzero_with_a_diagnostic(
 
     assert result.exit_code == 1
     assert "the reproduction gate failed" in result.stderr
+
+
+def test_evidence_derives_the_report_evidence_from_a_summary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import drivemetrics.cli.allseed as allseed_cli
+
+    calls: dict[str, Any] = {}
+
+    def derive(summary: Path, output: Path) -> Any:
+        calls["args"] = (summary, output)
+        return SimpleNamespace(evidence_path=output)
+
+    monkeypatch.setattr(allseed_cli, "EVIDENCE_SERVICE", derive)
+    summary = touch(tmp_path / "summary.json")
+    output = tmp_path / "evidence" / "allseed-evidence.json"
+
+    result = runner.invoke(
+        app, ["allseed", "evidence", "--summary", str(summary), "--output", str(output)]
+    )
+
+    assert result.exit_code == 0, result.output
+    assert calls["args"] == (summary, output)
+    assert json.loads(result.stdout) == {
+        "command": "allseed evidence",
+        "evidence_path": str(output),
+    }

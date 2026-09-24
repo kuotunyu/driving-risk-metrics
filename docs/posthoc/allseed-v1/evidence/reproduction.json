@@ -1,0 +1,30 @@
+{
+  "checked": [
+    "interval: segformer_b2 minus upernet_convnextv2_tiny (miou)",
+    "interval: segformer_b2 minus upernet_dinov2_small (miou)",
+    "interval: upernet_convnextv2_tiny minus upernet_dinov2_small (miou)",
+    "interval: segformer_b2 minus upernet_convnextv2_tiny (pixel_accuracy)",
+    "interval: segformer_b2 minus upernet_dinov2_small (pixel_accuracy)",
+    "interval: upernet_convnextv2_tiny minus upernet_dinov2_small (pixel_accuracy)",
+    "interval: segformer_b2 minus upernet_convnextv2_tiny (critical_recall)",
+    "interval: segformer_b2 minus upernet_dinov2_small (critical_recall)",
+    "interval: upernet_convnextv2_tiny minus upernet_dinov2_small (critical_recall)",
+    "instances: segformer_b2",
+    "instances: upernet_convnextv2_tiny",
+    "instances: upernet_dinov2_small",
+    "aurc: segformer_b2 uncalibrated",
+    "aurc: segformer_b2 calibrated",
+    "aurc: upernet_convnextv2_tiny uncalibrated",
+    "aurc: upernet_convnextv2_tiny calibrated",
+    "aurc: upernet_dinov2_small uncalibrated",
+    "aurc: upernet_dinov2_small calibrated",
+    "calibration: segformer_b2 uncalibrated",
+    "calibration: segformer_b2 calibrated",
+    "calibration: upernet_convnextv2_tiny uncalibrated",
+    "calibration: upernet_convnextv2_tiny calibrated",
+    "calibration: upernet_dinov2_small uncalibrated",
+    "calibration: upernet_dinov2_small calibrated"
+  ],
+  "mismatches": [],
+  "passed": true
+}

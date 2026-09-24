@@ -2,7 +2,7 @@
 
 **Which vulnerable-road-user segmentation failures does mIoU leave out?**
 
-[繁體中文](README.md) · [Live report](https://kuotunyu.github.io/driving-risk-metrics/) · [Release v1.0.2](https://github.com/kuotunyu/driving-risk-metrics/releases/tag/v1.0.2)
+[繁體中文](README.md) · [Live report](https://kuotunyu.github.io/driving-risk-metrics/) · [Release v1.1.0](https://github.com/kuotunyu/driving-risk-metrics/releases/tag/v1.1.0)
 
 Part of a three-project autonomous-driving perception-safety portfolio with [bev-calibration-lab](https://github.com/kuotunyu/bev-calibration-lab) ([site](https://kuotunyu.github.io/bev-calibration-lab/)), camera–LiDAR calibration faults on nuScenes, and [perception-error-to-aeb](https://github.com/kuotunyu/perception-error-to-aeb) ([site](https://kuotunyu.github.io/perception-error-to-aeb/)), perception errors fed into a fixed AEB policy on nuPlan.
 The projects use different datasets and study settings and do not form a validated perception-to-AEB pipeline.
@@ -30,6 +30,10 @@ they are not averaged over seeds and carry no interval. This is an exception to 
 mean-over-seeds rule in [`docs/protocol.md`](docs/protocol.md). Rider and motorcycle have
 too few smallest-tertile instances to estimate a failure rate; the person counts support
 a more stable within-cohort description.
+A pre-registered post-release analysis later added the other two seeds and intervals, from the
+same released predictions: seed 17 is representative, every model critically misses most
+smallest-tertile people, and the three models are separable on them. See
+[the all-seed analysis](docs/posthoc/allseed-v1/results.md).
 
 A pixel-averaged score can look healthy while most of the smallest pedestrians and every
 smallest rider in this cohort are critically missed. The figure shows every instance class

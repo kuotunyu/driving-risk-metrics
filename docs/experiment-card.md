@@ -158,12 +158,18 @@ published numbers do not meet that rule:
   Every instance-coverage value, the counts included, is therefore from seed 17
   and has no interval. Both READMEs and the generated report say so where the
   counts appear.
+  A pre-registered post-release analysis recomputes every instance block for
+  all three seeds, with intervals, from the same released predictions: see
+  [`posthoc/allseed-v1/results.md`](posthoc/allseed-v1/results.md).
 - **Intervals exist only for paired differences in three metrics.** The paired
   bootstrap intervals in `intervals.json` cover the difference between each pair
   of models in mean IoU, critical-class recall and pixel accuracy. The per-model
   means in the READMEs' headline table carry no interval of their own, and ECE,
   Brier score, selective risk (AURC), image-band pixel accuracy and risk-weighted
   cost are seed means without intervals.
+  The same post-release analysis adds intervals for ECE, Brier score, AURC, the
+  IoU of the four vulnerable-road-user classes and risk-weighted cost; image-band
+  pixel accuracy still has none.
 
 ## Threats to validity
 
