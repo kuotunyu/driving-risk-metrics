@@ -227,6 +227,9 @@ def test_cli_checks_actual_installed_version_and_normalizes(
 ) -> None:
     project, _, _ = distributions(tmp_path)
     module = release_module()
+    # The fixture project is version 1.0.2 whatever the package's own version is,
+    # so the runtime identity is pinned to it too; only the CLI wiring is tested.
+    monkeypatch.setattr(module, "__version__", "1.0.2")
     monkeypatch.setattr(importlib.metadata, "version", lambda name: "1.0.0")
     with pytest.raises(ValueError, match="identity"):
         module.main(
