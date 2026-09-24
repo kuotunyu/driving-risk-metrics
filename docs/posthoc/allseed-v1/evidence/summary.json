@@ -1,0 +1,3329 @@
+{
+  "analysis_plan": "docs/posthoc/allseed-v1/analysis-plan.md",
+  "counts": {
+    "images": 998,
+    "images_with_small_person": 214,
+    "small_person_instances": 462
+  },
+  "dataset_manifest_hash": "d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f",
+  "gates": {
+    "integrity": "passed",
+    "reproduction": "passed"
+  },
+  "primary": {
+    "pairs": {
+      "segformer_b2 minus upernet_convnextv2_tiny": {
+        "estimate": 0.0966810966810967,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.15425188147548158,
+            "low": 0.034930536409031036
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.14267165382096605,
+            "low": 0.04772046674927717
+          }
+        ],
+        "separable": true
+      },
+      "segformer_b2 minus upernet_dinov2_small": {
+        "estimate": -0.08802308802308811,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": -0.03179328639934713,
+            "low": -0.14710627833845247
+          },
+          {
+            "confidence": 0.95,
+            "high": -0.04238475306838112,
+            "low": -0.1356947021600533
+          }
+        ],
+        "separable": true
+      },
+      "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+        "estimate": -0.18470418470418482,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": -0.12958411048938637,
+            "low": -0.24154596314248633
+          },
+          {
+            "confidence": 0.95,
+            "high": -0.13883225907394334,
+            "low": -0.23103421812453737
+          }
+        ],
+        "separable": true
+      }
+    },
+    "small_person_miss_rate": {
+      "segformer_b2": {
+        "category": "majority missed",
+        "estimate": 0.7582972582972584,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.8219274984164799,
+            "low": 0.688164405099889
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.8126284133690169,
+            "low": 0.7031214534695202
+          }
+        ],
+        "per_seed": {
+          "17": 0.7619047619047619,
+          "42": 0.7424242424242424,
+          "73": 0.7705627705627706
+        },
+        "seed_17_minus_mean": 0.003607503607503504
+      },
+      "upernet_convnextv2_tiny": {
+        "category": "majority missed",
+        "estimate": 0.6616161616161617,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.7299823848967297,
+            "low": 0.5934460113900414
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.7162822637730701,
+            "low": 0.6052140594037237
+          }
+        ],
+        "per_seed": {
+          "17": 0.6623376623376623,
+          "42": 0.6515151515151515,
+          "73": 0.670995670995671
+        },
+        "seed_17_minus_mean": 0.0007215007215006786
+      },
+      "upernet_dinov2_small": {
+        "category": "majority missed",
+        "estimate": 0.8463203463203465,
+        "intervals": [
+          {
+            "confidence": 0.9833333333333333,
+            "high": 0.8914158626066414,
+            "low": 0.7980060503262807
+          },
+          {
+            "confidence": 0.95,
+            "high": 0.8827316161196511,
+            "low": 0.8082168589010174
+          }
+        ],
+        "per_seed": {
+          "17": 0.8506493506493507,
+          "42": 0.8484848484848485,
+          "73": 0.8398268398268398
+        },
+        "seed_17_minus_mean": 0.004329004329004182
+      }
+    }
+  },
+  "protocol_hash": "b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f",
+  "schema_version": "driving-risk-allseed-summary/v1",
+  "secondary": {
+    "instance_blocks": {
+      "segformer_b2-seed-17": {
+        "by_class": {
+          "bicycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 2,
+                "instance_count": 26,
+                "mean_correct_fraction": 0.866590843496068
+              },
+              "medium": {
+                "critical_misses": 19,
+                "instance_count": 38,
+                "mean_correct_fraction": 0.4613565272559844
+              },
+              "small": {
+                "critical_misses": 26,
+                "instance_count": 32,
+                "mean_correct_fraction": 0.16968678598795395
+              }
+            },
+            "critical_misses": 47,
+            "instance_count": 96,
+            "mean_correct_fraction": 0.47388424081499697
+          },
+          "bus": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 10,
+                "instance_count": 69,
+                "mean_correct_fraction": 0.8187339447073747
+              },
+              "medium": {
+                "critical_misses": 46,
+                "instance_count": 71,
+                "mean_correct_fraction": 0.30939484261992356
+              },
+              "small": {
+                "critical_misses": 78,
+                "instance_count": 78,
+                "mean_correct_fraction": 0.017116820666476473
+              }
+            },
+            "critical_misses": 134,
+            "instance_count": 218,
+            "mean_correct_fraction": 0.3660311377193057
+          },
+          "car": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 60,
+                "instance_count": 3449,
+                "mean_correct_fraction": 0.950764602717072
+              },
+              "medium": {
+                "critical_misses": 264,
+                "instance_count": 3563,
+                "mean_correct_fraction": 0.8699083862911611
+              },
+              "small": {
+                "critical_misses": 789,
+                "instance_count": 3749,
+                "mean_correct_fraction": 0.7414646869533592
+              }
+            },
+            "critical_misses": 1113,
+            "instance_count": 10761,
+            "mean_correct_fraction": 0.8510753467628231
+          },
+          "motorcycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 9,
+                "instance_count": 21,
+                "mean_correct_fraction": 0.5272335658036227
+              },
+              "medium": {
+                "critical_misses": 11,
+                "instance_count": 11,
+                "mean_correct_fraction": 0.032204677890906426
+              },
+              "small": {
+                "critical_misses": 14,
+                "instance_count": 14,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 34,
+            "instance_count": 46,
+            "mean_correct_fraction": 0.24839470301469666
+          },
+          "person": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 49,
+                "instance_count": 370,
+                "mean_correct_fraction": 0.7862676124709514
+              },
+              "medium": {
+                "critical_misses": 132,
+                "instance_count": 337,
+                "mean_correct_fraction": 0.5599037694630212
+              },
+              "small": {
+                "critical_misses": 352,
+                "instance_count": 462,
+                "mean_correct_fraction": 0.22862983246232094
+              }
+            },
+            "critical_misses": 533,
+            "instance_count": 1169,
+            "mean_correct_fraction": 0.5006275188373676
+          },
+          "rider": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 2,
+                "instance_count": 10,
+                "mean_correct_fraction": 0.614148193695564
+              },
+              "medium": {
+                "critical_misses": 18,
+                "instance_count": 18,
+                "mean_correct_fraction": 0.031271805548502854
+              },
+              "small": {
+                "critical_misses": 17,
+                "instance_count": 17,
+                "mean_correct_fraction": 0.0011534025374855825
+              }
+            },
+            "critical_misses": 37,
+            "instance_count": 45,
+            "mean_correct_fraction": 0.14942182844368768
+          },
+          "train": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4,
+                "instance_count": 4,
+                "mean_correct_fraction": 0.0
+              },
+              "medium": {
+                "critical_misses": 0,
+                "instance_count": 0,
+                "mean_correct_fraction": null
+              },
+              "small": {
+                "critical_misses": 3,
+                "instance_count": 3,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 7,
+            "instance_count": 7,
+            "mean_correct_fraction": 0.0
+          },
+          "truck": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 73,
+                "instance_count": 181,
+                "mean_correct_fraction": 0.575136829750502
+              },
+              "medium": {
+                "critical_misses": 121,
+                "instance_count": 178,
+                "mean_correct_fraction": 0.31317458080835525
+              },
+              "small": {
+                "critical_misses": 143,
+                "instance_count": 159,
+                "mean_correct_fraction": 0.09788190799469292
+              }
+            },
+            "critical_misses": 337,
+            "instance_count": 518,
+            "mean_correct_fraction": 0.33862560799205477
+          }
+        },
+        "by_tertile": {
+          "large": {
+            "critical_misses": 209,
+            "instance_count": 4130,
+            "mean_correct_fraction": 0.9129402635604879
+          },
+          "medium": {
+            "critical_misses": 611,
+            "instance_count": 4216,
+            "mean_correct_fraction": 0.8027352827008412
+          },
+          "small": {
+            "critical_misses": 1422,
+            "instance_count": 4514,
+            "mean_correct_fraction": 0.6441572916179947
+          }
+        },
+        "excluded_without_semantic_pixels": 115,
+        "instance_count": 12860,
+        "mean_corroborated_fraction": 0.94643690780947,
+        "tertile_edges_sha256": "5f9365d5b9189b49649e34fc8403f16f4934d630ceb5cf903429007a52997206"
+      },
+      "segformer_b2-seed-42": {
+        "by_class": {
+          "bicycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 2,
+                "instance_count": 26,
+                "mean_correct_fraction": 0.842318357800439
+              },
+              "medium": {
+                "critical_misses": 19,
+                "instance_count": 38,
+                "mean_correct_fraction": 0.45027631733817275
+              },
+              "small": {
+                "critical_misses": 26,
+                "instance_count": 32,
+                "mean_correct_fraction": 0.18249171639746897
+              }
+            },
+            "critical_misses": 47,
+            "instance_count": 96,
+            "mean_correct_fraction": 0.46719283631646863
+          },
+          "bus": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 7,
+                "instance_count": 69,
+                "mean_correct_fraction": 0.8381352109206958
+              },
+              "medium": {
+                "critical_misses": 44,
+                "instance_count": 71,
+                "mean_correct_fraction": 0.35332821867029773
+              },
+              "small": {
+                "critical_misses": 78,
+                "instance_count": 78,
+                "mean_correct_fraction": 0.015702045930755356
+              }
+            },
+            "critical_misses": 129,
+            "instance_count": 218,
+            "mean_correct_fraction": 0.38597427826476177
+          },
+          "car": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 63,
+                "instance_count": 3449,
+                "mean_correct_fraction": 0.9503407180376892
+              },
+              "medium": {
+                "critical_misses": 276,
+                "instance_count": 3563,
+                "mean_correct_fraction": 0.8666656386413111
+              },
+              "small": {
+                "critical_misses": 827,
+                "instance_count": 3749,
+                "mean_correct_fraction": 0.733775142369365
+              }
+            },
+            "critical_misses": 1166,
+            "instance_count": 10761,
+            "mean_correct_fraction": 0.847186861419355
+          },
+          "motorcycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 11,
+                "instance_count": 21,
+                "mean_correct_fraction": 0.44908249630594177
+              },
+              "medium": {
+                "critical_misses": 11,
+                "instance_count": 11,
+                "mean_correct_fraction": 0.023494582054941246
+              },
+              "small": {
+                "critical_misses": 14,
+                "instance_count": 14,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 36,
+            "instance_count": 46,
+            "mean_correct_fraction": 0.21063419184845936
+          },
+          "person": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 51,
+                "instance_count": 370,
+                "mean_correct_fraction": 0.7855826395784944
+              },
+              "medium": {
+                "critical_misses": 132,
+                "instance_count": 337,
+                "mean_correct_fraction": 0.5521992648328369
+              },
+              "small": {
+                "critical_misses": 343,
+                "instance_count": 462,
+                "mean_correct_fraction": 0.2343247849981131
+              }
+            },
+            "critical_misses": 526,
+            "instance_count": 1169,
+            "mean_correct_fraction": 0.5004403589066191
+          },
+          "rider": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4,
+                "instance_count": 10,
+                "mean_correct_fraction": 0.5122412379911805
+              },
+              "medium": {
+                "critical_misses": 18,
+                "instance_count": 18,
+                "mean_correct_fraction": 0.04233156623740473
+              },
+              "small": {
+                "critical_misses": 17,
+                "instance_count": 17,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 39,
+            "instance_count": 45,
+            "mean_correct_fraction": 0.13076401271522423
+          },
+          "train": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4,
+                "instance_count": 4,
+                "mean_correct_fraction": 0.0
+              },
+              "medium": {
+                "critical_misses": 0,
+                "instance_count": 0,
+                "mean_correct_fraction": null
+              },
+              "small": {
+                "critical_misses": 3,
+                "instance_count": 3,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 7,
+            "instance_count": 7,
+            "mean_correct_fraction": 0.0
+          },
+          "truck": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 74,
+                "instance_count": 181,
+                "mean_correct_fraction": 0.5626917195743922
+              },
+              "medium": {
+                "critical_misses": 118,
+                "instance_count": 178,
+                "mean_correct_fraction": 0.32437839226483367
+              },
+              "small": {
+                "critical_misses": 138,
+                "instance_count": 159,
+                "mean_correct_fraction": 0.13312420180589402
+              }
+            },
+            "critical_misses": 330,
+            "instance_count": 518,
+            "mean_correct_fraction": 0.3489446006819358
+          }
+        },
+        "by_tertile": {
+          "large": {
+            "critical_misses": 216,
+            "instance_count": 4130,
+            "mean_correct_fraction": 0.9115066988033115
+          },
+          "medium": {
+            "critical_misses": 618,
+            "instance_count": 4216,
+            "mean_correct_fraction": 0.8005164584274486
+          },
+          "small": {
+            "critical_misses": 1446,
+            "instance_count": 4514,
+            "mean_correct_fraction": 0.6396571338073388
+          }
+        },
+        "excluded_without_semantic_pixels": 115,
+        "instance_count": 12860,
+        "mean_corroborated_fraction": 0.94643690780947,
+        "tertile_edges_sha256": "5f9365d5b9189b49649e34fc8403f16f4934d630ceb5cf903429007a52997206"
+      },
+      "segformer_b2-seed-73": {
+        "by_class": {
+          "bicycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 2,
+                "instance_count": 26,
+                "mean_correct_fraction": 0.8488556684926146
+              },
+              "medium": {
+                "critical_misses": 18,
+                "instance_count": 38,
+                "mean_correct_fraction": 0.5011582571917115
+              },
+              "small": {
+                "critical_misses": 26,
+                "instance_count": 32,
+                "mean_correct_fraction": 0.16661872685142054
+              }
+            },
+            "critical_misses": 46,
+            "instance_count": 96,
+            "mean_correct_fraction": 0.4838131293056092
+          },
+          "bus": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 8,
+                "instance_count": 69,
+                "mean_correct_fraction": 0.8440840385391288
+              },
+              "medium": {
+                "critical_misses": 52,
+                "instance_count": 71,
+                "mean_correct_fraction": 0.29310928059275354
+              },
+              "small": {
+                "critical_misses": 78,
+                "instance_count": 78,
+                "mean_correct_fraction": 0.006747846296062528
+              }
+            },
+            "critical_misses": 138,
+            "instance_count": 218,
+            "mean_correct_fraction": 0.3650407779466893
+          },
+          "car": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 68,
+                "instance_count": 3449,
+                "mean_correct_fraction": 0.9491079919372032
+              },
+              "medium": {
+                "critical_misses": 272,
+                "instance_count": 3563,
+                "mean_correct_fraction": 0.8684328441473842
+              },
+              "small": {
+                "critical_misses": 820,
+                "instance_count": 3749,
+                "mean_correct_fraction": 0.7367240290428269
+              }
+            },
+            "critical_misses": 1160,
+            "instance_count": 10761,
+            "mean_correct_fraction": 0.8484042442867861
+          },
+          "motorcycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 9,
+                "instance_count": 21,
+                "mean_correct_fraction": 0.5237019777063263
+              },
+              "medium": {
+                "critical_misses": 11,
+                "instance_count": 11,
+                "mean_correct_fraction": 0.03261584844564218
+              },
+              "small": {
+                "critical_misses": 14,
+                "instance_count": 14,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 34,
+            "instance_count": 46,
+            "mean_correct_fraction": 0.2468807796681504
+          },
+          "person": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 55,
+                "instance_count": 370,
+                "mean_correct_fraction": 0.7812832819734188
+              },
+              "medium": {
+                "critical_misses": 136,
+                "instance_count": 337,
+                "mean_correct_fraction": 0.5564440646009068
+              },
+              "small": {
+                "critical_misses": 356,
+                "instance_count": 462,
+                "mean_correct_fraction": 0.22763002854334263
+              }
+            },
+            "critical_misses": 547,
+            "instance_count": 1169,
+            "mean_correct_fraction": 0.49765743138382784
+          },
+          "rider": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4,
+                "instance_count": 10,
+                "mean_correct_fraction": 0.545837461325962
+              },
+              "medium": {
+                "critical_misses": 18,
+                "instance_count": 18,
+                "mean_correct_fraction": 0.037517281944514966
+              },
+              "small": {
+                "critical_misses": 17,
+                "instance_count": 17,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 39,
+            "instance_count": 45,
+            "mean_correct_fraction": 0.13630412640579756
+          },
+          "train": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4,
+                "instance_count": 4,
+                "mean_correct_fraction": 0.0
+              },
+              "medium": {
+                "critical_misses": 0,
+                "instance_count": 0,
+                "mean_correct_fraction": null
+              },
+              "small": {
+                "critical_misses": 3,
+                "instance_count": 3,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 7,
+            "instance_count": 7,
+            "mean_correct_fraction": 0.0
+          },
+          "truck": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 68,
+                "instance_count": 181,
+                "mean_correct_fraction": 0.5943196222867407
+              },
+              "medium": {
+                "critical_misses": 120,
+                "instance_count": 178,
+                "mean_correct_fraction": 0.32577761388909304
+              },
+              "small": {
+                "critical_misses": 145,
+                "instance_count": 159,
+                "mean_correct_fraction": 0.10417168525378137
+              }
+            },
+            "critical_misses": 333,
+            "instance_count": 518,
+            "mean_correct_fraction": 0.35158989355503817
+          }
+        },
+        "by_tertile": {
+          "large": {
+            "critical_misses": 218,
+            "instance_count": 4130,
+            "mean_correct_fraction": 0.91207948967084
+          },
+          "medium": {
+            "critical_misses": 627,
+            "instance_count": 4216,
+            "mean_correct_fraction": 0.8018560594979054
+          },
+          "small": {
+            "critical_misses": 1459,
+            "instance_count": 4514,
+            "mean_correct_fraction": 0.6401340025020538
+          }
+        },
+        "excluded_without_semantic_pixels": 115,
+        "instance_count": 12860,
+        "mean_corroborated_fraction": 0.94643690780947,
+        "tertile_edges_sha256": "5f9365d5b9189b49649e34fc8403f16f4934d630ceb5cf903429007a52997206"
+      },
+      "upernet_convnextv2_tiny-seed-17": {
+        "by_class": {
+          "bicycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 1,
+                "instance_count": 26,
+                "mean_correct_fraction": 0.8670651834792102
+              },
+              "medium": {
+                "critical_misses": 18,
+                "instance_count": 38,
+                "mean_correct_fraction": 0.45242665193205533
+              },
+              "small": {
+                "critical_misses": 24,
+                "instance_count": 32,
+                "mean_correct_fraction": 0.2345290403592655
+              }
+            },
+            "critical_misses": 43,
+            "instance_count": 96,
+            "mean_correct_fraction": 0.49209205036847986
+          },
+          "bus": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 12,
+                "instance_count": 69,
+                "mean_correct_fraction": 0.7908266342173964
+              },
+              "medium": {
+                "critical_misses": 49,
+                "instance_count": 71,
+                "mean_correct_fraction": 0.2961058410834849
+              },
+              "small": {
+                "critical_misses": 74,
+                "instance_count": 78,
+                "mean_correct_fraction": 0.046816852305509325
+              }
+            },
+            "critical_misses": 135,
+            "instance_count": 218,
+            "mean_correct_fraction": 0.36349663742090604
+          },
+          "car": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 59,
+                "instance_count": 3449,
+                "mean_correct_fraction": 0.9516204516114917
+              },
+              "medium": {
+                "critical_misses": 265,
+                "instance_count": 3563,
+                "mean_correct_fraction": 0.871886766119851
+              },
+              "small": {
+                "critical_misses": 822,
+                "instance_count": 3749,
+                "mean_correct_fraction": 0.7363694654976332
+              }
+            },
+            "critical_misses": 1146,
+            "instance_count": 10761,
+            "mean_correct_fraction": 0.8502295893916642
+          },
+          "motorcycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 8,
+                "instance_count": 21,
+                "mean_correct_fraction": 0.5597839441446038
+              },
+              "medium": {
+                "critical_misses": 11,
+                "instance_count": 11,
+                "mean_correct_fraction": 0.12982017762916512
+              },
+              "small": {
+                "critical_misses": 14,
+                "instance_count": 14,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 33,
+            "instance_count": 46,
+            "mean_correct_fraction": 0.28659749523820643
+          },
+          "person": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 45,
+                "instance_count": 370,
+                "mean_correct_fraction": 0.8067092414993713
+              },
+              "medium": {
+                "critical_misses": 121,
+                "instance_count": 337,
+                "mean_correct_fraction": 0.5950178421416166
+              },
+              "small": {
+                "critical_misses": 306,
+                "instance_count": 462,
+                "mean_correct_fraction": 0.3130790167690769
+              }
+            },
+            "critical_misses": 472,
+            "instance_count": 1169,
+            "mean_correct_fraction": 0.5505953275481672
+          },
+          "rider": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 2,
+                "instance_count": 10,
+                "mean_correct_fraction": 0.6505606657959287
+              },
+              "medium": {
+                "critical_misses": 16,
+                "instance_count": 18,
+                "mean_correct_fraction": 0.08232731861612967
+              },
+              "small": {
+                "critical_misses": 17,
+                "instance_count": 17,
+                "mean_correct_fraction": 0.018670703575547867
+              }
+            },
+            "critical_misses": 35,
+            "instance_count": 45,
+            "mean_correct_fraction": 0.18455334119630964
+          },
+          "train": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4,
+                "instance_count": 4,
+                "mean_correct_fraction": 0.0
+              },
+              "medium": {
+                "critical_misses": 0,
+                "instance_count": 0,
+                "mean_correct_fraction": null
+              },
+              "small": {
+                "critical_misses": 3,
+                "instance_count": 3,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 7,
+            "instance_count": 7,
+            "mean_correct_fraction": 0.0
+          },
+          "truck": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 72,
+                "instance_count": 181,
+                "mean_correct_fraction": 0.5710739759931875
+              },
+              "medium": {
+                "critical_misses": 115,
+                "instance_count": 178,
+                "mean_correct_fraction": 0.327986934110514
+              },
+              "small": {
+                "critical_misses": 139,
+                "instance_count": 159,
+                "mean_correct_fraction": 0.1179158294418808
+              }
+            },
+            "critical_misses": 326,
+            "instance_count": 518,
+            "mean_correct_fraction": 0.34844532974458986
+          }
+        },
+        "by_tertile": {
+          "large": {
+            "critical_misses": 203,
+            "instance_count": 4130,
+            "mean_correct_fraction": 0.9150986800566648
+          },
+          "medium": {
+            "critical_misses": 595,
+            "instance_count": 4216,
+            "mean_correct_fraction": 0.8080077978979551
+          },
+          "small": {
+            "critical_misses": 1399,
+            "instance_count": 4514,
+            "mean_correct_fraction": 0.6503133129178796
+          }
+        },
+        "excluded_without_semantic_pixels": 115,
+        "instance_count": 12860,
+        "mean_corroborated_fraction": 0.94643690780947,
+        "tertile_edges_sha256": "5f9365d5b9189b49649e34fc8403f16f4934d630ceb5cf903429007a52997206"
+      },
+      "upernet_convnextv2_tiny-seed-42": {
+        "by_class": {
+          "bicycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 0,
+                "instance_count": 26,
+                "mean_correct_fraction": 0.871853120078375
+              },
+              "medium": {
+                "critical_misses": 18,
+                "instance_count": 38,
+                "mean_correct_fraction": 0.4955216016210736
+              },
+              "small": {
+                "critical_misses": 25,
+                "instance_count": 32,
+                "mean_correct_fraction": 0.22291195403948733
+              }
+            },
+            "critical_misses": 43,
+            "instance_count": 96,
+            "mean_correct_fraction": 0.5065748386760639
+          },
+          "bus": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 13,
+                "instance_count": 69,
+                "mean_correct_fraction": 0.7948919712692379
+              },
+              "medium": {
+                "critical_misses": 50,
+                "instance_count": 71,
+                "mean_correct_fraction": 0.27655252042985473
+              },
+              "small": {
+                "critical_misses": 75,
+                "instance_count": 78,
+                "mean_correct_fraction": 0.033473530517059945
+              }
+            },
+            "critical_misses": 138,
+            "instance_count": 218,
+            "mean_correct_fraction": 0.35364087315792553
+          },
+          "car": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 65,
+                "instance_count": 3449,
+                "mean_correct_fraction": 0.9518126081820842
+              },
+              "medium": {
+                "critical_misses": 269,
+                "instance_count": 3563,
+                "mean_correct_fraction": 0.8707709218094775
+              },
+              "small": {
+                "critical_misses": 846,
+                "instance_count": 3749,
+                "mean_correct_fraction": 0.7239312261293582
+              }
+            },
+            "critical_misses": 1180,
+            "instance_count": 10761,
+            "mean_correct_fraction": 0.8455883883269362
+          },
+          "motorcycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 8,
+                "instance_count": 21,
+                "mean_correct_fraction": 0.5435070833859159
+              },
+              "medium": {
+                "critical_misses": 11,
+                "instance_count": 11,
+                "mean_correct_fraction": 0.0352971492387308
+              },
+              "small": {
+                "critical_misses": 13,
+                "instance_count": 14,
+                "mean_correct_fraction": 0.055973266499582286
+              }
+            },
+            "critical_misses": 32,
+            "instance_count": 46,
+            "mean_correct_fraction": 0.27359876355922663
+          },
+          "person": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 45,
+                "instance_count": 370,
+                "mean_correct_fraction": 0.8075954571726086
+              },
+              "medium": {
+                "critical_misses": 109,
+                "instance_count": 337,
+                "mean_correct_fraction": 0.6139557606840768
+              },
+              "small": {
+                "critical_misses": 301,
+                "instance_count": 462,
+                "mean_correct_fraction": 0.325535935869305
+              }
+            },
+            "critical_misses": 455,
+            "instance_count": 1169,
+            "mean_correct_fraction": 0.5612583514764911
+          },
+          "rider": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 0,
+                "instance_count": 10,
+                "mean_correct_fraction": 0.7583210066831999
+              },
+              "medium": {
+                "critical_misses": 16,
+                "instance_count": 18,
+                "mean_correct_fraction": 0.10417249795649357
+              },
+              "small": {
+                "critical_misses": 16,
+                "instance_count": 17,
+                "mean_correct_fraction": 0.041138023836985775
+              }
+            },
+            "critical_misses": 32,
+            "instance_count": 45,
+            "mean_correct_fraction": 0.22572580967283645
+          },
+          "train": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4,
+                "instance_count": 4,
+                "mean_correct_fraction": 0.0
+              },
+              "medium": {
+                "critical_misses": 0,
+                "instance_count": 0,
+                "mean_correct_fraction": null
+              },
+              "small": {
+                "critical_misses": 3,
+                "instance_count": 3,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 7,
+            "instance_count": 7,
+            "mean_correct_fraction": 0.0
+          },
+          "truck": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 77,
+                "instance_count": 181,
+                "mean_correct_fraction": 0.5616636181118232
+              },
+              "medium": {
+                "critical_misses": 117,
+                "instance_count": 178,
+                "mean_correct_fraction": 0.33786459011646836
+              },
+              "small": {
+                "critical_misses": 141,
+                "instance_count": 159,
+                "mean_correct_fraction": 0.11051655215399064
+              }
+            },
+            "critical_misses": 335,
+            "instance_count": 518,
+            "mean_correct_fraction": 0.34628020021516565
+          }
+        },
+        "by_tertile": {
+          "large": {
+            "critical_misses": 212,
+            "instance_count": 4130,
+            "mean_correct_fraction": 0.9152023500265536
+          },
+          "medium": {
+            "critical_misses": 590,
+            "instance_count": 4216,
+            "mean_correct_fraction": 0.8089013771858152
+          },
+          "small": {
+            "critical_misses": 1420,
+            "instance_count": 4514,
+            "mean_correct_fraction": 0.64094262095013
+          }
+        },
+        "excluded_without_semantic_pixels": 115,
+        "instance_count": 12860,
+        "mean_corroborated_fraction": 0.94643690780947,
+        "tertile_edges_sha256": "5f9365d5b9189b49649e34fc8403f16f4934d630ceb5cf903429007a52997206"
+      },
+      "upernet_convnextv2_tiny-seed-73": {
+        "by_class": {
+          "bicycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 1,
+                "instance_count": 26,
+                "mean_correct_fraction": 0.885366001150188
+              },
+              "medium": {
+                "critical_misses": 18,
+                "instance_count": 38,
+                "mean_correct_fraction": 0.47593114447911755
+              },
+              "small": {
+                "critical_misses": 24,
+                "instance_count": 32,
+                "mean_correct_fraction": 0.23649518994620608
+              }
+            },
+            "critical_misses": 43,
+            "instance_count": 96,
+            "mean_correct_fraction": 0.5070077666498952
+          },
+          "bus": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 8,
+                "instance_count": 69,
+                "mean_correct_fraction": 0.8249890619784714
+              },
+              "medium": {
+                "critical_misses": 54,
+                "instance_count": 71,
+                "mean_correct_fraction": 0.2527813319910651
+              },
+              "small": {
+                "critical_misses": 76,
+                "instance_count": 78,
+                "mean_correct_fraction": 0.028096962763209932
+              }
+            },
+            "critical_misses": 138,
+            "instance_count": 218,
+            "mean_correct_fraction": 0.35350129790555296
+          },
+          "car": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 67,
+                "instance_count": 3449,
+                "mean_correct_fraction": 0.9514787264457777
+              },
+              "medium": {
+                "critical_misses": 282,
+                "instance_count": 3563,
+                "mean_correct_fraction": 0.8673756831155777
+              },
+              "small": {
+                "critical_misses": 872,
+                "instance_count": 3749,
+                "mean_correct_fraction": 0.721729864990891
+              }
+            },
+            "critical_misses": 1221,
+            "instance_count": 10761,
+            "mean_correct_fraction": 0.843590275095547
+          },
+          "motorcycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 8,
+                "instance_count": 21,
+                "mean_correct_fraction": 0.5659251050291518
+              },
+              "medium": {
+                "critical_misses": 10,
+                "instance_count": 11,
+                "mean_correct_fraction": 0.08702253982308293
+              },
+              "small": {
+                "critical_misses": 13,
+                "instance_count": 14,
+                "mean_correct_fraction": 0.07043089818209435
+              }
+            },
+            "critical_misses": 31,
+            "instance_count": 46,
+            "mean_correct_fraction": 0.30060234170033523
+          },
+          "person": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 45,
+                "instance_count": 370,
+                "mean_correct_fraction": 0.8092061763053996
+              },
+              "medium": {
+                "critical_misses": 114,
+                "instance_count": 337,
+                "mean_correct_fraction": 0.597931123587733
+              },
+              "small": {
+                "critical_misses": 310,
+                "instance_count": 462,
+                "mean_correct_fraction": 0.3148957336714027
+              }
+            },
+            "critical_misses": 469,
+            "instance_count": 1169,
+            "mean_correct_fraction": 0.5529434583731841
+          },
+          "rider": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 3,
+                "instance_count": 10,
+                "mean_correct_fraction": 0.6552938315533245
+              },
+              "medium": {
+                "critical_misses": 16,
+                "instance_count": 18,
+                "mean_correct_fraction": 0.10190841775968713
+              },
+              "small": {
+                "critical_misses": 16,
+                "instance_count": 17,
+                "mean_correct_fraction": 0.09049060800790905
+              }
+            },
+            "critical_misses": 35,
+            "instance_count": 45,
+            "mean_correct_fraction": 0.22056955936315709
+          },
+          "train": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4,
+                "instance_count": 4,
+                "mean_correct_fraction": 0.0
+              },
+              "medium": {
+                "critical_misses": 0,
+                "instance_count": 0,
+                "mean_correct_fraction": null
+              },
+              "small": {
+                "critical_misses": 3,
+                "instance_count": 3,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 7,
+            "instance_count": 7,
+            "mean_correct_fraction": 0.0
+          },
+          "truck": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 76,
+                "instance_count": 181,
+                "mean_correct_fraction": 0.5722626467874588
+              },
+              "medium": {
+                "critical_misses": 119,
+                "instance_count": 178,
+                "mean_correct_fraction": 0.3176724963452086
+              },
+              "small": {
+                "critical_misses": 141,
+                "instance_count": 159,
+                "mean_correct_fraction": 0.12422614159470537
+              }
+            },
+            "critical_misses": 336,
+            "instance_count": 518,
+            "mean_correct_fraction": 0.34725328172111036
+          }
+        },
+        "by_tertile": {
+          "large": {
+            "critical_misses": 212,
+            "instance_count": 4130,
+            "mean_correct_fraction": 0.9159847648040145
+          },
+          "medium": {
+            "critical_misses": 613,
+            "instance_count": 4216,
+            "mean_correct_fraction": 0.8034469899095397
+          },
+          "small": {
+            "critical_misses": 1455,
+            "instance_count": 4514,
+            "mean_correct_fraction": 0.6387423197618716
+          }
+        },
+        "excluded_without_semantic_pixels": 115,
+        "instance_count": 12860,
+        "mean_corroborated_fraction": 0.94643690780947,
+        "tertile_edges_sha256": "5f9365d5b9189b49649e34fc8403f16f4934d630ceb5cf903429007a52997206"
+      },
+      "upernet_dinov2_small-seed-17": {
+        "by_class": {
+          "bicycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 15,
+                "instance_count": 26,
+                "mean_correct_fraction": 0.4280333271416422
+              },
+              "medium": {
+                "critical_misses": 31,
+                "instance_count": 38,
+                "mean_correct_fraction": 0.19811046819222322
+              },
+              "small": {
+                "critical_misses": 29,
+                "instance_count": 32,
+                "mean_correct_fraction": 0.09463391161437858
+              }
+            },
+            "critical_misses": 75,
+            "instance_count": 96,
+            "mean_correct_fraction": 0.22588905696507602
+          },
+          "bus": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 35,
+                "instance_count": 69,
+                "mean_correct_fraction": 0.45181015971429933
+              },
+              "medium": {
+                "critical_misses": 60,
+                "instance_count": 71,
+                "mean_correct_fraction": 0.15723382460482122
+              },
+              "small": {
+                "critical_misses": 76,
+                "instance_count": 78,
+                "mean_correct_fraction": 0.03398833205938068
+              }
+            },
+            "critical_misses": 171,
+            "instance_count": 218,
+            "mean_correct_fraction": 0.20637427737550762
+          },
+          "car": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 84,
+                "instance_count": 3449,
+                "mean_correct_fraction": 0.9307359890921503
+              },
+              "medium": {
+                "critical_misses": 437,
+                "instance_count": 3563,
+                "mean_correct_fraction": 0.8106360968972108
+              },
+              "small": {
+                "critical_misses": 1218,
+                "instance_count": 3749,
+                "mean_correct_fraction": 0.6349252571191616
+              }
+            },
+            "critical_misses": 1739,
+            "instance_count": 10761,
+            "mean_correct_fraction": 0.7879137281445339
+          },
+          "motorcycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 17,
+                "instance_count": 21,
+                "mean_correct_fraction": 0.21706327274896994
+              },
+              "medium": {
+                "critical_misses": 11,
+                "instance_count": 11,
+                "mean_correct_fraction": 0.007544322897019992
+              },
+              "small": {
+                "critical_misses": 14,
+                "instance_count": 14,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 42,
+            "instance_count": 46,
+            "mean_correct_fraction": 0.10089817999120844
+          },
+          "person": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 142,
+                "instance_count": 370,
+                "mean_correct_fraction": 0.5885596540647788
+              },
+              "medium": {
+                "critical_misses": 198,
+                "instance_count": 337,
+                "mean_correct_fraction": 0.4082866242253165
+              },
+              "small": {
+                "critical_misses": 393,
+                "instance_count": 462,
+                "mean_correct_fraction": 0.15418297316032348
+              }
+            },
+            "critical_misses": 733,
+            "instance_count": 1169,
+            "mean_correct_fraction": 0.36492061417277133
+          },
+          "rider": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 9,
+                "instance_count": 10,
+                "mean_correct_fraction": 0.1176959415120448
+              },
+              "medium": {
+                "critical_misses": 17,
+                "instance_count": 18,
+                "mean_correct_fraction": 0.035202863961813845
+              },
+              "small": {
+                "critical_misses": 17,
+                "instance_count": 17,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 43,
+            "instance_count": 45,
+            "mean_correct_fraction": 0.040235799254068824
+          },
+          "train": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4,
+                "instance_count": 4,
+                "mean_correct_fraction": 0.0
+              },
+              "medium": {
+                "critical_misses": 0,
+                "instance_count": 0,
+                "mean_correct_fraction": null
+              },
+              "small": {
+                "critical_misses": 3,
+                "instance_count": 3,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 7,
+            "instance_count": 7,
+            "mean_correct_fraction": 0.0
+          },
+          "truck": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 124,
+                "instance_count": 181,
+                "mean_correct_fraction": 0.3181158269484281
+              },
+              "medium": {
+                "critical_misses": 157,
+                "instance_count": 178,
+                "mean_correct_fraction": 0.13413105371907136
+              },
+              "small": {
+                "critical_misses": 150,
+                "instance_count": 159,
+                "mean_correct_fraction": 0.06844660713131409
+              }
+            },
+            "critical_misses": 431,
+            "instance_count": 518,
+            "mean_correct_fraction": 0.17825734126165876
+          }
+        },
+        "by_tertile": {
+          "large": {
+            "critical_misses": 430,
+            "instance_count": 4130,
+            "mean_correct_fraction": 0.855567437948978
+          },
+          "medium": {
+            "critical_misses": 911,
+            "instance_count": 4216,
+            "mean_correct_fraction": 0.7279821564544874
+          },
+          "small": {
+            "critical_misses": 1900,
+            "instance_count": 4514,
+            "mean_correct_fraction": 0.5467721994120466
+          }
+        },
+        "excluded_without_semantic_pixels": 115,
+        "instance_count": 12860,
+        "mean_corroborated_fraction": 0.94643690780947,
+        "tertile_edges_sha256": "5f9365d5b9189b49649e34fc8403f16f4934d630ceb5cf903429007a52997206"
+      },
+      "upernet_dinov2_small-seed-42": {
+        "by_class": {
+          "bicycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 17,
+                "instance_count": 26,
+                "mean_correct_fraction": 0.4030281833286111
+              },
+              "medium": {
+                "critical_misses": 30,
+                "instance_count": 38,
+                "mean_correct_fraction": 0.17650233832282325
+              },
+              "small": {
+                "critical_misses": 28,
+                "instance_count": 32,
+                "mean_correct_fraction": 0.12031114421820793
+              }
+            },
+            "critical_misses": 75,
+            "instance_count": 96,
+            "mean_correct_fraction": 0.21912268997701903
+          },
+          "bus": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 35,
+                "instance_count": 69,
+                "mean_correct_fraction": 0.4761798952174614
+              },
+              "medium": {
+                "critical_misses": 63,
+                "instance_count": 71,
+                "mean_correct_fraction": 0.13260168206926903
+              },
+              "small": {
+                "critical_misses": 74,
+                "instance_count": 78,
+                "mean_correct_fraction": 0.04699025439413867
+              }
+            },
+            "critical_misses": 172,
+            "instance_count": 218,
+            "mean_correct_fraction": 0.2107173029342465
+          },
+          "car": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 80,
+                "instance_count": 3449,
+                "mean_correct_fraction": 0.9307211730197265
+              },
+              "medium": {
+                "critical_misses": 408,
+                "instance_count": 3563,
+                "mean_correct_fraction": 0.8187813244323957
+              },
+              "small": {
+                "critical_misses": 1193,
+                "instance_count": 3749,
+                "mean_correct_fraction": 0.6392421441507291
+              }
+            },
+            "critical_misses": 1681,
+            "instance_count": 10761,
+            "mean_correct_fraction": 0.7921098395240938
+          },
+          "motorcycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 20,
+                "instance_count": 21,
+                "mean_correct_fraction": 0.16171057657922835
+              },
+              "medium": {
+                "critical_misses": 11,
+                "instance_count": 11,
+                "mean_correct_fraction": 0.02883009107075497
+              },
+              "small": {
+                "critical_misses": 14,
+                "instance_count": 14,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 45,
+            "instance_count": 46,
+            "mean_correct_fraction": 0.08071854586830653
+          },
+          "person": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 113,
+                "instance_count": 370,
+                "mean_correct_fraction": 0.6061119407130552
+              },
+              "medium": {
+                "critical_misses": 194,
+                "instance_count": 337,
+                "mean_correct_fraction": 0.41039571946283737
+              },
+              "small": {
+                "critical_misses": 392,
+                "instance_count": 462,
+                "mean_correct_fraction": 0.14988415853872045
+              }
+            },
+            "critical_misses": 699,
+            "instance_count": 1169,
+            "mean_correct_fraction": 0.3693851640442219
+          },
+          "rider": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 8,
+                "instance_count": 10,
+                "mean_correct_fraction": 0.12853517460970515
+              },
+              "medium": {
+                "critical_misses": 18,
+                "instance_count": 18,
+                "mean_correct_fraction": 0.028810129939008222
+              },
+              "small": {
+                "critical_misses": 17,
+                "instance_count": 17,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 43,
+            "instance_count": 45,
+            "mean_correct_fraction": 0.040087424111093325
+          },
+          "train": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4,
+                "instance_count": 4,
+                "mean_correct_fraction": 0.0
+              },
+              "medium": {
+                "critical_misses": 0,
+                "instance_count": 0,
+                "mean_correct_fraction": null
+              },
+              "small": {
+                "critical_misses": 3,
+                "instance_count": 3,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 7,
+            "instance_count": 7,
+            "mean_correct_fraction": 0.0
+          },
+          "truck": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 117,
+                "instance_count": 181,
+                "mean_correct_fraction": 0.3226260339152328
+              },
+              "medium": {
+                "critical_misses": 152,
+                "instance_count": 178,
+                "mean_correct_fraction": 0.16067455634886987
+              },
+              "small": {
+                "critical_misses": 151,
+                "instance_count": 159,
+                "mean_correct_fraction": 0.06036741754063816
+              }
+            },
+            "critical_misses": 420,
+            "instance_count": 518,
+            "mean_correct_fraction": 0.18647452231219577
+          }
+        },
+        "by_tertile": {
+          "large": {
+            "critical_misses": 394,
+            "instance_count": 4130,
+            "mean_correct_fraction": 0.8573197276848278
+          },
+          "medium": {
+            "critical_misses": 876,
+            "instance_count": 4216,
+            "mean_correct_fraction": 0.7355737213153629
+          },
+          "small": {
+            "critical_misses": 1872,
+            "instance_count": 4514,
+            "mean_correct_fraction": 0.5500396312611123
+          }
+        },
+        "excluded_without_semantic_pixels": 115,
+        "instance_count": 12860,
+        "mean_corroborated_fraction": 0.94643690780947,
+        "tertile_edges_sha256": "5f9365d5b9189b49649e34fc8403f16f4934d630ceb5cf903429007a52997206"
+      },
+      "upernet_dinov2_small-seed-73": {
+        "by_class": {
+          "bicycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 20,
+                "instance_count": 26,
+                "mean_correct_fraction": 0.26200047328296827
+              },
+              "medium": {
+                "critical_misses": 32,
+                "instance_count": 38,
+                "mean_correct_fraction": 0.1488537500766785
+              },
+              "small": {
+                "critical_misses": 31,
+                "instance_count": 32,
+                "mean_correct_fraction": 0.04382440476190476
+              }
+            },
+            "critical_misses": 83,
+            "instance_count": 96,
+            "mean_correct_fraction": 0.14448787250679068
+          },
+          "bus": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 40,
+                "instance_count": 69,
+                "mean_correct_fraction": 0.4248529107983725
+              },
+              "medium": {
+                "critical_misses": 59,
+                "instance_count": 71,
+                "mean_correct_fraction": 0.16346576490894135
+              },
+              "small": {
+                "critical_misses": 75,
+                "instance_count": 78,
+                "mean_correct_fraction": 0.05756204192276089
+              }
+            },
+            "critical_misses": 174,
+            "instance_count": 218,
+            "mean_correct_fraction": 0.20830623588806368
+          },
+          "car": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 82,
+                "instance_count": 3449,
+                "mean_correct_fraction": 0.9287418790923048
+              },
+              "medium": {
+                "critical_misses": 442,
+                "instance_count": 3563,
+                "mean_correct_fraction": 0.8084051321097996
+              },
+              "small": {
+                "critical_misses": 1232,
+                "instance_count": 3749,
+                "mean_correct_fraction": 0.6310060628016626
+              }
+            },
+            "critical_misses": 1756,
+            "instance_count": 10761,
+            "mean_correct_fraction": 0.7851705191097511
+          },
+          "motorcycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 18,
+                "instance_count": 21,
+                "mean_correct_fraction": 0.13786592076012597
+              },
+              "medium": {
+                "critical_misses": 11,
+                "instance_count": 11,
+                "mean_correct_fraction": 0.014657541628495986
+              },
+              "small": {
+                "critical_misses": 14,
+                "instance_count": 14,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 43,
+            "instance_count": 46,
+            "mean_correct_fraction": 0.06644385421469785
+          },
+          "person": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 115,
+                "instance_count": 370,
+                "mean_correct_fraction": 0.6052053108940959
+              },
+              "medium": {
+                "critical_misses": 201,
+                "instance_count": 337,
+                "mean_correct_fraction": 0.37830266784095823
+              },
+              "small": {
+                "critical_misses": 388,
+                "instance_count": 462,
+                "mean_correct_fraction": 0.16283112244582987
+              }
+            },
+            "critical_misses": 704,
+            "instance_count": 1169,
+            "mean_correct_fraction": 0.36496316737655415
+          },
+          "rider": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 9,
+                "instance_count": 10,
+                "mean_correct_fraction": 0.15700956650401557
+              },
+              "medium": {
+                "critical_misses": 18,
+                "instance_count": 18,
+                "mean_correct_fraction": 0.0
+              },
+              "small": {
+                "critical_misses": 17,
+                "instance_count": 17,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 44,
+            "instance_count": 45,
+            "mean_correct_fraction": 0.034891014778670126
+          },
+          "train": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4,
+                "instance_count": 4,
+                "mean_correct_fraction": 0.0
+              },
+              "medium": {
+                "critical_misses": 0,
+                "instance_count": 0,
+                "mean_correct_fraction": null
+              },
+              "small": {
+                "critical_misses": 3,
+                "instance_count": 3,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 7,
+            "instance_count": 7,
+            "mean_correct_fraction": 0.0
+          },
+          "truck": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 119,
+                "instance_count": 181,
+                "mean_correct_fraction": 0.31853084542936705
+              },
+              "medium": {
+                "critical_misses": 153,
+                "instance_count": 178,
+                "mean_correct_fraction": 0.15761933033035153
+              },
+              "small": {
+                "critical_misses": 146,
+                "instance_count": 159,
+                "mean_correct_fraction": 0.08496719235500941
+              }
+            },
+            "critical_misses": 418,
+            "instance_count": 518,
+            "mean_correct_fraction": 0.19154460889182343
+          }
+        },
+        "by_tertile": {
+          "large": {
+            "critical_misses": 407,
+            "instance_count": 4130,
+            "mean_correct_fraction": 0.8536084581584353
+          },
+          "medium": {
+            "critical_misses": 916,
+            "instance_count": 4216,
+            "mean_correct_fraction": 0.7242209369871407
+          },
+          "small": {
+            "critical_misses": 1906,
+            "instance_count": 4514,
+            "mean_correct_fraction": 0.5450313938458594
+          }
+        },
+        "excluded_without_semantic_pixels": 115,
+        "instance_count": 12860,
+        "mean_corroborated_fraction": 0.94643690780947,
+        "tertile_edges_sha256": "5f9365d5b9189b49649e34fc8403f16f4934d630ceb5cf903429007a52997206"
+      }
+    },
+    "instance_seed_means": {
+      "segformer_b2": {
+        "by_class": {
+          "bicycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 2.0,
+                "instance_count": 26,
+                "mean_correct_fraction": 0.8525882899297071
+              },
+              "medium": {
+                "critical_misses": 18.666666666666668,
+                "instance_count": 38,
+                "mean_correct_fraction": 0.4709303672619562
+              },
+              "small": {
+                "critical_misses": 26.0,
+                "instance_count": 32,
+                "mean_correct_fraction": 0.1729324097456145
+              }
+            },
+            "critical_misses": 46.666666666666664,
+            "instance_count": 96,
+            "mean_correct_fraction": 0.4749634021456916
+          },
+          "bus": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 8.333333333333334,
+                "instance_count": 69,
+                "mean_correct_fraction": 0.8336510647223997
+              },
+              "medium": {
+                "critical_misses": 47.333333333333336,
+                "instance_count": 71,
+                "mean_correct_fraction": 0.3186107806276583
+              },
+              "small": {
+                "critical_misses": 78.0,
+                "instance_count": 78,
+                "mean_correct_fraction": 0.013188904297764786
+              }
+            },
+            "critical_misses": 133.66666666666666,
+            "instance_count": 218,
+            "mean_correct_fraction": 0.37234873131025226
+          },
+          "car": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 63.666666666666664,
+                "instance_count": 3449,
+                "mean_correct_fraction": 0.9500711042306548
+              },
+              "medium": {
+                "critical_misses": 270.6666666666667,
+                "instance_count": 3563,
+                "mean_correct_fraction": 0.8683356230266188
+              },
+              "small": {
+                "critical_misses": 812.0,
+                "instance_count": 3749,
+                "mean_correct_fraction": 0.7373212861218503
+              }
+            },
+            "critical_misses": 1146.3333333333333,
+            "instance_count": 10761,
+            "mean_correct_fraction": 0.8488888174896547
+          },
+          "motorcycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 9.666666666666666,
+                "instance_count": 21,
+                "mean_correct_fraction": 0.5000060132719636
+              },
+              "medium": {
+                "critical_misses": 11.0,
+                "instance_count": 11,
+                "mean_correct_fraction": 0.02943836946382995
+              },
+              "small": {
+                "critical_misses": 14.0,
+                "instance_count": 14,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 34.666666666666664,
+            "instance_count": 46,
+            "mean_correct_fraction": 0.23530322484376878
+          },
+          "person": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 51.666666666666664,
+                "instance_count": 370,
+                "mean_correct_fraction": 0.7843778446742883
+              },
+              "medium": {
+                "critical_misses": 133.33333333333334,
+                "instance_count": 337,
+                "mean_correct_fraction": 0.5561823662989216
+              },
+              "small": {
+                "critical_misses": 350.3333333333333,
+                "instance_count": 462,
+                "mean_correct_fraction": 0.2301948820012589
+              }
+            },
+            "critical_misses": 535.3333333333334,
+            "instance_count": 1169,
+            "mean_correct_fraction": 0.49957510304260483
+          },
+          "rider": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 3.3333333333333335,
+                "instance_count": 10,
+                "mean_correct_fraction": 0.5574089643375688
+              },
+              "medium": {
+                "critical_misses": 18.0,
+                "instance_count": 18,
+                "mean_correct_fraction": 0.03704021791014085
+              },
+              "small": {
+                "critical_misses": 17.0,
+                "instance_count": 17,
+                "mean_correct_fraction": 0.00038446751249519417
+              }
+            },
+            "critical_misses": 38.333333333333336,
+            "instance_count": 45,
+            "mean_correct_fraction": 0.1388299891882365
+          },
+          "train": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4.0,
+                "instance_count": 4,
+                "mean_correct_fraction": 0.0
+              },
+              "medium": {
+                "critical_misses": 0.0,
+                "instance_count": 0,
+                "mean_correct_fraction": null
+              },
+              "small": {
+                "critical_misses": 3.0,
+                "instance_count": 3,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 7.0,
+            "instance_count": 7,
+            "mean_correct_fraction": 0.0
+          },
+          "truck": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 71.66666666666667,
+                "instance_count": 181,
+                "mean_correct_fraction": 0.577382723870545
+              },
+              "medium": {
+                "critical_misses": 119.66666666666667,
+                "instance_count": 178,
+                "mean_correct_fraction": 0.321110195654094
+              },
+              "small": {
+                "critical_misses": 142.0,
+                "instance_count": 159,
+                "mean_correct_fraction": 0.11172593168478943
+              }
+            },
+            "critical_misses": 333.3333333333333,
+            "instance_count": 518,
+            "mean_correct_fraction": 0.34638670074300953
+          }
+        },
+        "by_tertile": {
+          "large": {
+            "critical_misses": 214.33333333333334,
+            "instance_count": 4130,
+            "mean_correct_fraction": 0.9121754840115465
+          },
+          "medium": {
+            "critical_misses": 618.6666666666666,
+            "instance_count": 4216,
+            "mean_correct_fraction": 0.8017026002087316
+          },
+          "small": {
+            "critical_misses": 1442.3333333333333,
+            "instance_count": 4514,
+            "mean_correct_fraction": 0.6413161426424625
+          }
+        },
+        "excluded_without_semantic_pixels": 115,
+        "instance_count": 12860,
+        "mean_corroborated_fraction": 0.94643690780947
+      },
+      "upernet_convnextv2_tiny": {
+        "by_class": {
+          "bicycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 0.6666666666666666,
+                "instance_count": 26,
+                "mean_correct_fraction": 0.8747614349025911
+              },
+              "medium": {
+                "critical_misses": 18.0,
+                "instance_count": 38,
+                "mean_correct_fraction": 0.47462646601074887
+              },
+              "small": {
+                "critical_misses": 24.333333333333332,
+                "instance_count": 32,
+                "mean_correct_fraction": 0.23131206144831964
+              }
+            },
+            "critical_misses": 43.0,
+            "instance_count": 96,
+            "mean_correct_fraction": 0.5018915518981464
+          },
+          "bus": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 11.0,
+                "instance_count": 69,
+                "mean_correct_fraction": 0.8035692224883686
+              },
+              "medium": {
+                "critical_misses": 51.0,
+                "instance_count": 71,
+                "mean_correct_fraction": 0.27514656450146824
+              },
+              "small": {
+                "critical_misses": 75.0,
+                "instance_count": 78,
+                "mean_correct_fraction": 0.036129115195259735
+              }
+            },
+            "critical_misses": 137.0,
+            "instance_count": 218,
+            "mean_correct_fraction": 0.3568796028281282
+          },
+          "car": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 63.666666666666664,
+                "instance_count": 3449,
+                "mean_correct_fraction": 0.9516372620797845
+              },
+              "medium": {
+                "critical_misses": 272.0,
+                "instance_count": 3563,
+                "mean_correct_fraction": 0.8700111236816355
+              },
+              "small": {
+                "critical_misses": 846.6666666666666,
+                "instance_count": 3749,
+                "mean_correct_fraction": 0.7273435188726275
+              }
+            },
+            "critical_misses": 1182.3333333333333,
+            "instance_count": 10761,
+            "mean_correct_fraction": 0.8464694176047157
+          },
+          "motorcycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 8.0,
+                "instance_count": 21,
+                "mean_correct_fraction": 0.5564053775198905
+              },
+              "medium": {
+                "critical_misses": 10.666666666666666,
+                "instance_count": 11,
+                "mean_correct_fraction": 0.08404662223032629
+              },
+              "small": {
+                "critical_misses": 13.333333333333334,
+                "instance_count": 14,
+                "mean_correct_fraction": 0.042134721560558884
+              }
+            },
+            "critical_misses": 32.0,
+            "instance_count": 46,
+            "mean_correct_fraction": 0.28693286683258945
+          },
+          "person": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 45.0,
+                "instance_count": 370,
+                "mean_correct_fraction": 0.8078369583257933
+              },
+              "medium": {
+                "critical_misses": 114.66666666666667,
+                "instance_count": 337,
+                "mean_correct_fraction": 0.602301575471142
+              },
+              "small": {
+                "critical_misses": 305.6666666666667,
+                "instance_count": 462,
+                "mean_correct_fraction": 0.3178368954365949
+              }
+            },
+            "critical_misses": 465.3333333333333,
+            "instance_count": 1169,
+            "mean_correct_fraction": 0.5549323791326142
+          },
+          "rider": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 1.6666666666666667,
+                "instance_count": 10,
+                "mean_correct_fraction": 0.688058501344151
+              },
+              "medium": {
+                "critical_misses": 16.0,
+                "instance_count": 18,
+                "mean_correct_fraction": 0.09613607811077013
+              },
+              "small": {
+                "critical_misses": 16.333333333333332,
+                "instance_count": 17,
+                "mean_correct_fraction": 0.0500997784734809
+              }
+            },
+            "critical_misses": 34.0,
+            "instance_count": 45,
+            "mean_correct_fraction": 0.21028290341076775
+          },
+          "train": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4.0,
+                "instance_count": 4,
+                "mean_correct_fraction": 0.0
+              },
+              "medium": {
+                "critical_misses": 0.0,
+                "instance_count": 0,
+                "mean_correct_fraction": null
+              },
+              "small": {
+                "critical_misses": 3.0,
+                "instance_count": 3,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 7.0,
+            "instance_count": 7,
+            "mean_correct_fraction": 0.0
+          },
+          "truck": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 75.0,
+                "instance_count": 181,
+                "mean_correct_fraction": 0.5683334136308231
+              },
+              "medium": {
+                "critical_misses": 117.0,
+                "instance_count": 178,
+                "mean_correct_fraction": 0.3278413401907303
+              },
+              "small": {
+                "critical_misses": 140.33333333333334,
+                "instance_count": 159,
+                "mean_correct_fraction": 0.11755284106352559
+              }
+            },
+            "critical_misses": 332.3333333333333,
+            "instance_count": 518,
+            "mean_correct_fraction": 0.34732627056028864
+          }
+        },
+        "by_tertile": {
+          "large": {
+            "critical_misses": 209.0,
+            "instance_count": 4130,
+            "mean_correct_fraction": 0.9154285982957443
+          },
+          "medium": {
+            "critical_misses": 599.3333333333334,
+            "instance_count": 4216,
+            "mean_correct_fraction": 0.8067853883311034
+          },
+          "small": {
+            "critical_misses": 1424.6666666666667,
+            "instance_count": 4514,
+            "mean_correct_fraction": 0.6433327512099604
+          }
+        },
+        "excluded_without_semantic_pixels": 115,
+        "instance_count": 12860,
+        "mean_corroborated_fraction": 0.94643690780947
+      },
+      "upernet_dinov2_small": {
+        "by_class": {
+          "bicycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 17.333333333333332,
+                "instance_count": 26,
+                "mean_correct_fraction": 0.3643539945844072
+              },
+              "medium": {
+                "critical_misses": 31.0,
+                "instance_count": 38,
+                "mean_correct_fraction": 0.17448885219724164
+              },
+              "small": {
+                "critical_misses": 29.333333333333332,
+                "instance_count": 32,
+                "mean_correct_fraction": 0.08625648686483041
+              }
+            },
+            "critical_misses": 77.66666666666667,
+            "instance_count": 96,
+            "mean_correct_fraction": 0.19649987314962858
+          },
+          "bus": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 36.666666666666664,
+                "instance_count": 69,
+                "mean_correct_fraction": 0.45094765524337777
+              },
+              "medium": {
+                "critical_misses": 60.666666666666664,
+                "instance_count": 71,
+                "mean_correct_fraction": 0.15110042386101052
+              },
+              "small": {
+                "critical_misses": 75.0,
+                "instance_count": 78,
+                "mean_correct_fraction": 0.04618020945876008
+              }
+            },
+            "critical_misses": 172.33333333333334,
+            "instance_count": 218,
+            "mean_correct_fraction": 0.2084659387326059
+          },
+          "car": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 82.0,
+                "instance_count": 3449,
+                "mean_correct_fraction": 0.9300663470680606
+              },
+              "medium": {
+                "critical_misses": 429.0,
+                "instance_count": 3563,
+                "mean_correct_fraction": 0.8126075178131353
+              },
+              "small": {
+                "critical_misses": 1214.3333333333333,
+                "instance_count": 3749,
+                "mean_correct_fraction": 0.6350578213571844
+              }
+            },
+            "critical_misses": 1725.3333333333333,
+            "instance_count": 10761,
+            "mean_correct_fraction": 0.7883980289261263
+          },
+          "motorcycle": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 18.333333333333332,
+                "instance_count": 21,
+                "mean_correct_fraction": 0.1722132566961081
+              },
+              "medium": {
+                "critical_misses": 11.0,
+                "instance_count": 11,
+                "mean_correct_fraction": 0.01701065186542365
+              },
+              "small": {
+                "critical_misses": 14.0,
+                "instance_count": 14,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 43.333333333333336,
+            "instance_count": 46,
+            "mean_correct_fraction": 0.08268686002473762
+          },
+          "person": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 123.33333333333333,
+                "instance_count": 370,
+                "mean_correct_fraction": 0.59995896855731
+              },
+              "medium": {
+                "critical_misses": 197.66666666666666,
+                "instance_count": 337,
+                "mean_correct_fraction": 0.3989950038430374
+              },
+              "small": {
+                "critical_misses": 391.0,
+                "instance_count": 462,
+                "mean_correct_fraction": 0.1556327513816246
+              }
+            },
+            "critical_misses": 712.0,
+            "instance_count": 1169,
+            "mean_correct_fraction": 0.3664229818645158
+          },
+          "rider": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 8.666666666666666,
+                "instance_count": 10,
+                "mean_correct_fraction": 0.13441356087525516
+              },
+              "medium": {
+                "critical_misses": 17.666666666666668,
+                "instance_count": 18,
+                "mean_correct_fraction": 0.021337664633607357
+              },
+              "small": {
+                "critical_misses": 17.0,
+                "instance_count": 17,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 43.333333333333336,
+            "instance_count": 45,
+            "mean_correct_fraction": 0.03840474604794409
+          },
+          "train": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 4.0,
+                "instance_count": 4,
+                "mean_correct_fraction": 0.0
+              },
+              "medium": {
+                "critical_misses": 0.0,
+                "instance_count": 0,
+                "mean_correct_fraction": null
+              },
+              "small": {
+                "critical_misses": 3.0,
+                "instance_count": 3,
+                "mean_correct_fraction": 0.0
+              }
+            },
+            "critical_misses": 7.0,
+            "instance_count": 7,
+            "mean_correct_fraction": 0.0
+          },
+          "truck": {
+            "by_tertile": {
+              "large": {
+                "critical_misses": 120.0,
+                "instance_count": 181,
+                "mean_correct_fraction": 0.31975756876434264
+              },
+              "medium": {
+                "critical_misses": 154.0,
+                "instance_count": 178,
+                "mean_correct_fraction": 0.1508083134660976
+              },
+              "small": {
+                "critical_misses": 149.0,
+                "instance_count": 159,
+                "mean_correct_fraction": 0.07126040567565388
+              }
+            },
+            "critical_misses": 423.0,
+            "instance_count": 518,
+            "mean_correct_fraction": 0.18542549082189266
+          }
+        },
+        "by_tertile": {
+          "large": {
+            "critical_misses": 410.3333333333333,
+            "instance_count": 4130,
+            "mean_correct_fraction": 0.8554985412640804
+          },
+          "medium": {
+            "critical_misses": 901.0,
+            "instance_count": 4216,
+            "mean_correct_fraction": 0.7292589382523303
+          },
+          "small": {
+            "critical_misses": 1892.6666666666667,
+            "instance_count": 4514,
+            "mean_correct_fraction": 0.5472810748396727
+          }
+        },
+        "excluded_without_semantic_pixels": 115,
+        "instance_count": 12860,
+        "mean_corroborated_fraction": 0.94643690780947
+      }
+    },
+    "intervals": {
+      "aurc calibrated": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.012856369693487748,
+            "high": 0.015279443842048872,
+            "low": 0.010611526318087443
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.020190739181943192,
+            "high": 0.02267524617814969,
+            "low": 0.017820421002002443
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.023386164831388768,
+            "high": 0.026749556611565632,
+            "low": 0.020354714831257364
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": -0.007334369488455445,
+            "excludes_zero": true,
+            "high": -0.006170768083929803,
+            "low": -0.008443274569832366
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.01052979513790102,
+            "excludes_zero": true,
+            "high": -0.00856293594623816,
+            "low": -0.012657449108278361
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.0031954256494455754,
+            "excludes_zero": true,
+            "high": -0.001214142263534213,
+            "low": -0.0053049003949438385
+          }
+        }
+      },
+      "aurc uncalibrated": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.012495290172510378,
+            "high": 0.014823083301196261,
+            "low": 0.010336850220884914
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.01987506343017152,
+            "high": 0.02222309860472963,
+            "low": 0.01765455078880748
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.022858672560029682,
+            "high": 0.026173566198744058,
+            "low": 0.019916313748295843
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": -0.00737977325766114,
+            "excludes_zero": true,
+            "high": -0.006345059209328625,
+            "low": -0.008374391299355419
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.010363382387519304,
+            "excludes_zero": true,
+            "high": -0.008474965797817693,
+            "low": -0.012422951285513217
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.002983609129858164,
+            "excludes_zero": true,
+            "high": -0.0011617391193318254,
+            "low": -0.005093692338731369
+          }
+        }
+      },
+      "brier calibrated": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.09858760255882038,
+            "high": 0.10413351660806774,
+            "low": 0.09329048270715072
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.09870498563179696,
+            "high": 0.1042408694948446,
+            "low": 0.09338643008245012
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.13455525642805566,
+            "high": 0.14184463636743253,
+            "low": 0.1277215150568486
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": -0.00011738307297658179,
+            "excludes_zero": false,
+            "high": 0.0021455378421024714,
+            "low": -0.0023863977048887964
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.03596765386923528,
+            "excludes_zero": true,
+            "high": -0.03155136106594713,
+            "low": -0.04048336230883013
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.0358502707962587,
+            "excludes_zero": true,
+            "high": -0.03188222115757343,
+            "low": -0.04022635572737139
+          }
+        }
+      },
+      "brier uncalibrated": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.09759012789041406,
+            "high": 0.10363413347771439,
+            "low": 0.09166984120897338
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.10513396317982472,
+            "high": 0.11140663858295871,
+            "low": 0.09912942083859307
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.1409479257943207,
+            "high": 0.14930685611803465,
+            "low": 0.13307030964044786
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": -0.007543835289410661,
+            "excludes_zero": true,
+            "high": -0.004902153049408158,
+            "low": -0.010315787127126694
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.043357797903906634,
+            "excludes_zero": true,
+            "high": -0.038198513359363896,
+            "low": -0.04865289397735436
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.03581396261449597,
+            "excludes_zero": true,
+            "high": -0.031183497496114133,
+            "low": -0.04083651283810035
+          }
+        }
+      },
+      "classwise_ece calibrated": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.0035196866015977167,
+            "high": 0.003774544431760801,
+            "low": 0.003405532492979147
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.0032855195799122,
+            "high": 0.003515810775791158,
+            "low": 0.003184006315751668
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.003985369701553616,
+            "high": 0.004264054483594673,
+            "low": 0.0038253989154009064
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.00023416702168551663,
+            "excludes_zero": true,
+            "high": 0.00038969847390527457,
+            "low": 7.787417102475398e-05
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.0004656830999558996,
+            "excludes_zero": true,
+            "high": -0.0002565876319997021,
+            "low": -0.0006386091190303521
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.0006998501216414162,
+            "excludes_zero": true,
+            "high": -0.0005017193004771036,
+            "low": -0.0008741886293933371
+          }
+        }
+      },
+      "classwise_ece uncalibrated": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.0028840449773854925,
+            "high": 0.0031957089619550055,
+            "low": 0.0025971344640844767
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.004609387187919981,
+            "high": 0.004931723269896203,
+            "low": 0.004306124382868767
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.005448051902032049,
+            "high": 0.005881482974843861,
+            "low": 0.0050472862965270605
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": -0.0017253422105344886,
+            "excludes_zero": true,
+            "high": -0.0015722270972559908,
+            "low": -0.0018758322776037534
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.002564006924646556,
+            "excludes_zero": true,
+            "high": -0.002271264396898059,
+            "low": -0.0028598710754941495
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.0008386647141120675,
+            "excludes_zero": true,
+            "high": -0.0005815591198360223,
+            "low": -0.001126065231772701
+          }
+        }
+      },
+      "cost drivable_boundary": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.06479000538624796,
+            "high": 0.06871165031447933,
+            "low": 0.061020585926710016
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.06464029450757099,
+            "high": 0.06852565416330951,
+            "low": 0.06081268874960871
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.09002749300336542,
+            "high": 0.09485904072127033,
+            "low": 0.08534288223276708
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.00014971087867697574,
+            "excludes_zero": false,
+            "high": 0.0016610668915013993,
+            "low": -0.0014258164496065617
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.025237487617117457,
+            "excludes_zero": true,
+            "high": -0.022388813933699642,
+            "low": -0.02809797251356042
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.025387198495794433,
+            "excludes_zero": true,
+            "high": -0.02277881865739563,
+            "low": -0.028149519793124057
+          }
+        }
+      },
+      "cost vru_priority": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.05133617156418783,
+            "high": 0.054081883225921314,
+            "low": 0.04866848657359657
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.05111514898266528,
+            "high": 0.053931714789238056,
+            "low": 0.048443628036192114
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.07229704141283605,
+            "high": 0.07621173251094014,
+            "low": 0.06861563579146271
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.00022102258152254667,
+            "excludes_zero": false,
+            "high": 0.0014425365972791486,
+            "low": -0.0010563274252190513
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.02096086984864822,
+            "excludes_zero": true,
+            "high": -0.018550728086384777,
+            "low": -0.023382381733271593
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.021181892430170768,
+            "excludes_zero": true,
+            "high": -0.019014853532190328,
+            "low": -0.02350945899324388
+          }
+        }
+      },
+      "iou bicycle": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.5220167269001419,
+            "high": 0.5824088435548236,
+            "low": 0.44391219109522095
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.5903385646010292,
+            "high": 0.6424442941533607,
+            "low": 0.49966368111635456
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.24580769316006332,
+            "high": 0.36504066195644147,
+            "low": 0.11330897720498924
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": -0.06832183770088729,
+            "excludes_zero": false,
+            "high": 0.0014866376199575181,
+            "low": -0.12299548738086705
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.27620903374007855,
+            "excludes_zero": true,
+            "high": 0.4088735777630228,
+            "low": 0.1529149005536178
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.34453087144096584,
+            "excludes_zero": true,
+            "high": 0.4692145027225964,
+            "low": 0.2131507790793766
+          }
+        }
+      },
+      "iou motorcycle": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.5525858619206591,
+            "high": 0.6697216765976337,
+            "low": 0.33715078936226656
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.5789328252046682,
+            "high": 0.6923400536543709,
+            "low": 0.3670856820610111
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.2199190898815222,
+            "high": 0.32592386485199515,
+            "low": 0.0952378097555107
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": -0.026346963284009095,
+            "excludes_zero": false,
+            "high": 0.02927086888460359,
+            "low": -0.10141265106399742
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.33266677203913686,
+            "excludes_zero": true,
+            "high": 0.43176055017470016,
+            "low": 0.19572053421868152
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.35901373532314595,
+            "excludes_zero": true,
+            "high": 0.4622035241784344,
+            "low": 0.22239517943738146
+          }
+        }
+      },
+      "iou person": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.6958766834268991,
+            "high": 0.7417195197371619,
+            "low": 0.6407109161604742
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.7327243920802404,
+            "high": 0.772688563858259,
+            "low": 0.6850369946102034
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.4684498789095221,
+            "high": 0.5306793806554924,
+            "low": 0.39974035918630585
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": -0.036847708653341305,
+            "excludes_zero": true,
+            "high": -0.02093613083617544,
+            "low": -0.05495115375404541
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.227426804517377,
+            "excludes_zero": true,
+            "high": 0.29959765839614855,
+            "low": 0.17193834516200296
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.2642745131707183,
+            "excludes_zero": true,
+            "high": 0.3357401471589633,
+            "low": 0.20815058194924912
+          }
+        }
+      },
+      "iou rider": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.3708426669117529,
+            "high": 0.455971225931635,
+            "low": 0.23421333562225427
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.44677841815707203,
+            "high": 0.5410127803751077,
+            "low": 0.2890214254544112
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.07572238843562405,
+            "high": 0.20029877106947033,
+            "low": 0.003721311257644537
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": -0.07593575124531915,
+            "excludes_zero": false,
+            "high": 0.04047891696218514,
+            "low": -0.1923297295399848
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.2951202784761288,
+            "excludes_zero": true,
+            "high": 0.40359666544899453,
+            "low": 0.13516692439973244
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.37105602972144797,
+            "excludes_zero": true,
+            "high": 0.4867878751340584,
+            "low": 0.20120398269008014
+          }
+        }
+      },
+      "toplabel_ece calibrated": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.0288166070918478,
+            "high": 0.031512061849729045,
+            "low": 0.026061711059437522
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.023042629310155074,
+            "high": 0.025609539995897827,
+            "low": 0.020403595373171064
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.025884325426983438,
+            "high": 0.029175088811543962,
+            "low": 0.02234028333194965
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.0057739777816927275,
+            "excludes_zero": true,
+            "high": 0.007576989657464939,
+            "low": 0.0039935455088541474
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.0029322816648643633,
+            "excludes_zero": true,
+            "high": 0.005630492146005192,
+            "low": 0.00041006292569081517
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.002841696116828364,
+            "excludes_zero": true,
+            "high": -0.00027408844183006534,
+            "low": -0.005270982712520002
+          }
+        }
+      },
+      "toplabel_ece uncalibrated": {
+        "levels": {
+          "segformer_b2": {
+            "confidence": 0.95,
+            "estimate": 0.02728273794497198,
+            "high": 0.030181040539960048,
+            "low": 0.02447795072804457
+          },
+          "upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": 0.04367086040678675,
+            "high": 0.04669102014073379,
+            "low": 0.04077670861478886
+          },
+          "upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": 0.05135956117050855,
+            "high": 0.05537804386992017,
+            "low": 0.04753732856153436
+          }
+        },
+        "pairs": {
+          "segformer_b2 minus upernet_convnextv2_tiny": {
+            "confidence": 0.95,
+            "estimate": -0.01638812246181477,
+            "excludes_zero": true,
+            "high": -0.01499024565124947,
+            "low": -0.017884315914540466
+          },
+          "segformer_b2 minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.02407682322553657,
+            "excludes_zero": true,
+            "high": -0.021343995680165234,
+            "low": -0.026836844798111638
+          },
+          "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+            "confidence": 0.95,
+            "estimate": -0.007688700763721801,
+            "excludes_zero": true,
+            "high": -0.005273732491885021,
+            "low": -0.010333439717390865
+          }
+        }
+      }
+    },
+    "not_computed": {},
+    "threshold_sweep": [
+      {
+        "order": [
+          "upernet_convnextv2_tiny",
+          "segformer_b2",
+          "upernet_dinov2_small"
+        ],
+        "order_equals_threshold_05": true,
+        "rates": {
+          "segformer_b2": 0.6378066378066377,
+          "upernet_convnextv2_tiny": 0.5339105339105339,
+          "upernet_dinov2_small": 0.7402597402597403
+        },
+        "threshold": 0.1
+      },
+      {
+        "order": [
+          "upernet_convnextv2_tiny",
+          "segformer_b2",
+          "upernet_dinov2_small"
+        ],
+        "order_equals_threshold_05": true,
+        "rates": {
+          "segformer_b2": 0.6608946608946609,
+          "upernet_convnextv2_tiny": 0.5634920634920634,
+          "upernet_dinov2_small": 0.7676767676767677
+        },
+        "threshold": 0.2
+      },
+      {
+        "order": [
+          "upernet_convnextv2_tiny",
+          "segformer_b2",
+          "upernet_dinov2_small"
+        ],
+        "order_equals_threshold_05": true,
+        "rates": {
+          "segformer_b2": 0.6883116883116882,
+          "upernet_convnextv2_tiny": 0.595959595959596,
+          "upernet_dinov2_small": 0.7950937950937952
+        },
+        "threshold": 0.3
+      },
+      {
+        "order": [
+          "upernet_convnextv2_tiny",
+          "segformer_b2",
+          "upernet_dinov2_small"
+        ],
+        "order_equals_threshold_05": true,
+        "rates": {
+          "segformer_b2": 0.7258297258297258,
+          "upernet_convnextv2_tiny": 0.626984126984127,
+          "upernet_dinov2_small": 0.8225108225108224
+        },
+        "threshold": 0.4
+      },
+      {
+        "order": [
+          "upernet_convnextv2_tiny",
+          "segformer_b2",
+          "upernet_dinov2_small"
+        ],
+        "order_equals_threshold_05": true,
+        "rates": {
+          "segformer_b2": 0.7582972582972584,
+          "upernet_convnextv2_tiny": 0.6616161616161617,
+          "upernet_dinov2_small": 0.8463203463203465
+        },
+        "threshold": 0.5
+      },
+      {
+        "order": [
+          "upernet_convnextv2_tiny",
+          "segformer_b2",
+          "upernet_dinov2_small"
+        ],
+        "order_equals_threshold_05": true,
+        "rates": {
+          "segformer_b2": 0.7893217893217893,
+          "upernet_convnextv2_tiny": 0.702020202020202,
+          "upernet_dinov2_small": 0.8737373737373737
+        },
+        "threshold": 0.6
+      },
+      {
+        "order": [
+          "upernet_convnextv2_tiny",
+          "segformer_b2",
+          "upernet_dinov2_small"
+        ],
+        "order_equals_threshold_05": true,
+        "rates": {
+          "segformer_b2": 0.8268398268398268,
+          "upernet_convnextv2_tiny": 0.746031746031746,
+          "upernet_dinov2_small": 0.8953823953823954
+        },
+        "threshold": 0.7
+      },
+      {
+        "order": [
+          "upernet_convnextv2_tiny",
+          "segformer_b2",
+          "upernet_dinov2_small"
+        ],
+        "order_equals_threshold_05": true,
+        "rates": {
+          "segformer_b2": 0.8766233766233767,
+          "upernet_convnextv2_tiny": 0.8044733044733045,
+          "upernet_dinov2_small": 0.9155844155844156
+        },
+        "threshold": 0.8
+      },
+      {
+        "order": [
+          "upernet_convnextv2_tiny",
+          "segformer_b2",
+          "upernet_dinov2_small"
+        ],
+        "order_equals_threshold_05": true,
+        "rates": {
+          "segformer_b2": 0.9307359307359307,
+          "upernet_convnextv2_tiny": 0.8636363636363636,
+          "upernet_dinov2_small": 0.9444444444444443
+        },
+        "threshold": 0.9
+      }
+    ]
+  },
+  "settings": {
+    "descriptive_confidence": 0.95,
+    "primary_confidence": 0.9833333333333333,
+    "resamples": 5000,
+    "seed": 20260831,
+    "threshold_tenths": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ]
+  },
+  "status": "post-release analysis of the released locked-cohort predictions; pre-registered decision rules"
+}

@@ -25,6 +25,8 @@ instance 計數來自每個模型的單一訓練 seed（seed 17，三個核准 s
 溫度縮放不會改變預測類別），不是跨 seed 平均，也沒有區間。這是
 [`docs/protocol.md`](docs/protocol.md) 跨 seed 平均規則的例外。rider 與 motorcycle 的最小
 tertile instance 太少，不足以估計失敗率；person 的樣本可支撐較穩定的 cohort 內描述。
+之後一份預先登記的發布後分析，用同一批已發布的預測補上另外兩個 seed 與區間：seed 17 具代表性，
+三個模型都漏掉多數最小 tertile 的 person，而且兩兩之間可以區分。見[全 seed 分析結果](docs/posthoc/allseed-v1/results.md)。
 
 以像素平均的分數可能看起來不錯，但這個 cohort 中多數最小 tertile 的 person 與全部最小
 tertile 的 rider 都是 critical miss。下圖列出三個模型在每一個 instance 類別上的結果：car

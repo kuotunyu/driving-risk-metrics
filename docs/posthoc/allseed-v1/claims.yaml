@@ -1,0 +1,273 @@
+allowed_evidence_types:
+- observed
+- derived
+- synthetic
+- illustrative
+claim_required_fields:
+- claim_id
+- text
+- evidence_type
+- protocol_hash
+- dataset_manifest_hash
+- artifact_path
+- metric_path
+- status
+allowed_statuses:
+- draft
+- verified
+- rejected
+- superseded
+claims:
+- claim_id: p1.posthoc.allseed.counts
+  text: The locked cohort holds 998 images; 214 of them contain the 462 corroborated small-tertile person
+    instances every model and seed is scored on.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /counts
+  status: verified
+- claim_id: p1.posthoc.allseed.rate.segformer
+  text: Averaged over the three approved seeds, SegFormer-B2 critically misses 0.7582972582972584 of the
+    small-tertile people in the locked cohort, with Bonferroni-adjusted bootstrap interval 0.688164405099889
+    to 0.8219274984164799 and descriptive interval 0.7031214534695202 to 0.8126284133690169; the per-seed
+    rates, in approved-seed order, are 0.7619047619047619, 0.7424242424242424 and 0.7705627705627706,
+    and the first approved seed is 0.003607503607503504 above the mean.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /primary/segformer_b2
+  status: verified
+- claim_id: p1.posthoc.allseed.small.segformer
+  text: Averaged over the three seeds, SegFormer-B2 critically misses 350.3333333333333 of 462 small people,
+    17.0 of 17 small riders, 14.0 of 14 small motorcycles and 26.0 of 32 small bicycles.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /small_instances/segformer_b2
+  status: verified
+- claim_id: p1.posthoc.allseed.rate.convnextv2
+  text: Averaged over the three approved seeds, UperNet-ConvNeXtV2-Tiny critically misses 0.6616161616161617
+    of the small-tertile people in the locked cohort, with Bonferroni-adjusted bootstrap interval 0.5934460113900414
+    to 0.7299823848967297 and descriptive interval 0.6052140594037237 to 0.7162822637730701; the per-seed
+    rates, in approved-seed order, are 0.6623376623376623, 0.6515151515151515 and 0.670995670995671, and
+    the first approved seed is 0.0007215007215006786 above the mean.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /primary/upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.small.convnextv2
+  text: Averaged over the three seeds, UperNet-ConvNeXtV2-Tiny critically misses 305.6666666666667 of
+    462 small people, 16.333333333333332 of 17 small riders, 13.333333333333334 of 14 small motorcycles
+    and 24.333333333333332 of 32 small bicycles.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /small_instances/upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.rate.dinov2
+  text: Averaged over the three approved seeds, UperNet-DINOv2-Small critically misses 0.8463203463203465
+    of the small-tertile people in the locked cohort, with Bonferroni-adjusted bootstrap interval 0.7980060503262807
+    to 0.8914158626066414 and descriptive interval 0.8082168589010174 to 0.8827316161196511; the per-seed
+    rates, in approved-seed order, are 0.8506493506493507, 0.8484848484848485 and 0.8398268398268398,
+    and the first approved seed is 0.004329004329004182 above the mean.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /primary/upernet_dinov2_small
+  status: verified
+- claim_id: p1.posthoc.allseed.small.dinov2
+  text: Averaged over the three seeds, UperNet-DINOv2-Small critically misses 391.0 of 462 small people,
+    17.0 of 17 small riders, 14.0 of 14 small motorcycles and 29.333333333333332 of 32 small bicycles.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /small_instances/upernet_dinov2_small
+  status: verified
+- claim_id: p1.posthoc.allseed.pair.segformer-minus-convnextv2
+  text: The seed-mean small-person critical-miss rate of SegFormer-B2 minus that of UperNet-ConvNeXtV2-Tiny
+    is 0.0966810966810967, with Bonferroni-adjusted bootstrap interval 0.034930536409031036 to 0.15425188147548158.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.pair.segformer-minus-dinov2
+  text: The seed-mean small-person critical-miss rate of SegFormer-B2 minus that of UperNet-DINOv2-Small
+    is -0.08802308802308811, with Bonferroni-adjusted bootstrap interval -0.14710627833845247 to -0.03179328639934713.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /pairs/segformer_b2 minus upernet_dinov2_small
+  status: verified
+- claim_id: p1.posthoc.allseed.pair.convnextv2-minus-dinov2
+  text: The seed-mean small-person critical-miss rate of UperNet-ConvNeXtV2-Tiny minus that of UperNet-DINOv2-Small
+    is -0.18470418470418482, with Bonferroni-adjusted bootstrap interval -0.24154596314248633 to -0.12958411048938637.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /pairs/upernet_convnextv2_tiny minus upernet_dinov2_small
+  status: verified
+- claim_id: p1.posthoc.allseed.threshold.01
+  text: With the critical-miss threshold at one tenth, the seed-mean small-person rates are 0.6378066378066377
+    for SegFormer-B2, 0.5339105339105339 for UperNet-ConvNeXtV2-Tiny and 0.7402597402597403 for UperNet-DINOv2-Small.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /threshold_sweep/0.1
+  status: verified
+- claim_id: p1.posthoc.allseed.threshold.05
+  text: With the critical-miss threshold at one half, the seed-mean small-person rates are 0.7582972582972584
+    for SegFormer-B2, 0.6616161616161617 for UperNet-ConvNeXtV2-Tiny and 0.8463203463203465 for UperNet-DINOv2-Small.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /threshold_sweep/0.5
+  status: verified
+- claim_id: p1.posthoc.allseed.threshold.09
+  text: With the critical-miss threshold at nine tenths, the seed-mean small-person rates are 0.9307359307359307
+    for SegFormer-B2, 0.8636363636363636 for UperNet-ConvNeXtV2-Tiny and 0.9444444444444443 for UperNet-DINOv2-Small.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /threshold_sweep/0.9
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.aurc-calibrated
+  text: For aurc calibrated, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is -0.007334369488455445, with
+    descriptive bootstrap interval -0.008443274569832366 to -0.006170768083929803.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/aurc calibrated/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.aurc-uncalibrated
+  text: For aurc uncalibrated, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is -0.00737977325766114, with
+    descriptive bootstrap interval -0.008374391299355419 to -0.006345059209328625.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/aurc uncalibrated/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.brier-calibrated
+  text: For brier calibrated, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is -0.00011738307297658179, with
+    descriptive bootstrap interval -0.0023863977048887964 to 0.0021455378421024714.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/brier calibrated/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.brier-uncalibrated
+  text: For brier uncalibrated, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is -0.007543835289410661, with
+    descriptive bootstrap interval -0.010315787127126694 to -0.004902153049408158.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/brier uncalibrated/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.classwise-ece-calibrated
+  text: For classwise ece calibrated, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is 0.00023416702168551663,
+    with descriptive bootstrap interval 7.787417102475398e-05 to 0.00038969847390527457.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/classwise_ece calibrated/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.classwise-ece-uncalibrated
+  text: For classwise ece uncalibrated, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is -0.0017253422105344886,
+    with descriptive bootstrap interval -0.0018758322776037534 to -0.0015722270972559908.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/classwise_ece uncalibrated/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.cost-drivable-boundary
+  text: For cost drivable boundary, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is 0.00014971087867697574,
+    with descriptive bootstrap interval -0.0014258164496065617 to 0.0016610668915013993.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/cost drivable_boundary/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.cost-vru-priority
+  text: For cost vru priority, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is 0.00022102258152254667, with
+    descriptive bootstrap interval -0.0010563274252190513 to 0.0014425365972791486.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/cost vru_priority/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.iou-bicycle
+  text: For iou bicycle, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is -0.06832183770088729, with descriptive
+    bootstrap interval -0.12299548738086705 to 0.0014866376199575181.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/iou bicycle/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.iou-motorcycle
+  text: For iou motorcycle, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is -0.026346963284009095, with
+    descriptive bootstrap interval -0.10141265106399742 to 0.02927086888460359.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/iou motorcycle/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.iou-person
+  text: For iou person, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is -0.036847708653341305, with descriptive
+    bootstrap interval -0.05495115375404541 to -0.02093613083617544.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/iou person/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.iou-rider
+  text: For iou rider, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is -0.07593575124531915, with descriptive
+    bootstrap interval -0.1923297295399848 to 0.04047891696218514.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/iou rider/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.toplabel-ece-calibrated
+  text: For toplabel ece calibrated, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is 0.0057739777816927275,
+    with descriptive bootstrap interval 0.0039935455088541474 to 0.007576989657464939.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/toplabel_ece calibrated/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified
+- claim_id: p1.posthoc.allseed.secondary.toplabel-ece-uncalibrated
+  text: For toplabel ece uncalibrated, SegFormer-B2 minus UperNet-ConvNeXtV2-Tiny is -0.01638812246181477,
+    with descriptive bootstrap interval -0.017884315914540466 to -0.01499024565124947.
+  evidence_type: observed
+  protocol_hash: b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f
+  dataset_manifest_hash: d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f
+  artifact_path: docs/posthoc/allseed-v1/evidence/allseed-evidence.json
+  metric_path: /intervals/toplabel_ece uncalibrated/pairs/segformer_b2 minus upernet_convnextv2_tiny
+  status: verified

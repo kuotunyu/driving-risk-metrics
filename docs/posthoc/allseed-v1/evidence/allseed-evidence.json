@@ -1,0 +1,801 @@
+{
+  "analysis_plan": "docs/posthoc/allseed-v1/analysis-plan.md",
+  "counts": {
+    "images": 998,
+    "images_with_small_person": 214,
+    "small_person_instances": 462
+  },
+  "dataset_manifest_hash": "d43bda8f556747f8500bc14269957f2218c52c02917358e5456ec75faa12944f",
+  "gates": {
+    "integrity": "passed",
+    "reproduction": "passed"
+  },
+  "intervals": {
+    "aurc calibrated": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.012856369693487748,
+          "high": 0.015279443842048872,
+          "low": 0.010611526318087443
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.020190739181943192,
+          "high": 0.02267524617814969,
+          "low": 0.017820421002002443
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.023386164831388768,
+          "high": 0.026749556611565632,
+          "low": 0.020354714831257364
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": -0.007334369488455445,
+          "excludes_zero": true,
+          "high": -0.006170768083929803,
+          "low": -0.008443274569832366
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.01052979513790102,
+          "excludes_zero": true,
+          "high": -0.00856293594623816,
+          "low": -0.012657449108278361
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.0031954256494455754,
+          "excludes_zero": true,
+          "high": -0.001214142263534213,
+          "low": -0.0053049003949438385
+        }
+      }
+    },
+    "aurc uncalibrated": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.012495290172510378,
+          "high": 0.014823083301196261,
+          "low": 0.010336850220884914
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.01987506343017152,
+          "high": 0.02222309860472963,
+          "low": 0.01765455078880748
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.022858672560029682,
+          "high": 0.026173566198744058,
+          "low": 0.019916313748295843
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": -0.00737977325766114,
+          "excludes_zero": true,
+          "high": -0.006345059209328625,
+          "low": -0.008374391299355419
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.010363382387519304,
+          "excludes_zero": true,
+          "high": -0.008474965797817693,
+          "low": -0.012422951285513217
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.002983609129858164,
+          "excludes_zero": true,
+          "high": -0.0011617391193318254,
+          "low": -0.005093692338731369
+        }
+      }
+    },
+    "brier calibrated": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.09858760255882038,
+          "high": 0.10413351660806774,
+          "low": 0.09329048270715072
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.09870498563179696,
+          "high": 0.1042408694948446,
+          "low": 0.09338643008245012
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.13455525642805566,
+          "high": 0.14184463636743253,
+          "low": 0.1277215150568486
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": -0.00011738307297658179,
+          "excludes_zero": false,
+          "high": 0.0021455378421024714,
+          "low": -0.0023863977048887964
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.03596765386923528,
+          "excludes_zero": true,
+          "high": -0.03155136106594713,
+          "low": -0.04048336230883013
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.0358502707962587,
+          "excludes_zero": true,
+          "high": -0.03188222115757343,
+          "low": -0.04022635572737139
+        }
+      }
+    },
+    "brier uncalibrated": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.09759012789041406,
+          "high": 0.10363413347771439,
+          "low": 0.09166984120897338
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.10513396317982472,
+          "high": 0.11140663858295871,
+          "low": 0.09912942083859307
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.1409479257943207,
+          "high": 0.14930685611803465,
+          "low": 0.13307030964044786
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": -0.007543835289410661,
+          "excludes_zero": true,
+          "high": -0.004902153049408158,
+          "low": -0.010315787127126694
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.043357797903906634,
+          "excludes_zero": true,
+          "high": -0.038198513359363896,
+          "low": -0.04865289397735436
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.03581396261449597,
+          "excludes_zero": true,
+          "high": -0.031183497496114133,
+          "low": -0.04083651283810035
+        }
+      }
+    },
+    "classwise_ece calibrated": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.0035196866015977167,
+          "high": 0.003774544431760801,
+          "low": 0.003405532492979147
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.0032855195799122,
+          "high": 0.003515810775791158,
+          "low": 0.003184006315751668
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.003985369701553616,
+          "high": 0.004264054483594673,
+          "low": 0.0038253989154009064
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.00023416702168551663,
+          "excludes_zero": true,
+          "high": 0.00038969847390527457,
+          "low": 7.787417102475398e-05
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.0004656830999558996,
+          "excludes_zero": true,
+          "high": -0.0002565876319997021,
+          "low": -0.0006386091190303521
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.0006998501216414162,
+          "excludes_zero": true,
+          "high": -0.0005017193004771036,
+          "low": -0.0008741886293933371
+        }
+      }
+    },
+    "classwise_ece uncalibrated": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.0028840449773854925,
+          "high": 0.0031957089619550055,
+          "low": 0.0025971344640844767
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.004609387187919981,
+          "high": 0.004931723269896203,
+          "low": 0.004306124382868767
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.005448051902032049,
+          "high": 0.005881482974843861,
+          "low": 0.0050472862965270605
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": -0.0017253422105344886,
+          "excludes_zero": true,
+          "high": -0.0015722270972559908,
+          "low": -0.0018758322776037534
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.002564006924646556,
+          "excludes_zero": true,
+          "high": -0.002271264396898059,
+          "low": -0.0028598710754941495
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.0008386647141120675,
+          "excludes_zero": true,
+          "high": -0.0005815591198360223,
+          "low": -0.001126065231772701
+        }
+      }
+    },
+    "cost drivable_boundary": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.06479000538624796,
+          "high": 0.06871165031447933,
+          "low": 0.061020585926710016
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.06464029450757099,
+          "high": 0.06852565416330951,
+          "low": 0.06081268874960871
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.09002749300336542,
+          "high": 0.09485904072127033,
+          "low": 0.08534288223276708
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.00014971087867697574,
+          "excludes_zero": false,
+          "high": 0.0016610668915013993,
+          "low": -0.0014258164496065617
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.025237487617117457,
+          "excludes_zero": true,
+          "high": -0.022388813933699642,
+          "low": -0.02809797251356042
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.025387198495794433,
+          "excludes_zero": true,
+          "high": -0.02277881865739563,
+          "low": -0.028149519793124057
+        }
+      }
+    },
+    "cost vru_priority": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.05133617156418783,
+          "high": 0.054081883225921314,
+          "low": 0.04866848657359657
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.05111514898266528,
+          "high": 0.053931714789238056,
+          "low": 0.048443628036192114
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.07229704141283605,
+          "high": 0.07621173251094014,
+          "low": 0.06861563579146271
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.00022102258152254667,
+          "excludes_zero": false,
+          "high": 0.0014425365972791486,
+          "low": -0.0010563274252190513
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.02096086984864822,
+          "excludes_zero": true,
+          "high": -0.018550728086384777,
+          "low": -0.023382381733271593
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.021181892430170768,
+          "excludes_zero": true,
+          "high": -0.019014853532190328,
+          "low": -0.02350945899324388
+        }
+      }
+    },
+    "iou bicycle": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.5220167269001419,
+          "high": 0.5824088435548236,
+          "low": 0.44391219109522095
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.5903385646010292,
+          "high": 0.6424442941533607,
+          "low": 0.49966368111635456
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.24580769316006332,
+          "high": 0.36504066195644147,
+          "low": 0.11330897720498924
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": -0.06832183770088729,
+          "excludes_zero": false,
+          "high": 0.0014866376199575181,
+          "low": -0.12299548738086705
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.27620903374007855,
+          "excludes_zero": true,
+          "high": 0.4088735777630228,
+          "low": 0.1529149005536178
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.34453087144096584,
+          "excludes_zero": true,
+          "high": 0.4692145027225964,
+          "low": 0.2131507790793766
+        }
+      }
+    },
+    "iou motorcycle": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.5525858619206591,
+          "high": 0.6697216765976337,
+          "low": 0.33715078936226656
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.5789328252046682,
+          "high": 0.6923400536543709,
+          "low": 0.3670856820610111
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.2199190898815222,
+          "high": 0.32592386485199515,
+          "low": 0.0952378097555107
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": -0.026346963284009095,
+          "excludes_zero": false,
+          "high": 0.02927086888460359,
+          "low": -0.10141265106399742
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.33266677203913686,
+          "excludes_zero": true,
+          "high": 0.43176055017470016,
+          "low": 0.19572053421868152
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.35901373532314595,
+          "excludes_zero": true,
+          "high": 0.4622035241784344,
+          "low": 0.22239517943738146
+        }
+      }
+    },
+    "iou person": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.6958766834268991,
+          "high": 0.7417195197371619,
+          "low": 0.6407109161604742
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.7327243920802404,
+          "high": 0.772688563858259,
+          "low": 0.6850369946102034
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.4684498789095221,
+          "high": 0.5306793806554924,
+          "low": 0.39974035918630585
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": -0.036847708653341305,
+          "excludes_zero": true,
+          "high": -0.02093613083617544,
+          "low": -0.05495115375404541
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.227426804517377,
+          "excludes_zero": true,
+          "high": 0.29959765839614855,
+          "low": 0.17193834516200296
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.2642745131707183,
+          "excludes_zero": true,
+          "high": 0.3357401471589633,
+          "low": 0.20815058194924912
+        }
+      }
+    },
+    "iou rider": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.3708426669117529,
+          "high": 0.455971225931635,
+          "low": 0.23421333562225427
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.44677841815707203,
+          "high": 0.5410127803751077,
+          "low": 0.2890214254544112
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.07572238843562405,
+          "high": 0.20029877106947033,
+          "low": 0.003721311257644537
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": -0.07593575124531915,
+          "excludes_zero": false,
+          "high": 0.04047891696218514,
+          "low": -0.1923297295399848
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.2951202784761288,
+          "excludes_zero": true,
+          "high": 0.40359666544899453,
+          "low": 0.13516692439973244
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.37105602972144797,
+          "excludes_zero": true,
+          "high": 0.4867878751340584,
+          "low": 0.20120398269008014
+        }
+      }
+    },
+    "toplabel_ece calibrated": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.0288166070918478,
+          "high": 0.031512061849729045,
+          "low": 0.026061711059437522
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.023042629310155074,
+          "high": 0.025609539995897827,
+          "low": 0.020403595373171064
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.025884325426983438,
+          "high": 0.029175088811543962,
+          "low": 0.02234028333194965
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.0057739777816927275,
+          "excludes_zero": true,
+          "high": 0.007576989657464939,
+          "low": 0.0039935455088541474
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.0029322816648643633,
+          "excludes_zero": true,
+          "high": 0.005630492146005192,
+          "low": 0.00041006292569081517
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.002841696116828364,
+          "excludes_zero": true,
+          "high": -0.00027408844183006534,
+          "low": -0.005270982712520002
+        }
+      }
+    },
+    "toplabel_ece uncalibrated": {
+      "levels": {
+        "segformer_b2": {
+          "confidence": 0.95,
+          "estimate": 0.02728273794497198,
+          "high": 0.030181040539960048,
+          "low": 0.02447795072804457
+        },
+        "upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": 0.04367086040678675,
+          "high": 0.04669102014073379,
+          "low": 0.04077670861478886
+        },
+        "upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": 0.05135956117050855,
+          "high": 0.05537804386992017,
+          "low": 0.04753732856153436
+        }
+      },
+      "pairs": {
+        "segformer_b2 minus upernet_convnextv2_tiny": {
+          "confidence": 0.95,
+          "estimate": -0.01638812246181477,
+          "excludes_zero": true,
+          "high": -0.01499024565124947,
+          "low": -0.017884315914540466
+        },
+        "segformer_b2 minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.02407682322553657,
+          "excludes_zero": true,
+          "high": -0.021343995680165234,
+          "low": -0.026836844798111638
+        },
+        "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+          "confidence": 0.95,
+          "estimate": -0.007688700763721801,
+          "excludes_zero": true,
+          "high": -0.005273732491885021,
+          "low": -0.010333439717390865
+        }
+      }
+    }
+  },
+  "pairs": {
+    "segformer_b2 minus upernet_convnextv2_tiny": {
+      "estimate": 0.0966810966810967,
+      "high": 0.15425188147548158,
+      "high_95": 0.14267165382096605,
+      "low": 0.034930536409031036,
+      "low_95": 0.04772046674927717,
+      "separable": true
+    },
+    "segformer_b2 minus upernet_dinov2_small": {
+      "estimate": -0.08802308802308811,
+      "high": -0.03179328639934713,
+      "high_95": -0.04238475306838112,
+      "low": -0.14710627833845247,
+      "low_95": -0.1356947021600533,
+      "separable": true
+    },
+    "upernet_convnextv2_tiny minus upernet_dinov2_small": {
+      "estimate": -0.18470418470418482,
+      "high": -0.12958411048938637,
+      "high_95": -0.13883225907394334,
+      "low": -0.24154596314248633,
+      "low_95": -0.23103421812453737,
+      "separable": true
+    }
+  },
+  "primary": {
+    "segformer_b2": {
+      "category": "majority missed",
+      "estimate": 0.7582972582972584,
+      "high": 0.8219274984164799,
+      "high_95": 0.8126284133690169,
+      "low": 0.688164405099889,
+      "low_95": 0.7031214534695202,
+      "seed_17": 0.7619047619047619,
+      "seed_17_minus_mean": 0.003607503607503504,
+      "seed_42": 0.7424242424242424,
+      "seed_73": 0.7705627705627706
+    },
+    "upernet_convnextv2_tiny": {
+      "category": "majority missed",
+      "estimate": 0.6616161616161617,
+      "high": 0.7299823848967297,
+      "high_95": 0.7162822637730701,
+      "low": 0.5934460113900414,
+      "low_95": 0.6052140594037237,
+      "seed_17": 0.6623376623376623,
+      "seed_17_minus_mean": 0.0007215007215006786,
+      "seed_42": 0.6515151515151515,
+      "seed_73": 0.670995670995671
+    },
+    "upernet_dinov2_small": {
+      "category": "majority missed",
+      "estimate": 0.8463203463203465,
+      "high": 0.8914158626066414,
+      "high_95": 0.8827316161196511,
+      "low": 0.7980060503262807,
+      "low_95": 0.8082168589010174,
+      "seed_17": 0.8506493506493507,
+      "seed_17_minus_mean": 0.004329004329004182,
+      "seed_42": 0.8484848484848485,
+      "seed_73": 0.8398268398268398
+    }
+  },
+  "protocol_hash": "b33c842250f6afcc7bd7c1108b29bf84f342dda5bb5420e64d6be48773c4369f",
+  "schema_version": "driving-risk-allseed-evidence/v1",
+  "small_instances": {
+    "segformer_b2": {
+      "bicycle_count": 32,
+      "bicycle_misses": 26.0,
+      "motorcycle_count": 14,
+      "motorcycle_misses": 14.0,
+      "person_count": 462,
+      "person_misses": 350.3333333333333,
+      "rider_count": 17,
+      "rider_misses": 17.0
+    },
+    "upernet_convnextv2_tiny": {
+      "bicycle_count": 32,
+      "bicycle_misses": 24.333333333333332,
+      "motorcycle_count": 14,
+      "motorcycle_misses": 13.333333333333334,
+      "person_count": 462,
+      "person_misses": 305.6666666666667,
+      "rider_count": 17,
+      "rider_misses": 16.333333333333332
+    },
+    "upernet_dinov2_small": {
+      "bicycle_count": 32,
+      "bicycle_misses": 29.333333333333332,
+      "motorcycle_count": 14,
+      "motorcycle_misses": 14.0,
+      "person_count": 462,
+      "person_misses": 391.0,
+      "rider_count": 17,
+      "rider_misses": 17.0
+    }
+  },
+  "source_summary_sha256": "1dbf286222c2d5d58ba57bb4daa861472b6bc3fb5a4665f8fe8c6e7524996434",
+  "status": "post-release analysis of the released locked-cohort predictions; pre-registered decision rules",
+  "threshold_sweep": {
+    "0.1": {
+      "order_holds": true,
+      "segformer_b2": 0.6378066378066377,
+      "upernet_convnextv2_tiny": 0.5339105339105339,
+      "upernet_dinov2_small": 0.7402597402597403
+    },
+    "0.2": {
+      "order_holds": true,
+      "segformer_b2": 0.6608946608946609,
+      "upernet_convnextv2_tiny": 0.5634920634920634,
+      "upernet_dinov2_small": 0.7676767676767677
+    },
+    "0.3": {
+      "order_holds": true,
+      "segformer_b2": 0.6883116883116882,
+      "upernet_convnextv2_tiny": 0.595959595959596,
+      "upernet_dinov2_small": 0.7950937950937952
+    },
+    "0.4": {
+      "order_holds": true,
+      "segformer_b2": 0.7258297258297258,
+      "upernet_convnextv2_tiny": 0.626984126984127,
+      "upernet_dinov2_small": 0.8225108225108224
+    },
+    "0.5": {
+      "order_holds": true,
+      "segformer_b2": 0.7582972582972584,
+      "upernet_convnextv2_tiny": 0.6616161616161617,
+      "upernet_dinov2_small": 0.8463203463203465
+    },
+    "0.6": {
+      "order_holds": true,
+      "segformer_b2": 0.7893217893217893,
+      "upernet_convnextv2_tiny": 0.702020202020202,
+      "upernet_dinov2_small": 0.8737373737373737
+    },
+    "0.7": {
+      "order_holds": true,
+      "segformer_b2": 0.8268398268398268,
+      "upernet_convnextv2_tiny": 0.746031746031746,
+      "upernet_dinov2_small": 0.8953823953823954
+    },
+    "0.8": {
+      "order_holds": true,
+      "segformer_b2": 0.8766233766233767,
+      "upernet_convnextv2_tiny": 0.8044733044733045,
+      "upernet_dinov2_small": 0.9155844155844156
+    },
+    "0.9": {
+      "order_holds": true,
+      "segformer_b2": 0.9307359307359307,
+      "upernet_convnextv2_tiny": 0.8636363636363636,
+      "upernet_dinov2_small": 0.9444444444444443
+    }
+  }
+}

@@ -30,6 +30,10 @@ they are not averaged over seeds and carry no interval. This is an exception to 
 mean-over-seeds rule in [`docs/protocol.md`](docs/protocol.md). Rider and motorcycle have
 too few smallest-tertile instances to estimate a failure rate; the person counts support
 a more stable within-cohort description.
+A pre-registered post-release analysis later added the other two seeds and intervals, from the
+same released predictions: seed 17 is representative, every model critically misses most
+smallest-tertile people, and the three models are separable on them. See
+[the all-seed analysis](docs/posthoc/allseed-v1/results.md).
 
 A pixel-averaged score can look healthy while most of the smallest pedestrians and every
 smallest rider in this cohort are critically missed. The figure shows every instance class
