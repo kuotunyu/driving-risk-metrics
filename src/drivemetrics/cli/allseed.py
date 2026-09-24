@@ -15,10 +15,12 @@ import typer
 from drivemetrics.cli._output import run
 from drivemetrics.cli.evaluate import sample_progress_printer
 from drivemetrics.posthoc.allseed import extract_all_seeds
+from drivemetrics.posthoc.allseed_evidence import write_allseed_evidence
 from drivemetrics.posthoc.allseed_statistics import analyse_all_seeds
 
 EXTRACT_SERVICE = extract_all_seeds
 ANALYSE_SERVICE = analyse_all_seeds
+EVIDENCE_SERVICE = write_allseed_evidence
 
 app = typer.Typer(
     add_completion=False,
@@ -109,5 +111,28 @@ def analyse_command(
             "categories": result.categories,
             "separable": result.separable,
         }
+
+    run(operation)
+
+
+@app.command("evidence")
+def evidence_command(
+    summary: Annotated[
+        Path,
+        typer.Option(
+            "--summary",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="The summary.json written by `allseed analyse`.",
+        ),
+    ],
+    output: Annotated[Path, typer.Option("--output", dir_okay=False)],
+) -> None:
+    """Derive the flat, claim-auditable evidence the published report cites (no recomputation)."""
+
+    def operation() -> dict[str, Any]:
+        result = EVIDENCE_SERVICE(summary, output)
+        return {"command": "allseed evidence", "evidence_path": str(result.evidence_path)}
 
     run(operation)
